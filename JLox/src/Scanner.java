@@ -85,7 +85,7 @@ class Scanner {
         else if (match('*')){
           int nestDeeps = 1;
           while (peek() != '"' && !isAtEnd()) {
-            
+
           }
         }
         else {
@@ -142,9 +142,11 @@ class Scanner {
   }
 
   private void string() {
+    StringBuilder valueBuilder = new StringBuilder();
     while (peek() != '"' && !isAtEnd()) {
       if (peek() == '\n') setNewLine();
-      advance();
+      if (peek() == '\\') advance();
+      valueBuilder.append(advance());
     }
 
     if (isAtEnd()) {
@@ -155,9 +157,7 @@ class Scanner {
     // The closing ".
     advance();
 
-    // Trim the surrounding quotes.
-    String value = source.substring(start + 1, current - 1);
-    addToken(STRING, value);
+    addToken(STRING, valueBuilder.toString());
   }
 
   private void setNewLine() {
