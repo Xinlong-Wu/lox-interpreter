@@ -17,7 +17,7 @@ TESTS := $(shell find $(TEST_DIR) -name "*.lox" | sed 's/\.lox//')
 CLASSES := $(SOURCES:$(SRC_DIR)/%.java=$(BUILD_DIR)/%.class)
 
 # Default target
-all: $(BUILD_DIR) GenerateAst #$(CLASSES)
+all: $(BUILD_DIR) GenerateAst build-src #$(CLASSES)
 
 # Rule to create the build directory
 $(BUILD_DIR):
