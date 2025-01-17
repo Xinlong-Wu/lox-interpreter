@@ -1,11 +1,12 @@
-package com.xinlong.JLox;
+import static Token.TokenType.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.xinlong.JLox.TokenType.*; 
+import Token.Token;
+import Token.TokenType; 
 
 class Scanner {
   private static final Map<String, TokenType> keywords;

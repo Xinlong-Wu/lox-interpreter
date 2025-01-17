@@ -4,8 +4,8 @@ TEST_DIR := test
 BUILD_DIR := build
 MAIN_CLASS := com.xinlong.JLox.Lox
 
-# Find all .java files in the source directory
-SOURCES := $(shell find $(SRC_DIR) -name "*.java")
+# Find all .java files in the source directory and subdirectories
+SOURCES :=	$(shell find $(SRC_DIR) -name "*.java")
 
 # Find the relative path without extension of all .lox files in the test directory and subdirectories
 TESTS := $(shell find $(TEST_DIR) -name "*.lox" | sed 's/\.lox//')
