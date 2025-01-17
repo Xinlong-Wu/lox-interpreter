@@ -84,8 +84,22 @@ class Scanner {
         } 
         else if (match('*')){
           int nestDeeps = 1;
-          while (peek() != '"' && !isAtEnd()) {
-
+          while (!isAtEnd()){
+            if (peek() == '/' && peekNext() == '*'){
+              nestDeeps++;
+            }
+            else if (peek() == '*' && peekNext() == '/'){
+              nestDeeps--;
+              if (nestDeeps == 0){
+                advance();
+                advance();
+                break;
+              }
+            }
+            advance();
+          }
+          if (nestDeeps != 0){
+            Lox.error(line, column, "Unterminated comment.");
           }
         }
         else {

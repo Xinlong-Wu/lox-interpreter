@@ -35,10 +35,9 @@ clean:
 run: all
 	java -cp $(BUILD_DIR) $(MAIN_CLASS)
 
-$(TESTS): all $(TESTS).lox
+$(TESTS): all $@
 	java -cp $(BUILD_DIR) $(MAIN_CLASS) $@.lox
 
 test: all $(TESTS)
-	echo java -cp $(BUILD_DIR) com.xinlong.JLox.Lox test.lox
 
 .PHONY: all clean run
