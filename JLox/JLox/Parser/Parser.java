@@ -6,13 +6,11 @@ import JLox.Expression.Expr;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 import JLox.Lox;
+import JLox.Error.ParseError;
 
 import static JLox.Token.TokenType.*;
 
 public class Parser {
-    private static class ParseError extends RuntimeException {
-    }
-
     private final List<Token> tokens;
     private int current = 0;
 

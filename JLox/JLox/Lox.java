@@ -9,14 +9,17 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import JLox.Expression.Expr;
+import JLox.Interpreter.Interpreter;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 import JLox.Utils.AstPrinter;
 import JLox.Parser.Parser;
-import JLox.Scanner;
+import JLox.Error.RuntimeError;
 
 public class Lox {
+    private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
@@ -35,6 +38,8 @@ public class Lox {
         // Indicate an error in the exit code.
         if (hadError)
             System.exit(65);
+        if (hadRuntimeError)
+            System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
@@ -62,7 +67,8 @@ public class Lox {
         if (hadError)
             return;
 
-        System.out.println(new AstPrinter().print(expression));
+        interpreter.interpret(expression);
+        // System.out.println(new AstPrinter().print(expression));
     }
 
     static void error(int line, int column, String message) {
@@ -82,5 +88,11 @@ public class Lox {
         } else {
             report(token.line, token.column, " at '" + token.lexeme + "'", message);
         }
+    }
+
+    public static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() +
+                "\n[line " + error.token.line + ":" + error.token.column + "]");
+        hadRuntimeError = true;
     }
 }
