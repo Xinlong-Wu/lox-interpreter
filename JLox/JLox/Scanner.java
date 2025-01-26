@@ -1,14 +1,16 @@
-import static Token.TokenType.*;
+package JLox;
+
+import static JLox.Token.TokenType.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import Token.Token;
-import Token.TokenType; 
+import JLox.Token.Token;
+import JLox.Token.TokenType; 
 
-class Scanner {
+public class Scanner {
   private static final Map<String, TokenType> keywords;
   static {
     keywords = new HashMap<>();
@@ -65,6 +67,8 @@ class Scanner {
       case '+': addToken(PLUS); break;
       case ';': addToken(SEMICOLON); break;
       case '*': addToken(STAR); break; 
+      case ':': addToken(COLON); break;
+      case '?': addToken(QUESTION); break;
 
       case '!':
         addToken(match('=') ? BANG_EQUAL : BANG);

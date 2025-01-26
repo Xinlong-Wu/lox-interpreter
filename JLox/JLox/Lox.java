@@ -1,3 +1,5 @@
+package JLox;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -6,7 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-import Token.Token;
+import JLox.Expression.Expr;
+import JLox.Token.Token;
+import JLox.Token.TokenType;
+import JLox.Utils.AstPrinter;
+import JLox.Parser.Parser;
+import JLox.Scanner;
 
 public class Lox {
     static boolean hadError = false;
@@ -48,10 +55,14 @@ public class Lox {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        // For now, just print the tokens.
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.parse();
+
+        // Stop if there was a syntax error.
+        if (hadError)
+            return;
+
+        System.out.println(new AstPrinter().print(expression));
     }
 
     static void error(int line, int column, String message) {
@@ -63,5 +74,13 @@ public class Lox {
         System.err.println(
                 "[line " + line + ":" + column + "] Error" + where + ": " + message);
         hadError = true;
+    }
+
+    public static void error(Token token, String message) {
+        if (token.type == TokenType.EOF) {
+            report(token.line, token.column, " at end", message);
+        } else {
+            report(token.line, token.column, " at '" + token.lexeme + "'", message);
+        }
     }
 }

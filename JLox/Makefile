@@ -1,10 +1,10 @@
 # Variables
-SRC_DIR := src
+SRC_DIR := JLox
 TOOLS_DIR := tools
 TEST_DIR := test
 BUILD_DIR := build
 TOOLS_BUILD_DIR := build/tools
-MAIN_CLASS := Lox
+MAIN_CLASS := JLox.Lox
 
 # Find all .java files in the source directory and subdirectories
 SOURCES :=	$(shell find $(SRC_DIR) -name "*.java")

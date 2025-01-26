@@ -8,11 +8,11 @@
             "type": "java",
             "name": "Lox",
             "request": "launch",
-            "mainClass": "com.xinlong.JLox.Lox",
+            "mainClass": "JLox.Lox",
             "projectName": "",
-            "args": [
-                "JLox/test/scanner/string.lox"
-            ]
+            // "args": [
+            //     "JLox/test/scanner/string.lox"
+            // ]
         }
     ]
 }

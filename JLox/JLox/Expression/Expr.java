@@ -1,7 +1,7 @@
-package Expression;
+package JLox.Expression;
 
 import java.util.List;
-import Token.Token;
+import JLox.Token.Token;
 
 public abstract class Expr {
   public interface Visitor<R> {
@@ -9,6 +9,7 @@ public abstract class Expr {
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
     R visitUnaryExpr(Unary expr);
+    R visitTernaryExpr(Ternary expr);
   }
   public static class Binary extends Expr {
     public Binary(Expr left, Token operator, Expr right) {
@@ -63,6 +64,22 @@ public abstract class Expr {
 
     public final Token operator;
     public final Expr right;
+  }
+  public static class Ternary extends Expr {
+    public Ternary(Expr condition, Expr thenBranch, Expr elseBranch) {
+      this.condition = condition;
+      this.thenBranch = thenBranch;
+      this.elseBranch = elseBranch;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitTernaryExpr(this);
+    }
+
+    public final Expr condition;
+    public final Expr thenBranch;
+    public final Expr elseBranch;
   }
 
   public abstract <R> R accept(Visitor<R> visitor);

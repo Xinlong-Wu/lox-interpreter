@@ -1,8 +1,8 @@
-package Utils;
+package JLox.Utils;
 
-import Expression.Expr;
-import Token.Token;
-import Token.TokenType;
+import JLox.Expression.Expr;
+import JLox.Token.Token;
+import JLox.Token.TokenType;
 
 public class AstPrinter implements Expr.Visitor<String> {
     public String print(Expr expr) {
@@ -30,6 +30,11 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
         return parenthesize(expr.operator.lexeme, expr.right);
+    }
+
+    @Override
+    public String visitTernaryExpr(Expr.Ternary expr) {
+        return parenthesize("?", expr.condition, expr.thenBranch, expr.elseBranch);
     }
 
     private String parenthesize(String name, Expr... exprs) {

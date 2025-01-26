@@ -1,11 +1,11 @@
-package Token;
+package JLox.Token;
 
 public class Token {
     public final TokenType type;
     public final String lexeme;
     public final Object literal;
-    final int line;
-    final int column;
+    public final int line;
+    public final int column;
 
     public Token(TokenType type, String lexeme, Object literal, int line, int column) {
         this.type = type;
