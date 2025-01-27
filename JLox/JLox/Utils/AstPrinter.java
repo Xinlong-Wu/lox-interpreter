@@ -1,14 +1,26 @@
 package JLox.Utils;
 
 import JLox.Expression.Expr;
-import JLox.Expression.Expr.Assign;
-import JLox.Expression.Expr.Variable;
+import JLox.Expression.Stmt;
+import JLox.Expression.Stmt.*;
+import JLox.Expression.Expr.*;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 
-public class AstPrinter implements Expr.Visitor<String> {
+public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
+
+    private static AstPrinter instance = new AstPrinter();
+
+    public static AstPrinter getInstance() {
+        return instance;
+    }
+
     public String print(Expr expr) {
         return expr.accept(this);
+    }
+
+    public String print(Stmt stmt) {
+        return stmt.accept(this);
     }
 
     @Override
@@ -32,11 +44,6 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
         return parenthesize(expr.operator.lexeme, expr.right);
-    }
-
-    @Override
-    public String visitTernaryExpr(Expr.Ternary expr) {
-        return parenthesize("?", expr.condition, expr.thenBranch, expr.elseBranch);
     }
 
     private String parenthesize(String name, Expr... exprs) {
@@ -75,8 +82,87 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitVariableExpr(Variable expr) {
         StringBuilder builder = new StringBuilder();
-        builder.append("var ");
         builder.append(expr.name.lexeme);
+        return builder.toString();
+    }
+
+    @Override
+    public String visitLogicalExpr(Logical expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(expr.left.accept(this));
+        builder.append(" ");
+        builder.append(expr.operator.lexeme);
+        builder.append(" ");
+        builder.append(expr.right.accept(this));
+        return builder.toString();
+    }
+
+    @Override
+    public String visitBlockStmt(Block stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{\n");
+        for (Stmt statement : stmt.statements) {
+            builder.append(statement.accept(this));
+            builder.append("\n");
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitExpressionStmt(Expression stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(stmt.expression.accept(this)).append(";");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitIfStmt(If stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("if (").append(stmt.condition.accept(this)).append(") ");
+        builder.append(stmt.thenBranch.accept(this));
+        if (stmt.elseBranch != null) {
+            builder.append(" else ").append(stmt.elseBranch.accept(this));
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public String visitPrintStmt(Print stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("print()").append(stmt.expression.accept(this)).append(");");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitVarStmt(Var stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("var ").append(stmt.name.lexeme);
+        if (stmt.initializer != null) {
+            builder.append(" = ").append(stmt.initializer.accept(this));
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public String visitWhileStmt(While stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("while (").append(stmt.condition.accept(this)).append(") ");
+        builder.append(stmt.body.accept(this));
+        return builder.toString();
+    }
+
+    @Override
+    public String visitBreakStmt(Break stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("break;");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitContinueStmt(Continue stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("continue;");
         return builder.toString();
     }
 }
