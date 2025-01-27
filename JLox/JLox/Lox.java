@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import JLox.Expression.Expr;
+import JLox.Expression.Stmt;
 import JLox.Interpreter.Interpreter;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
@@ -61,13 +62,13 @@ public class Lox {
         List<Token> tokens = scanner.scanTokens();
 
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        List<Stmt> statements = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError)
             return;
 
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
         // System.out.println(new AstPrinter().print(expression));
     }
 

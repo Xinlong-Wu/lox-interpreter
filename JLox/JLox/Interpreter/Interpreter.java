@@ -1,23 +1,59 @@
 package JLox.Interpreter;
 
 import JLox.Expression.Expr;
-import JLox.Expression.Expr.Binary;
-import JLox.Expression.Expr.Grouping;
-import JLox.Expression.Expr.Literal;
 import JLox.Expression.Expr.Ternary;
-import JLox.Expression.Expr.Unary;
+import JLox.Expression.Stmt;
 import JLox.Token.Token;
+import JLox.Token.TokenType;
+
+import java.util.List;
+
 import JLox.Lox;
 import JLox.Error.RuntimeError;
 
-public class Interpreter implements Expr.Visitor<Object> {
-    public void interpret(Expr expression) {
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    private Environment environment = new Environment();
+
+    public void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = new RuntimeError(stmt.name,
+                "Undefined variable '" + stmt.name.lexeme + "'.");
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
     }
 
     @Override
@@ -28,6 +64,11 @@ public class Interpreter implements Expr.Visitor<Object> {
     @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
         return evaluate(expr.expression);
+    }
+
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
     }
 
     @Override
@@ -68,8 +109,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof Double) {
                     if (right instanceof String) {
                         return stringify(left) + (String) right;
-                    }
-                    else if (right instanceof Double) {
+                    } else if (right instanceof Double) {
                         return (double) left + (double) right;
                     }
                 }
@@ -77,12 +117,10 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof String) {
                     if (right instanceof Double) {
                         return (String) left + stringify(right);
-                    }
-                    else if (right instanceof String) {
+                    } else if (right instanceof String) {
                         return (String) left + (String) right;
                     }
                 }
-
 
                 throw new RuntimeError(expr.operator,
                         "Operands must be two numbers or two strings.");
@@ -117,6 +155,26 @@ public class Interpreter implements Expr.Visitor<Object> {
             return evaluate(expr.thenBranch);
         } else {
             return evaluate(expr.elseBranch);
+        }
+    }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    void executeBlock(List<Stmt> statements,
+            Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
         }
     }
 
@@ -156,6 +214,10 @@ public class Interpreter implements Expr.Visitor<Object> {
         return expr.accept(this);
     }
 
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double)
             return;
@@ -164,8 +226,12 @@ public class Interpreter implements Expr.Visitor<Object> {
 
     private void checkNumberOperands(Token operator,
             Object left, Object right) {
-        if (left instanceof Double && right instanceof Double)
+        if (left instanceof Double && right instanceof Double) {
+            if (operator.type == TokenType.SLASH && (double) right == 0) {
+                throw new RuntimeError(operator, "Division by zero.");
+            }
             return;
+        }
 
         throw new RuntimeError(operator, "Operands must be numbers.");
     }

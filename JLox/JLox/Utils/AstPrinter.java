@@ -1,6 +1,8 @@
 package JLox.Utils;
 
 import JLox.Expression.Expr;
+import JLox.Expression.Expr.Assign;
+import JLox.Expression.Expr.Variable;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 
@@ -61,4 +63,20 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     System.out.println(new AstPrinter().print(expression));
   }
+
+    @Override
+    public String visitAssignExpr(Assign expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(expr.name.lexeme).append(" = ");
+        builder.append(expr.value.accept(this));
+        return builder.toString();
+    }
+
+    @Override
+    public String visitVariableExpr(Variable expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("var ");
+        builder.append(expr.name.lexeme);
+        return builder.toString();
+    }
 }
