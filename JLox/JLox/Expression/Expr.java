@@ -2,6 +2,7 @@ package JLox.Expression;
 
 import java.util.List;
 import JLox.Token.Token;
+import JLox.Utils.AstPrinter;
 
 public abstract class Expr {
   public interface Visitor<R> {
@@ -9,8 +10,8 @@ public abstract class Expr {
     R visitBinaryExpr(Binary expr);
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
+    R visitLogicalExpr(Logical expr);
     R visitUnaryExpr(Unary expr);
-    R visitTernaryExpr(Ternary expr);
     R visitVariableExpr(Variable expr);
   }
   public static class Assign extends Expr {
@@ -67,6 +68,22 @@ public abstract class Expr {
 
     public final Object value;
   }
+  public static class Logical extends Expr {
+    public Logical(Expr left, Token operator, Expr right) {
+      this.left = left;
+      this.operator = operator;
+      this.right = right;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitLogicalExpr(this);
+    }
+
+    public final Expr left;
+    public final Token operator;
+    public final Expr right;
+  }
   public static class Unary extends Expr {
     public Unary(Token operator, Expr right) {
       this.operator = operator;
@@ -80,22 +97,6 @@ public abstract class Expr {
 
     public final Token operator;
     public final Expr right;
-  }
-  public static class Ternary extends Expr {
-    public Ternary(Expr condition, Expr thenBranch, Expr elseBranch) {
-      this.condition = condition;
-      this.thenBranch = thenBranch;
-      this.elseBranch = elseBranch;
-    }
-
-    @Override
-    public <R> R accept(Visitor<R> visitor) {
-      return visitor.visitTernaryExpr(this);
-    }
-
-    public final Expr condition;
-    public final Expr thenBranch;
-    public final Expr elseBranch;
   }
   public static class Variable extends Expr {
     public Variable(Token name) {
@@ -111,4 +112,8 @@ public abstract class Expr {
   }
 
   public abstract <R> R accept(Visitor<R> visitor);
+
+  public void dump() {
+    System.out.println(AstPrinter.getInstance().print(this));
+  }
 }

@@ -9,10 +9,17 @@
             "name": "Lox",
             "request": "launch",
             "mainClass": "JLox.Lox",
-            "projectName": "",
-            // "args": [
-            //     "JLox/test/scanner/string.lox"
-            // ]
+            "projectName": "lox-interpreter_e7cf4de0"
+        },
+        {
+            "type": "java",
+            "name": "GenerateAst",
+            "request": "launch",
+            "mainClass": "tools.GenerateAst",
+            "projectName": "lox-interpreter_e7cf4de0",
+            "args": [
+                "/tmp/"
+            ]
         }
     ]
 }

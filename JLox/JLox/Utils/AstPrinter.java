@@ -130,7 +130,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitPrintStmt(Print stmt) {
         StringBuilder builder = new StringBuilder();
-        builder.append("print()").append(stmt.expression.accept(this)).append(");");
+        builder.append("print(").append(stmt.expression.accept(this)).append(");");
         return builder.toString();
     }
 

@@ -13,20 +13,23 @@ public class GenerateAst {
     }
     String outputDir = args[0];
     defineAst(outputDir, "Expr", Arrays.asList(
-      "Assign   : Token name, Expr value",
+        "Assign   : Token name, Expr value",
         "Binary   : Expr left, Token operator, Expr right",
         "Grouping : Expr expression",
         "Literal  : Object value",
+        "Logical  : Expr left, Token operator, Expr right",
         "Unary    : Token operator, Expr right",
-        "Ternary  : Expr condition, Expr thenBranch, Expr elseBranch",
-        "Variable : Token name"
-        ));
+        "Variable : Token name"));
 
     defineAst(outputDir, "Stmt", Arrays.asList(
-      "Block      : List<Stmt> statements",
+        "Block      : List<Stmt> statements",
         "Expression : Expr expression",
+        "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
         "Print      : Expr expression",
-        "Var        : Token name, Expr initializer"
+        "Var        : Token name, Expr initializer",
+        "While      : Expr condition, Stmt body",
+        "Break      : ",
+        "Continue   : "
         ));
   }
 
@@ -40,6 +43,7 @@ public class GenerateAst {
     writer.println();
     writer.println("import java.util.List;");
     writer.println("import JLox.Token.Token;");
+    writer.println("import JLox.Utils.AstPrinter;");
     writer.println();
     writer.println("public abstract class " + baseName + " {");
 
@@ -55,6 +59,12 @@ public class GenerateAst {
     // The base accept() method.
     writer.println();
     writer.println("  public abstract <R> R accept(Visitor<R> visitor);");
+
+    // the dump() method
+    writer.println();
+    writer.println("  public void dump() {");
+    writer.println("    System.out.println(AstPrinter.getInstance().print(this));");
+    writer.println("  }");
 
     writer.println("}");
     writer.close();
@@ -83,10 +93,13 @@ public class GenerateAst {
     writer.println("    public " + className + "(" + fieldList + ") {");
 
     // Store parameters in fields.
-    String[] fields = fieldList.split(", ");
-    for (String field : fields) {
-      String name = field.split(" ")[1];
-      writer.println("      this." + name + " = " + name + ";");
+    String[] fields = new String[0];
+    if (!fieldList.isEmpty()) {
+      fields = fieldList.split(", ");
+      for (String field : fields) {
+        String name = field.split(" ")[1];
+        writer.println("      this." + name + " = " + name + ";");
+      }
     }
 
     writer.println("    }");

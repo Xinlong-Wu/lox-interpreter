@@ -1,8 +1,9 @@
 package JLox.Interpreter;
 
 import JLox.Expression.Expr;
-import JLox.Expression.Expr.Ternary;
 import JLox.Expression.Stmt;
+import JLox.Expression.Stmt.Break;
+import JLox.Expression.Stmt.Continue;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 
@@ -28,6 +29,45 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
         return null;
+    }
+
+    @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            try {
+                if (stmt.body instanceof Stmt.Block)
+                    assert ((Stmt.Block) stmt.body).statements.size() <= 2;
+                execute(stmt.body);
+            } catch (BreakException e) {
+                break;
+            } catch (ContinueException e) {
+                assert stmt.body instanceof Stmt.Block;
+                if (((Stmt.Block) stmt.body).statements.size() == 2)
+                    execute(((Stmt.Block) stmt.body).statements.get(1));
+                continue;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitBreakStmt(Break stmt) {
+        throw new BreakException();
+    }
+
+    @Override
+    public Void visitContinueStmt(Continue stmt) {
+        throw new ContinueException();
     }
 
     @Override
@@ -59,6 +99,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
+    }
+
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left))
+                return left;
+        } else {
+            if (!isTruthy(left))
+                return left;
+        }
+
+        return evaluate(expr.right);
     }
 
     @Override
@@ -146,16 +201,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         // Unreachable.
         return null;
-    }
-
-    @Override
-    public Object visitTernaryExpr(Ternary expr) {
-        Object condition = evaluate(expr.condition);
-        if (isTruthy(condition)) {
-            return evaluate(expr.thenBranch);
-        } else {
-            return evaluate(expr.elseBranch);
-        }
     }
 
     @Override

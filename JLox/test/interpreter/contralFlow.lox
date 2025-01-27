@@ -1,0 +1,12 @@
+print "hi" or 2; // "hi".
+print nil or "yes"; // "yes".
+
+var i = 10;
+while (true) {
+    print i;
+    i = i - 1;
+    if (i <= 0)
+        break;
+}
+
+for (var i = 0; i < 10; i = i + 1) print i;
