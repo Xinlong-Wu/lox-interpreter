@@ -160,6 +160,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             case STAR:
                 checkNumberOperands(expr.operator, left, right);
                 return (double) left * (double) right;
+            case MOD:
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left % (double) right;
             case PLUS:
                 if (left instanceof Double) {
                     if (right instanceof String) {
@@ -272,8 +275,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private void checkNumberOperands(Token operator,
             Object left, Object right) {
         if (left instanceof Double && right instanceof Double) {
-            if (operator.type == TokenType.SLASH && (double) right == 0) {
-                throw new RuntimeError(operator, "Division by zero.");
+            if ((double) right == 0) {
+                if (operator.type == TokenType.SLASH || operator.type == TokenType.MOD)
+                    throw new RuntimeError(operator, "Division by zero.");
             }
             return;
         }
