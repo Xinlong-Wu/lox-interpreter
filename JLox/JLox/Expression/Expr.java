@@ -13,6 +13,7 @@ public abstract class Expr {
     R visitLiteralExpr(Literal expr);
     R visitLogicalExpr(Logical expr);
     R visitUnaryExpr(Unary expr);
+    R visitLambdaExpr(Lambda expr);
     R visitVariableExpr(Variable expr);
   }
   public static class Assign extends Expr {
@@ -114,6 +115,18 @@ public abstract class Expr {
 
     public final Token operator;
     public final Expr right;
+  }
+  public static class Lambda extends Expr {
+    public Lambda(Stmt.Function func) {
+      this.func = func;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitLambdaExpr(this);
+    }
+
+    public final Stmt.Function func;
   }
   public static class Variable extends Expr {
     public Variable(Token name) {

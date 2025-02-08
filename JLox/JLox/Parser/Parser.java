@@ -227,21 +227,33 @@ public class Parser {
     }
 
     private Expr expression() {
-        return assignment();
-        // Expr expr = equality();
-        // if (match(QUESTION)) {
-        // Expr thenBranch = expression();
-        // consume(COLON, "Expect ':' after `" + peek().lexeme + "`.");
-        // Expr elseBranch = expression();
-        // return new Expr.Ternary(expr, thenBranch, elseBranch);
-        // }
-        // while (match(COMMA)) {
-        // Token operator = previous();
-        // Expr right = equality();
-        // expr = new Expr.Binary(expr, operator, right);
-        // }
+        if (match(FUN))
+            return lambda();
 
-        // return expr;
+        return assignment();
+    }
+
+    private Expr lambda() {
+        Token name = new Token(IDENTIFIER, "lambda", null, peek().line, peek().column);
+        consume(LEFT_PAREN, "Expect '(' after `fun`.");
+        List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+
+                parameters.add(
+                        consume(IDENTIFIER, "Expect parameter name."));
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
+
+        consume(LEFT_BRACE, "Expect '{' before lambda body.");
+        List<Stmt> body = block();
+        Stmt.Function func =  new Stmt.Function(name, parameters, body);
+
+        return new Expr.Lambda(func);
     }
 
     private Expr assignment() {
