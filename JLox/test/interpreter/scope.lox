@@ -17,3 +17,17 @@ var c = "global c";
 print a;
 print b;
 print c;
+
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
+
+// error
+// var a = "block";
+// return "at top level";

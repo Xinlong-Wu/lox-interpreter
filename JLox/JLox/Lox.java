@@ -11,6 +11,7 @@ import java.util.List;
 import JLox.Expression.Expr;
 import JLox.Expression.Stmt;
 import JLox.Interpreter.Interpreter;
+import JLox.Interpreter.Resolver;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 import JLox.Utils.AstPrinter;
@@ -65,8 +66,13 @@ public class Lox {
         List<Stmt> statements = parser.parse();
 
         // Stop if there was a syntax error.
-        if (hadError)
-            return;
+        if (hadError) return;
+
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
+        // Stop if there was a resolution error.
+        if (hadError) return;
 
         interpreter.interpret(statements);
         // System.out.println(new AstPrinter().print(expression));
