@@ -2,18 +2,18 @@ package JLox.Interpreter;
 
 import JLox.Expression.Expr;
 import JLox.Expression.Stmt;
-import JLox.Expression.Stmt.Break;
-import JLox.Expression.Stmt.Continue;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import JLox.Lox;
 import JLox.Error.RuntimeError;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals;
 
     public void interpret(List<Stmt> statements) {
         try {
@@ -28,6 +28,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        LoxFunction function = new LoxFunction(stmt, environment);
+        environment.define(stmt.name.lexeme, function);
         return null;
     }
 
@@ -48,9 +55,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (stmt.body instanceof Stmt.Block)
                     assert ((Stmt.Block) stmt.body).statements.size() <= 2;
                 execute(stmt.body);
-            } catch (BreakException e) {
+            } catch (Break e) {
                 break;
-            } catch (ContinueException e) {
+            } catch (Continue e) {
                 assert stmt.body instanceof Stmt.Block;
                 if (((Stmt.Block) stmt.body).statements.size() == 2)
                     execute(((Stmt.Block) stmt.body).statements.get(1));
@@ -61,13 +68,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitBreakStmt(Break stmt) {
-        throw new BreakException();
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        throw new Break();
     }
 
     @Override
-    public Void visitContinueStmt(Continue stmt) {
-        throw new ContinueException();
+    public Void visitContinueStmt(Stmt.Continue stmt) {
+        throw new Continue();
     }
 
     @Override
@@ -75,6 +82,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object value = evaluate(stmt.expression);
         System.out.println(stringify(value));
         return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null)
+            value = evaluate(stmt.value);
+
+        throw new Return(value);
     }
 
     @Override
@@ -204,6 +220,30 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         // Unreachable.
         return null;
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof LoxCallable)) {
+            throw new RuntimeError(expr.paren,
+                    "Can only call functions and classes.");
+        }
+
+        LoxCallable function = (LoxCallable) callee;
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size() + ".");
+        }
+
+        return function.call(this, arguments);
     }
 
     @Override

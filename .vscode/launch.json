@@ -13,6 +13,16 @@
         },
         {
             "type": "java",
+            "name": "Lox-file",
+            "request": "launch",
+            "mainClass": "JLox.Lox",
+            "projectName": "lox-interpreter_e7cf4de0",
+            "args": [
+                "${file}"
+            ]
+        },
+        {
+            "type": "java",
             "name": "GenerateAst",
             "request": "launch",
             "mainClass": "tools.GenerateAst",

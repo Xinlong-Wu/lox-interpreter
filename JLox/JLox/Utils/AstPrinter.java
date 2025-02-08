@@ -165,4 +165,43 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         builder.append("continue;");
         return builder.toString();
     }
+
+    @Override
+    public String visitFunctionStmt(Function stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("fun ").append(stmt.name.lexeme).append("(");
+        for (int i = 0; i < stmt.params.size(); i++) {
+            if (i > 0) builder.append(", ");
+            builder.append(stmt.params.get(i).lexeme);
+        }
+        builder.append(") ");
+        for (Stmt statement : stmt.body) {
+            builder.append(statement.accept(this));
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public String visitCallExpr(Call expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(expr.callee.accept(this)).append("(");
+        for (int i = 0; i < expr.arguments.size(); i++) {
+            if (i > 0) builder.append(", ");
+            builder.append(expr.arguments.get(i).accept(this));
+        }
+        builder.append(")");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitReturnStmt(Return stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("return");
+        if (stmt.value != null) {
+            builder.append(" ").append(stmt.value.accept(this));
+        }
+        builder.append(";");
+        return builder.toString();
+    }
 }
