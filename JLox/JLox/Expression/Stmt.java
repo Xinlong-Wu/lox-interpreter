@@ -128,7 +128,8 @@ public abstract class Stmt {
     public final Expr value;
   }
   public static class Break extends Stmt {
-    public Break() {
+    public Break(Token keyword) {
+      this.keyword = keyword;
     }
 
     @Override
@@ -136,9 +137,11 @@ public abstract class Stmt {
       return visitor.visitBreakStmt(this);
     }
 
+    public final Token keyword;
   }
   public static class Continue extends Stmt {
-    public Continue() {
+    public Continue(Token keyword) {
+      this.keyword = keyword;
     }
 
     @Override
@@ -146,6 +149,7 @@ public abstract class Stmt {
       return visitor.visitContinueStmt(this);
     }
 
+    public final Token keyword;
   }
 
   public abstract <R> R accept(Visitor<R> visitor);

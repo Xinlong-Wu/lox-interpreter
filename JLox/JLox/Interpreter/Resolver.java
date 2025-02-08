@@ -14,6 +14,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final Interpreter interpreter;
   private final Stack<Map<String, Boolean>> scopes = new Stack<>();
   private FunctionType currentFunction = FunctionType.NONE;
+  private boolean inLoop = false;
 
   public Resolver(Interpreter interpreter) {
     this.interpreter = interpreter;
@@ -105,11 +106,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitBreakStmt(Stmt.Break stmt) {
+    if (!inLoop)
+      Lox.error(stmt.keyword, "Cannot use 'break' outside of a loop.");
     return null;
   }
 
   @Override
   public Void visitContinueStmt(Stmt.Continue stmt) {
+    if (!inLoop)
+      Lox.error(stmt.keyword, "Cannot use 'continue' outside of a loop.");
     return null;
   }
 
@@ -160,7 +165,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   @Override
   public Void visitWhileStmt(Stmt.While stmt) {
     resolve(stmt.condition);
+    boolean prevInLoop = inLoop;
+    inLoop = true;
     resolve(stmt.body);
+    inLoop = prevInLoop;
     return null;
   }
 
@@ -182,6 +190,8 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       Stmt.Function function, FunctionType type) {
     FunctionType enclosingFunction = currentFunction;
     currentFunction = type;
+    boolean prevInLoop = inLoop;
+    inLoop = false;
 
     beginScope();
     for (Token param : function.params) {
@@ -191,6 +201,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     resolve(function.body);
     endScope();
 
+    inLoop = prevInLoop;
     currentFunction = enclosingFunction;
   }
 

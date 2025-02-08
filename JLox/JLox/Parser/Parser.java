@@ -16,7 +16,6 @@ import static JLox.Token.TokenType.*;
 public class Parser {
     private final List<Token> tokens;
     private int current = 0;
-    private boolean inLoop = false;
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -74,12 +73,10 @@ public class Parser {
         if (match(IF))
             return ifStatement();
 
-        if (inLoop) {
-            if (match(BREAK))
-                return breakStatement();
-            if (match(CONTINUE))
-                return continueStatement();
-        }
+        if (match(BREAK))
+            return breakStatement();
+        if (match(CONTINUE))
+            return continueStatement();
 
         if (match(LEFT_BRACE))
             return new Stmt.Block(block());
@@ -171,21 +168,17 @@ public class Parser {
     }
 
     private Stmt loopBody() {
-        inLoop = true;
-        Stmt body = statement();
-        inLoop = false;
-
-        return body;
+        return statement();
     }
 
     private Stmt breakStatement() {
         consume(SEMICOLON, "Expect ';' after 'break'.");
-        return new Stmt.Break();
+        return new Stmt.Break(previous());
     }
 
     private Stmt continueStatement() {
         consume(SEMICOLON, "Expect ';' after 'continue'.");
-        return new Stmt.Continue();
+        return new Stmt.Continue(previous());
     }
 
     private Stmt expressionStatement() {
