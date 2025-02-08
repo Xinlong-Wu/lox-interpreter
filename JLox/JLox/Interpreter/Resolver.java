@@ -10,14 +10,21 @@ import JLox.Expression.Expr;
 import JLox.Expression.Stmt;
 import JLox.Token.Token;
 
+import static JLox.Token.TokenType.*;
+
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final Interpreter interpreter;
-  private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+  private final Stack<Map<Token, Integer>> scopes = new Stack<>();
   private FunctionType currentFunction = FunctionType.NONE;
   private boolean inLoop = false;
 
   public Resolver(Interpreter interpreter) {
     this.interpreter = interpreter;
+  }
+
+  private static class variableState {
+    static Integer DECLARED = -1;
+    static Integer DEFINED = 0;
   }
 
   private enum FunctionType {
@@ -46,7 +53,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   @Override
   public Void visitVariableExpr(Expr.Variable expr) {
     if (!scopes.isEmpty() &&
-        scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
+        scopes.peek().get(expr.name) == variableState.DECLARED) {
       Lox.error(expr.name,
           "Can't read local variable in its own initializer.");
     }
@@ -206,32 +213,44 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   private void beginScope() {
-    scopes.push(new HashMap<String, Boolean>());
+    scopes.push(new HashMap<Token, Integer>());
   }
 
   private void endScope() {
+    for (Map.Entry<Token, Integer> entry : scopes.peek().entrySet()) {
+      if (entry.getValue() == variableState.DEFINED) {
+        Lox.warning(entry.getKey(),
+            "Local variable is defined but never used.");
+      }
+    }
     scopes.pop();
   }
 
   private void declare(Token name) {
     if (scopes.isEmpty()) return;
 
-    Map<String, Boolean> scope = scopes.peek();
-    if (scope.containsKey(name.lexeme)) {
+    Map<Token, Integer> scope = scopes.peek();
+    if (scope.containsKey(name)) {
         Lox.error(name,
             "Already a variable with this name in this scope.");
     }
-    scope.put(name.lexeme, false);
+    scope.put(name, variableState.DECLARED);
   }
 
   private void define(Token name) {
     if (scopes.isEmpty()) return;
-    scopes.peek().put(name.lexeme, true);
+    scopes.peek().put(name, variableState.DEFINED);
   }
 
   private void resolveLocal(Expr expr, Token name) {
     for (int i = scopes.size() - 1; i >= 0; i--) {
-      if (scopes.get(i).containsKey(name.lexeme)) {
+      HashMap<Token, Integer> scope = (HashMap<Token, Integer>) scopes.get(i);
+      if (scope.containsKey(name)) {
+        Integer state = scope.get(name);
+        if (state == variableState.DECLARED)
+          Lox.error(name, "Use of uninitialized variable");
+
+        scope.put(name, state + 1);
         interpreter.resolve(expr, scopes.size() - 1 - i);
         return;
       }

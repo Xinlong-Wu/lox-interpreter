@@ -1,5 +1,7 @@
 package JLox.Token;
 
+import java.util.Objects;
+
 public class Token {
     public final TokenType type;
     public final String lexeme;
@@ -17,5 +19,18 @@ public class Token {
 
     public String toString() {
         return type + " " + lexeme + " " + literal;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Token token = (Token) o;
+        return Objects.equals(lexeme, token.lexeme);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lexeme);
     }
 }
