@@ -8,13 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-import JLox.Expression.Expr;
 import JLox.Expression.Stmt;
 import JLox.Interpreter.Interpreter;
 import JLox.Interpreter.Resolver;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
-import JLox.Utils.AstPrinter;
 import JLox.Parser.Parser;
 import JLox.Error.RuntimeError;
 
@@ -22,6 +20,7 @@ public class Lox {
     private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
+    static boolean suppressError = true;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
@@ -47,13 +46,20 @@ public class Lox {
     private static void runPrompt() throws IOException {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
-
+        suppressError = false;
+        String lines = null;
         for (;;) {
-            System.out.print("> ");
-            String line = reader.readLine();
-            if (line == null)
+            if (lines == null){
+                System.out.print("> ");
+                lines = reader.readLine();
+            }
+            else
+                lines += reader.readLine();
+            if (lines == null)
                 break;
-            run(line);
+            run(lines);
+            if (!hadError)
+                lines = null;
             hadError = false;
         }
     }
@@ -89,11 +95,12 @@ public class Lox {
     }
 
     public static void error(Token token, String message) {
-        if (token.type == TokenType.EOF) {
-            report(token.line, token.column, " at end", message);
-        } else {
-            report(token.line, token.column, " at '" + token.lexeme + "'", message);
-        }
+        if (suppressError)
+            if (token.type == TokenType.EOF) {
+                report(token.line, token.column, " at end", message);
+            } else {
+                report(token.line, token.column, " at '" + token.lexeme + "'", message);
+            }
         hadError = true;
     }
 

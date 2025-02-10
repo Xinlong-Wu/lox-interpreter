@@ -1,8 +1,11 @@
 package JLox.Utils;
 
+import JLox.Error.RuntimeError;
 import JLox.Expression.Expr;
 import JLox.Expression.Stmt;
 import JLox.Expression.Stmt.*;
+import JLox.Expression.Stmt.Class;
+import JLox.Interpreter.LoxInstance;
 import JLox.Expression.Expr.*;
 import JLox.Token.Token;
 import JLox.Token.TokenType;
@@ -60,16 +63,16 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     public static void main(String[] args) {
-    Expr expression = new Expr.Binary(
-        new Expr.Unary(
-            new Token(TokenType.MINUS, "-", null, 1, 0),
-            new Expr.Literal(123)),
-        new Token(TokenType.STAR, "*", null, 1, 0),
-        new Expr.Grouping(
-            new Expr.Literal(45.67)));
+        Expr expression = new Expr.Binary(
+                new Expr.Unary(
+                        new Token(TokenType.MINUS, "-", null, 1, 0),
+                        new Expr.Literal(123)),
+                new Token(TokenType.STAR, "*", null, 1, 0),
+                new Expr.Grouping(
+                        new Expr.Literal(45.67)));
 
-    System.out.println(new AstPrinter().print(expression));
-  }
+        System.out.println(new AstPrinter().print(expression));
+    }
 
     @Override
     public String visitAssignExpr(Assign expr) {
@@ -171,7 +174,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         StringBuilder builder = new StringBuilder();
         builder.append("fun ").append(stmt.name.lexeme).append("(");
         for (int i = 0; i < stmt.params.size(); i++) {
-            if (i > 0) builder.append(", ");
+            if (i > 0)
+                builder.append(", ");
             builder.append(stmt.params.get(i).lexeme);
         }
         builder.append(") ");
@@ -185,11 +189,24 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitClassStmt(Class stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("class ").append(stmt.name.lexeme).append(" {\n");
+        for (Stmt.Function method : stmt.methods) {
+            builder.append(method.accept(this));
+            builder.append("\n");
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
+    @Override
     public String visitLambdaExpr(Lambda expr) {
         StringBuilder builder = new StringBuilder();
         builder.append("fun ").append("(");
         for (int i = 0; i < expr.func.params.size(); i++) {
-            if (i > 0) builder.append(", ");
+            if (i > 0)
+                builder.append(", ");
             builder.append(expr.func.params.get(i).lexeme);
         }
         builder.append(") ");
@@ -207,10 +224,18 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         StringBuilder builder = new StringBuilder();
         builder.append(expr.callee.accept(this)).append("(");
         for (int i = 0; i < expr.arguments.size(); i++) {
-            if (i > 0) builder.append(", ");
+            if (i > 0)
+                builder.append(", ");
             builder.append(expr.arguments.get(i).accept(this));
         }
         builder.append(")");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitGetExpr(Expr.Get expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(expr.object.accept(this)).append(".").append(expr.name.lexeme);
         return builder.toString();
     }
 
@@ -222,6 +247,21 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
             builder.append(" ").append(stmt.value.accept(this));
         }
         builder.append(";");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitSetExpr(Set expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(expr.object.accept(this)).append(".").append(expr.name.lexeme).append(" = ");
+        builder.append(expr.value.accept(this));
+        return builder.toString();
+    }
+
+    @Override
+    public String visitThisExpr(This expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("this");
         return builder.toString();
     }
 }
