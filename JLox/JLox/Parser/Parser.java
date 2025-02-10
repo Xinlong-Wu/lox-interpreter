@@ -50,6 +50,13 @@ public class Parser {
 
     private Stmt classDeclaration() {
         Token name = consume(IDENTIFIER, "Expect class name.");
+
+        Expr.Variable superclass = null;
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.");
+            superclass = new Expr.Variable(previous());
+        }
+
         consume(LEFT_BRACE, "Expect '{' before class body.");
 
         List<Stmt.Function> staticMethods = new ArrayList<>();
@@ -58,7 +65,7 @@ public class Parser {
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
             if (match(STATIC))
                 staticMethods.add(function("static method"));
-            else if(lookAhead(1).type == LEFT_BRACE)
+            else if (lookAhead(1).type == LEFT_BRACE)
                 getters.add(getter("getter"));
             else
                 methods.add(function("method"));
@@ -66,7 +73,7 @@ public class Parser {
 
         consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, staticMethods, methods, getters);
+        return new Stmt.Class(name, superclass, staticMethods, methods, getters);
     }
 
     private Stmt varDeclaration() {
@@ -441,6 +448,14 @@ public class Parser {
         if (match(PLUS)) {
             error(previous(), "Ignore Operator " + previous().lexeme);
             return primary();
+        }
+
+        if (match(SUPER)) {
+            Token keyword = previous();
+            consume(DOT, "Expect '.' after 'super'.");
+            Token method = consume(IDENTIFIER,
+                    "Expect superclass method name.");
+            return new Expr.Super(keyword, method);
         }
 
         if (match(THIS))

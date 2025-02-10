@@ -268,4 +268,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         builder.append("this");
         return builder.toString();
     }
+
+    @Override
+    public String visitSuperExpr(Super expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("super.").append(expr.method.lexeme);
+        return builder.toString();
+    }
 }
