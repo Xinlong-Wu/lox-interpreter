@@ -295,11 +295,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitGetExpr(Expr.Get expr) {
         Object object = evaluate(expr.object);
         if (object instanceof LoxInstance) {
-            return ((LoxInstance) object).get(expr.name);
+            Object value = ((LoxInstance) object).get(expr.name);
+            if (value != null) 
+                return value;
+            LoxFunction getter = ((LoxInstance) object).getter(expr.name);
+            if (getter != null)
+                return getter.call(this, new ArrayList<>());
         }
 
         throw new RuntimeError(expr.name,
-                "Only instances have properties.");
+                "Undefined property '" + expr.name.lexeme + "'.");
     }
 
     @Override
@@ -311,14 +316,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         environment.define(stmt.name.lexeme, null);
+        Map<String, LoxFunction> staticMethods = new HashMap<>();
         Map<String, LoxFunction> methods = new HashMap<>();
+        Map<String, LoxFunction> getters = new HashMap<>();
+
+        for (Stmt.Function method : stmt.staticMethods) {
+            LoxFunction function = new LoxFunction(method, environment,
+                    false);
+            staticMethods.put(method.name.lexeme, function);
+        }
+
         for (Stmt.Function method : stmt.methods) {
             LoxFunction function = new LoxFunction(method, environment,
                     method.name.lexeme.equals("init"));
             methods.put(method.name.lexeme, function);
         }
 
-        LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+        for (Stmt.Function getter : stmt.getter) {
+            LoxFunction function = new LoxFunction(getter, environment,
+                    false);
+            getters.put(getter.name.lexeme, function);
+        }
+
+        LoxClass klass = new LoxClass(stmt.name.lexeme, staticMethods, methods, getters);
         environment.assign(stmt.name, klass);
         return null;
     }

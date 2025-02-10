@@ -8,7 +8,7 @@ import JLox.Token.Token;
 
 public class LoxInstance {
     private LoxClass klass;
-    private final Map<String, Object> fields = new HashMap<>();
+    protected final Map<String, Object> fields = new HashMap<>();
 
     LoxInstance(LoxClass klass) {
         this.klass = klass;
@@ -23,8 +23,15 @@ public class LoxInstance {
         if (method != null)
             return method.bind(this);
 
-        throw new RuntimeError(name,
-                "Undefined property '" + name.lexeme + "'.");
+        return method;
+    }
+
+    LoxFunction getter(Token name) {
+        LoxFunction getter = klass.findGetter(name.lexeme);
+        if (getter != null)
+            return getter.bind(this);
+
+        return null;
     }
 
     void set(Token name, Object value) {

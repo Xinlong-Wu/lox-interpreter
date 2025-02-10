@@ -3,18 +3,29 @@ package JLox.Interpreter;
 import java.util.List;
 import java.util.Map;
 
-public class LoxClass implements LoxCallable {
+public class LoxClass extends LoxInstance implements LoxCallable {
     final String name;
-    private final Map<String, LoxFunction> methods;
+    private final Map<String, LoxFunction> methods, getters;
 
-    LoxClass(String name, Map<String, LoxFunction> methods) {
+    LoxClass(String name, Map<String, LoxFunction> staticMethods, Map<String, LoxFunction> methods, Map<String, LoxFunction> getters) {
+        super(null);
+        this.fields.putAll(staticMethods);
         this.name = name;
         this.methods = methods;
+        this.getters = getters;
     }
 
     LoxFunction findMethod(String name) {
         if (methods.containsKey(name)) {
             return methods.get(name);
+        }
+
+        return null;
+    }
+
+    LoxFunction findGetter(String name) {
+        if (getters.containsKey(name)) {
+            return getters.get(name);
         }
 
         return null;

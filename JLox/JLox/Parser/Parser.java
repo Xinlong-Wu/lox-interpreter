@@ -52,14 +52,21 @@ public class Parser {
         Token name = consume(IDENTIFIER, "Expect class name.");
         consume(LEFT_BRACE, "Expect '{' before class body.");
 
+        List<Stmt.Function> staticMethods = new ArrayList<>();
         List<Stmt.Function> methods = new ArrayList<>();
+        List<Stmt.Function> getters = new ArrayList<>();
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
-            methods.add(function("method"));
+            if (match(STATIC))
+                staticMethods.add(function("static method"));
+            else if(lookAhead(1).type == LEFT_BRACE)
+                getters.add(getter("getter"));
+            else
+                methods.add(function("method"));
         }
 
         consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, methods);
+        return new Stmt.Class(name, staticMethods, methods, getters);
     }
 
     private Stmt varDeclaration() {
@@ -223,6 +230,13 @@ public class Parser {
         consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
         List<Stmt> body = block();
         return new Stmt.Function(name, parameters, body);
+    }
+
+    private Stmt.Function getter(String kind) {
+        Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, new ArrayList<>(), body);
     }
 
     private List<Stmt> block() {
@@ -479,6 +493,10 @@ public class Parser {
 
     private Token previous() {
         return tokens.get(current - 1);
+    }
+
+    private Token lookAhead(int n) {
+        return tokens.get(current + n);
     }
 
     private ParseError error(Token token, String message) {

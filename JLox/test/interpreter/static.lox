@@ -1,0 +1,12 @@
+class Breakfast {
+  static cook() {
+    print "Eggs a-fryin'!";
+  }
+
+  static serve(who) {
+    print "Enjoy your breakfast, " + who + ".";
+  }
+}
+
+Breakfast.cook();
+Breakfast.serve(1);

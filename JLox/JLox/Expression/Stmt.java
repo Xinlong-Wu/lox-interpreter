@@ -31,9 +31,11 @@ public abstract class Stmt {
     public final List<Stmt> statements;
   }
   public static class Class extends Stmt {
-    public Class(Token name, List<Stmt.Function> methods) {
+    public Class(Token name, List<Stmt.Function> staticMethods, List<Stmt.Function> methods, List<Stmt.Function> getter) {
       this.name = name;
+      this.staticMethods = staticMethods;
       this.methods = methods;
+      this.getter = getter;
     }
 
     @Override
@@ -42,7 +44,9 @@ public abstract class Stmt {
     }
 
     public final Token name;
+    public final List<Stmt.Function> staticMethods;
     public final List<Stmt.Function> methods;
+    public final List<Stmt.Function> getter;
   }
   public static class Expression extends Stmt {
     public Expression(Expr expression) {

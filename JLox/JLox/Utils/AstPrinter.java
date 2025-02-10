@@ -192,6 +192,10 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     public String visitClassStmt(Class stmt) {
         StringBuilder builder = new StringBuilder();
         builder.append("class ").append(stmt.name.lexeme).append(" {\n");
+        for (Stmt.Function method : stmt.staticMethods) {
+            builder.append("static ").append(method.accept(this));
+            builder.append("\n");
+        }
         for (Stmt.Function method : stmt.methods) {
             builder.append(method.accept(this));
             builder.append("\n");

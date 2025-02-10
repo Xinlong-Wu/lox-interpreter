@@ -1,5 +1,6 @@
 package JLox.Interpreter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     FUNCTION,
     METHOD,
     INITIALIZER,
+    GETTER
   }
 
   private enum ClassType {
@@ -55,6 +57,14 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     currentClass = ClassType.CLASS;
     declare(stmt.name);
     define(stmt.name);
+
+    for (Stmt.Function method : stmt.staticMethods) {
+      if (method.name.lexeme.equals("init")) {
+        Lox.error(method.name, "Static methods cannot be initializers.");
+      }
+      resolveFunction(method, FunctionType.METHOD);
+    }
+
     beginScope();
     define(new Token(THIS, "this", null, 0, 0));
     for (Stmt.Function method : stmt.methods) {

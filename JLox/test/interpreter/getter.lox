@@ -1,0 +1,13 @@
+class Breakfast {
+  name {
+    return "Eggs a-fryin'";
+  }
+
+  serve(who) {
+    print "Enjoy your breakfast, " + who + ".";
+  }
+}
+
+var todaysBf = Breakfast();
+todaysBf.serve(todaysBf.name);
+
