@@ -3,7 +3,7 @@
   "customizations":{
     "vscode": {
       "extensions": [
-        "dart-code.dart-code",
+        // "dart-code.dart-code",
         "ms-vscode.cpptools-extension-pack",
         "vadimcn.vscode-lldb",
         "GitHub.copilot",
@@ -13,5 +13,5 @@
       ]
     }
   },
-  "postCreateCommand": "bash tools/installDart.sh"
+  // "postCreateCommand": "bash tools/installDart.sh"
 }
