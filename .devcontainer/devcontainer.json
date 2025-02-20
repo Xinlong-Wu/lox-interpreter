@@ -1,8 +1,5 @@
 {
   "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {
-    "ghcr.io/devcontainers-community/templates/dart:1": {}
-  },
   "customizations":{
     "vscode": {
       "extensions": [
@@ -15,5 +12,8 @@
         "ms-vscode.makefile-tools"
       ]
     }
+  },
+  "features": {
+    "ghcr.io/devcontainers-community/templates/dart:1": {}
   }
 }
