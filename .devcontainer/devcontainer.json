@@ -13,7 +13,5 @@
       ]
     }
   },
-  "features": {
-    "ghcr.io/devcontainers-community/features/dart-sdk": {}
-  }
+  "postCreateCommand": "bash tools/installDart.sh"
 }
