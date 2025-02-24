@@ -38,7 +38,7 @@ int addConstant(Chunk *chunk, Value value)
 
 void writeConstant(Chunk* chunk, Value value, LineInfo line)
 {
-  int constant = addConstant(chunk, 1.2);
+  int constant = addConstant(chunk, value);
   if (IsLongConstant(constant)) {
     writeChunk(chunk, OP_CONSTANT_LONG, line);
     writeChunk(chunk, constant >> 16 , line);

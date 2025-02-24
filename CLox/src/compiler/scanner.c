@@ -47,7 +47,7 @@ Token makeToken(TokenType type)
     token.start = scanner.start;
     token.length = (int)(scanner.current - scanner.start);
     token.line = scanner.line;
-    token.column = scanner.column;
+    token.column = scanner.column - token.length;
     return token;
 }
 
@@ -58,10 +58,11 @@ Token errorToken(const char *message)
     token.start = message;
     token.length = (int)strlen(message);
     token.line = scanner.line;
+    token.column = scanner.column - token.length;
     return token;
 }
 
-char advance()
+static char advance()
 {
     scanner.current++;
     scanner.column++;
@@ -201,7 +202,7 @@ Token identifier()
     return makeToken(identifierType());
 }
 
-Token number()
+static Token number()
 {
     while (isDigit(peek()))
         advance();
