@@ -3,14 +3,16 @@
 
 #include "common.h"
 
-typedef struct _LineInfo
+
+
+typedef struct LineInfo
 {
     int line;
     int column;
     int offset;
 } LineInfo;
 
-typedef struct _LineInfoArray
+typedef struct LineInfoArray
 {
     int capacity;
     int count;
@@ -18,7 +20,7 @@ typedef struct _LineInfoArray
 } LineInfoArray;
 
 LineInfo createLineInfo(int line, int column);
-LineInfo getLineInfo(struct _Chunk *chunk, int offset);
+LineInfo getLineInfo(struct Chunk *chunk, int offset);
 bool isSameLineInfo(LineInfo a, LineInfo b);
 
 void initLineInfoArray(LineInfoArray *array);

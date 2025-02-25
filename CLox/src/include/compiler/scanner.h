@@ -27,7 +27,7 @@ typedef enum _TokenType {
     TOKEN_ERROR, TOKEN_EOF
 } TokenType;
 
-typedef struct _Token
+typedef struct Token
 {
     TokenType type;
     const char *start;

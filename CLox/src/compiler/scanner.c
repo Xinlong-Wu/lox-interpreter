@@ -79,7 +79,7 @@ bool match(char expected)
     return true;
 }
 
-char peek()
+static char peek()
 {
     return *scanner.current;
 }
