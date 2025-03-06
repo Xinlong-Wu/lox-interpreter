@@ -4,6 +4,7 @@
 #include "disassembler/lineinfo.h"
 #include "memory.h"
 #include "value.h"
+#include "vm/vm.h"
 
 void initChunk(Chunk *chunk)
 {
@@ -32,9 +33,9 @@ void writeChunk(Chunk *chunk, uint8_t byte, LineInfo line)
 
 int addConstant(Chunk *chunk, Value value)
 {
-
-
+  push(value);
   writeValueArray(&chunk->constants, value);
+  pop();
   return chunk->constants.count - 1;
 }
 
