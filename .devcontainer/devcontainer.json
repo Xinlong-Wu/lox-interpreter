@@ -11,6 +11,14 @@
         "redhat.java",
         "ms-vscode.makefile-tools"
       ]
+    },
+    "apt": {
+      "packages": [
+        "lldb",
+        "llvm-dev",
+        "cmake",
+        "make"
+      ]
     }
   },
   // "postCreateCommand": "bash tools/installDart.sh"
