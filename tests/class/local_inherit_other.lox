@@ -1,0 +1,11 @@
+// RUN: %lox %s | FileCheck %s
+
+class A {}
+
+fun f() {
+  class B < A {}
+  return B;
+}
+
+// CHECK:       B
+print f(); // expect: B

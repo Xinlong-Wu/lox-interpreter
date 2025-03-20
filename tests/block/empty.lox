@@ -1,0 +1,10 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+{} // By itself.
+
+// In a statement.
+if (true) {}
+if (false) {} else {}
+
+// CHECK-LABEL: ok
+print "ok"; // expect: ok

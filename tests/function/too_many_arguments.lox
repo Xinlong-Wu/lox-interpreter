@@ -1,0 +1,39 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+fun foo() {}
+{
+  var a = 1;
+  // CHECK: Error at 'a': Can't have more than 255 arguments.
+  foo(
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a, a, a, a,
+     a, a, a, a, a, a, a);
+}

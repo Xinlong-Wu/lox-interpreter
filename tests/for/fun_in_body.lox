@@ -1,0 +1,3 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+// CHECK: Error at 'fun': Expect expression.
+for (;;) fun foo() {}

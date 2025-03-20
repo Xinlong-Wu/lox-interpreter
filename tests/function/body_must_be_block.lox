@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+// CHECK: Error at '123': Expect '{' before function body.
+// CHECK: Error at end: Expect '}' after block.
+fun f() 123;

@@ -1,0 +1,26 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: A
+class A {
+  say() {
+    print "A";
+  }
+}
+
+class B < A {
+  test() {
+    super.say();
+  }
+
+  say() {
+    print "B";
+  }
+}
+
+class C < B {
+  say() {
+    print "C";
+  }
+}
+
+C().test(); // expect: A

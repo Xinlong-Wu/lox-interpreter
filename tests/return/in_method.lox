@@ -1,0 +1,11 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: ok
+class Foo {
+  method() {
+    return "ok";
+    print "bad";
+  }
+}
+
+print Foo().method(); // expect: ok

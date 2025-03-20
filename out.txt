@@ -1,0 +1,242 @@
+== <script> ==
+0000 [ 91:  7]	OP_CONSTANT     	   0	'2'
+0002 [ 91: 11]	OP_CONSTANT     	   1	'3'
+0004 [ 91: 15]	OP_CONSTANT     	   2	'4'
+0006 [ 91: 16]	OP_MULTIPLY
+0007 [ 91: 16]	OP_ADD
+0008 [ 91: 16]	OP_PRINT
+0009 [ 94:  7]	OP_CONSTANT     	   3	'20'
+0011 [ 94: 12]	OP_CONSTANT     	   4	'3'
+0013 [ 94: 16]	OP_CONSTANT     	   5	'4'
+0015 [ 94: 17]	OP_MULTIPLY
+0016 [ 94: 17]	OP_SUBTRACT
+0017 [ 94: 17]	OP_PRINT
+0018 [ 97:  7]	OP_CONSTANT     	   6	'2'
+0020 [ 97: 11]	OP_CONSTANT     	   7	'6'
+0022 [ 97: 15]	OP_CONSTANT     	   8	'3'
+0024 [ 97: 16]	OP_DIVIDE
+0025 [ 97: 16]	OP_ADD
+0026 [ 97: 16]	OP_PRINT
+0027 [100:  7]	OP_CONSTANT     	   9	'2'
+0029 [100: 11]	OP_CONSTANT     	  10	'6'
+0031 [100: 15]	OP_CONSTANT     	  11	'3'
+0033 [100: 15]	OP_DIVIDE
+0034 [100: 15]	OP_SUBTRACT
+0035 [100: 16]	OP_PRINT
+0036 [103:  7]	OP_FALSE
+0037 [103: 15]	OP_CONSTANT     	  12	'2'
+0039 [103: 19]	OP_CONSTANT     	  13	'1'
+0041 [103: 20]	OP_LESS
+0042 [103: 20]	OP_EQUAL
+0043 [103: 20]	OP_PRINT
+0044 [106:  7]	OP_FALSE
+0045 [106: 15]	OP_CONSTANT     	  14	'1'
+0047 [106: 19]	OP_CONSTANT     	  15	'2'
+0049 [106: 19]	OP_GREATER
+0050 [106: 19]	OP_EQUAL
+0051 [106: 20]	OP_PRINT
+0052 [109:  7]	OP_FALSE
+0053 [109: 15]	OP_CONSTANT     	  16	'2'
+0055 [109: 19]	OP_CONSTANT     	  17	'1'
+0057 [109: 20]	OP_GREATER
+0058 [109: 20]	OP_NOT
+0059 [109: 20]	OP_EQUAL
+0060 [109: 20]	OP_PRINT
+0061 [112:  7]	OP_FALSE
+0062 [112: 15]	OP_CONSTANT     	  18	'1'
+0064 [112: 19]	OP_CONSTANT     	  19	'2'
+0066 [112: 19]	OP_LESS
+0067 [112: 19]	OP_NOT
+0068 [112: 19]	OP_EQUAL
+0069 [112: 20]	OP_PRINT
+0070 [115:  7]	OP_CONSTANT     	  20	'1'
+0072 [115: 11]	OP_CONSTANT     	  21	'1'
+0074 [115: 11]	OP_SUBTRACT
+0075 [115: 12]	OP_PRINT
+0076 [116:  7]	OP_CONSTANT     	  22	'1'
+0078 [116: 10]	OP_CONSTANT     	  23	'1'
+0080 [116: 11]	OP_SUBTRACT
+0081 [116: 11]	OP_PRINT
+0082 [117:  7]	OP_CONSTANT     	  24	'1'
+0084 [117: 10]	OP_CONSTANT     	  25	'1'
+0086 [117: 11]	OP_SUBTRACT
+0087 [117: 11]	OP_PRINT
+0088 [118:  7]	OP_CONSTANT     	  26	'1'
+0090 [118:  9]	OP_CONSTANT     	  27	'1'
+0092 [118:  9]	OP_SUBTRACT
+0093 [118: 10]	OP_PRINT
+0094 [121:  8]	OP_CONSTANT     	  28	'2'
+0096 [121: 13]	OP_CONSTANT     	  29	'6'
+0098 [121: 18]	OP_CONSTANT     	  30	'2'
+0100 [121: 22]	OP_CONSTANT     	  31	'2'
+0102 [121: 22]	OP_ADD
+0103 [121: 23]	OP_SUBTRACT
+0104 [121: 24]	OP_MULTIPLY
+0105 [121: 26]	OP_PRINT
+0106 [122:  1]	OP_NIL
+0107 [122:  1]	OP_RETURN
+          [ <script> ]
+0000 [ 91:  7]	OP_CONSTANT     	   0	'2'
+          [ <script> ][ 2 ]
+0002 [ 91: 11]	OP_CONSTANT     	   1	'3'
+          [ <script> ][ 2 ][ 3 ]
+0004 [ 91: 15]	OP_CONSTANT     	   2	'4'
+          [ <script> ][ 2 ][ 3 ][ 4 ]
+0006 [ 91: 16]	OP_MULTIPLY
+          [ <script> ][ 2 ][ 12 ]
+0007 [ 91: 16]	OP_ADD
+          [ <script> ][ 14 ]
+0008 [ 91: 16]	OP_PRINT
+14
+          [ <script> ]
+0009 [ 94:  7]	OP_CONSTANT     	   3	'20'
+          [ <script> ][ 20 ]
+0011 [ 94: 12]	OP_CONSTANT     	   4	'3'
+          [ <script> ][ 20 ][ 3 ]
+0013 [ 94: 16]	OP_CONSTANT     	   5	'4'
+          [ <script> ][ 20 ][ 3 ][ 4 ]
+0015 [ 94: 17]	OP_MULTIPLY
+          [ <script> ][ 20 ][ 12 ]
+0016 [ 94: 17]	OP_SUBTRACT
+          [ <script> ][ 8 ]
+0017 [ 94: 17]	OP_PRINT
+8
+          [ <script> ]
+0018 [ 97:  7]	OP_CONSTANT     	   6	'2'
+          [ <script> ][ 2 ]
+0020 [ 97: 11]	OP_CONSTANT     	   7	'6'
+          [ <script> ][ 2 ][ 6 ]
+0022 [ 97: 15]	OP_CONSTANT     	   8	'3'
+          [ <script> ][ 2 ][ 6 ][ 3 ]
+0024 [ 97: 16]	OP_DIVIDE
+          [ <script> ][ 2 ][ 2 ]
+0025 [ 97: 16]	OP_ADD
+          [ <script> ][ 4 ]
+0026 [ 97: 16]	OP_PRINT
+4
+          [ <script> ]
+0027 [100:  7]	OP_CONSTANT     	   9	'2'
+          [ <script> ][ 2 ]
+0029 [100: 11]	OP_CONSTANT     	  10	'6'
+          [ <script> ][ 2 ][ 6 ]
+0031 [100: 15]	OP_CONSTANT     	  11	'3'
+          [ <script> ][ 2 ][ 6 ][ 3 ]
+0033 [100: 15]	OP_DIVIDE
+          [ <script> ][ 2 ][ 2 ]
+0034 [100: 15]	OP_SUBTRACT
+          [ <script> ][ 0 ]
+0035 [100: 16]	OP_PRINT
+0
+          [ <script> ]
+0036 [103:  7]	OP_FALSE
+          [ <script> ][ false ]
+0037 [103: 15]	OP_CONSTANT     	  12	'2'
+          [ <script> ][ false ][ 2 ]
+0039 [103: 19]	OP_CONSTANT     	  13	'1'
+          [ <script> ][ false ][ 2 ][ 1 ]
+0041 [103: 20]	OP_LESS
+          [ <script> ][ false ][ false ]
+0042 [103: 20]	OP_EQUAL
+          [ <script> ][ true ]
+0043 [103: 20]	OP_PRINT
+true
+          [ <script> ]
+0044 [106:  7]	OP_FALSE
+          [ <script> ][ false ]
+0045 [106: 15]	OP_CONSTANT     	  14	'1'
+          [ <script> ][ false ][ 1 ]
+0047 [106: 19]	OP_CONSTANT     	  15	'2'
+          [ <script> ][ false ][ 1 ][ 2 ]
+0049 [106: 19]	OP_GREATER
+          [ <script> ][ false ][ false ]
+0050 [106: 19]	OP_EQUAL
+          [ <script> ][ true ]
+0051 [106: 20]	OP_PRINT
+true
+          [ <script> ]
+0052 [109:  7]	OP_FALSE
+          [ <script> ][ false ]
+0053 [109: 15]	OP_CONSTANT     	  16	'2'
+          [ <script> ][ false ][ 2 ]
+0055 [109: 19]	OP_CONSTANT     	  17	'1'
+          [ <script> ][ false ][ 2 ][ 1 ]
+0057 [109: 20]	OP_GREATER
+          [ <script> ][ false ][ true ]
+0058 [109: 20]	OP_NOT
+          [ <script> ][ false ][ false ]
+0059 [109: 20]	OP_EQUAL
+          [ <script> ][ true ]
+0060 [109: 20]	OP_PRINT
+true
+          [ <script> ]
+0061 [112:  7]	OP_FALSE
+          [ <script> ][ false ]
+0062 [112: 15]	OP_CONSTANT     	  18	'1'
+          [ <script> ][ false ][ 1 ]
+0064 [112: 19]	OP_CONSTANT     	  19	'2'
+          [ <script> ][ false ][ 1 ][ 2 ]
+0066 [112: 19]	OP_LESS
+          [ <script> ][ false ][ true ]
+0067 [112: 19]	OP_NOT
+          [ <script> ][ false ][ false ]
+0068 [112: 19]	OP_EQUAL
+          [ <script> ][ true ]
+0069 [112: 20]	OP_PRINT
+true
+          [ <script> ]
+0070 [115:  7]	OP_CONSTANT     	  20	'1'
+          [ <script> ][ 1 ]
+0072 [115: 11]	OP_CONSTANT     	  21	'1'
+          [ <script> ][ 1 ][ 1 ]
+0074 [115: 11]	OP_SUBTRACT
+          [ <script> ][ 0 ]
+0075 [115: 12]	OP_PRINT
+0
+          [ <script> ]
+0076 [116:  7]	OP_CONSTANT     	  22	'1'
+          [ <script> ][ 1 ]
+0078 [116: 10]	OP_CONSTANT     	  23	'1'
+          [ <script> ][ 1 ][ 1 ]
+0080 [116: 11]	OP_SUBTRACT
+          [ <script> ][ 0 ]
+0081 [116: 11]	OP_PRINT
+0
+          [ <script> ]
+0082 [117:  7]	OP_CONSTANT     	  24	'1'
+          [ <script> ][ 1 ]
+0084 [117: 10]	OP_CONSTANT     	  25	'1'
+          [ <script> ][ 1 ][ 1 ]
+0086 [117: 11]	OP_SUBTRACT
+          [ <script> ][ 0 ]
+0087 [117: 11]	OP_PRINT
+0
+          [ <script> ]
+0088 [118:  7]	OP_CONSTANT     	  26	'1'
+          [ <script> ][ 1 ]
+0090 [118:  9]	OP_CONSTANT     	  27	'1'
+          [ <script> ][ 1 ][ 1 ]
+0092 [118:  9]	OP_SUBTRACT
+          [ <script> ][ 0 ]
+0093 [118: 10]	OP_PRINT
+0
+          [ <script> ]
+0094 [121:  8]	OP_CONSTANT     	  28	'2'
+          [ <script> ][ 2 ]
+0096 [121: 13]	OP_CONSTANT     	  29	'6'
+          [ <script> ][ 2 ][ 6 ]
+0098 [121: 18]	OP_CONSTANT     	  30	'2'
+          [ <script> ][ 2 ][ 6 ][ 2 ]
+0100 [121: 22]	OP_CONSTANT     	  31	'2'
+          [ <script> ][ 2 ][ 6 ][ 2 ][ 2 ]
+0102 [121: 22]	OP_ADD
+          [ <script> ][ 2 ][ 6 ][ 4 ]
+0103 [121: 23]	OP_SUBTRACT
+          [ <script> ][ 2 ][ 2 ]
+0104 [121: 24]	OP_MULTIPLY
+          [ <script> ][ 4 ]
+0105 [121: 26]	OP_PRINT
+4
+          [ <script> ]
+0106 [122:  1]	OP_NIL
+          [ <script> ][ nil ]
+0107 [122:  1]	OP_RETURN

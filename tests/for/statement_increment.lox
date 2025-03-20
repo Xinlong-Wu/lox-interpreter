@@ -1,0 +1,3 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+// CHECK: Error at '{': Expect expression.
+for (var a = 1; a < 2; {}) {}

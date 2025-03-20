@@ -1,0 +1,13 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+class Foo {
+  bar(arg) {
+    print arg;
+  }
+}
+
+var bar = Foo().bar;
+// CHECK:     got method
+// CHECK-NEXT: arg
+print "got method"; // expect: got method
+bar("arg");          // expect: arg

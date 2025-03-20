@@ -1,0 +1,7 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {}
+
+var foo = Foo();
+// CHECK:       Foo instance
+print foo; // expect: Foo instance

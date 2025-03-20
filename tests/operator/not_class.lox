@@ -1,0 +1,9 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+class Bar {}
+
+// CHECK: false
+print !Bar;      // expect: false
+
+// CHECK: false
+print !Bar();    // expect: false

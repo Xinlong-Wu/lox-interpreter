@@ -1,0 +1,10 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Expect superclass method name.
+class A {}
+
+class B < A {
+  method() {
+    super.; // Error at ';': Expect superclass method name.
+  }
+}

@@ -1,0 +1,10 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: ()
+print "(" + "" + ")";   // expect: ()
+
+// CHECK: a string
+print "a string"; // expect: a string
+
+// CHECK: A~¶Þॐஃ
+print "A~¶Þॐஃ"; // expect: A~¶Þॐஃ

@@ -1,0 +1,54 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// Single-expression body.
+// CHECK: 1
+// CHECK-NEXT: 2
+// CHECK-NEXT: 3
+for (var c = 0; c < 3;) print c = c + 1;
+
+// Block body.
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1
+// CHECK-NEXT: 2
+for (var a = 0; a < 3; a = a + 1) {
+  print a;
+}
+
+// No clauses.
+fun foo() {
+  for (;;) return "done";
+}
+
+// CHECK-NEXT: done
+print foo();
+
+// No variable.
+var i = 0;
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1
+for (; i < 2; i = i + 1) print i;
+
+// No condition.
+fun bar() {
+  for (var i = 0;; i = i + 1) {
+    print i;
+    if (i >= 2) return;
+  }
+}
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1
+// CHECK-NEXT: 2
+bar();
+
+// No increment.
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1
+for (var i = 0; i < 2;) {
+  print i;
+  i = i + 1;
+}
+
+// Statement bodies.
+for (; false;) if (true) 1; else 2;
+for (; false;) while (true) 1;
+for (; false;) for (;;) 1;

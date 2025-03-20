@@ -1,0 +1,25 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Outer instance
+// CHECK: Outer instance
+// CHECK: Inner instance
+class Outer {
+  method() {
+    print this; // expect: Outer instance
+
+    fun f() {
+      print this; // expect: Outer instance
+
+      class Inner {
+        method() {
+          print this; // expect: Inner instance
+        }
+      }
+
+      Inner().method();
+    }
+    f();
+  }
+}
+
+Outer().method();

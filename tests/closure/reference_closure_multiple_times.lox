@@ -1,0 +1,16 @@
+// RUN: %lox %s | FileCheck %s
+
+var f;
+
+{
+  var a = "a";
+  fun f_() {
+    print a;
+    print a;
+  }
+  f = f_;
+}
+
+// CHECK:       a
+// CHECK:       a
+f();

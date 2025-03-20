@@ -1,0 +1,8 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+class Foo {
+  init(a, b) {}
+}
+
+// CHECK:       Expected 2 arguments but got 1.
+var foo = Foo(1); // expect runtime error: Expected 2 arguments but got 1.

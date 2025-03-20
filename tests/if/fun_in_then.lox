@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Error at 'fun': Expect expression.
+if (true) fun foo() {} // [line 2] Error at 'fun': Expect expression.

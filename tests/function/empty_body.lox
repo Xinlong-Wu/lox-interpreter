@@ -1,0 +1,4 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+fun f() {}
+// CHECK: nil
+print f();

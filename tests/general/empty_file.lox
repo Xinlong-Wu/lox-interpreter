@@ -1,0 +1,5 @@
+// RUN: %lox %s --debug | FileCheck %s
+
+// CHECK-LABEL:     == <script> ==
+// CHECK-NEXT:      0000 [  6:  1]  OP_NIL
+// CHECK-NEXT:      0001 [  6:  1]  OP_RETURN

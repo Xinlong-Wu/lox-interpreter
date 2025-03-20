@@ -1,0 +1,11 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+fun f() {
+  for (;;) {
+    var i = "i";
+    return i;
+  }
+}
+
+// CHECK: i
+print f();

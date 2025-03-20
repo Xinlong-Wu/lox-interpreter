@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Error at 'class': Expect expression.
+while (true) class Foo {}

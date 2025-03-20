@@ -1,0 +1,18 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Derived.init()
+// CHECK: Base.init(a, b)
+class Base {
+  init(a, b) {
+    print "Base.init(" + a + ", " + b + ")";
+  }
+}
+
+class Derived < Base {
+  init() {
+    print "Derived.init()";
+    super.init("a", "b");
+  }
+}
+
+Derived(); // expect: Derived.init() and Base.init(a, b)

@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Error at 'this': Expect variable name.
+var this = "value";

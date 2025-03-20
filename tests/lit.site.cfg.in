@@ -1,0 +1,29 @@
+@LIT_SITE_CFG_IN_HEADER@
+
+import sys
+
+config.lox_build_path = r"@CMAKE_BINARY_DIR@"
+config.lox_src_path = r"@CMAKE_SOURCE_DIR@"
+config.lox_test_path = r"@CMAKE_CURRENT_SOURCE_DIR@"
+config.test_exec_root = r"@CMAKE_CURRENT_BINARY_DIR@"
+config.lox_bin_name = r"@CMAKE_LOX_TARGET@"
+config.llvm_tools_dir = r"@LLVM_TOOLS_BINARY_DIR@"
+
+# Support substitution of the tools_dir with user parameters. This is
+# used when we can't determine the tool dir at configuration time.
+try:
+    config.llvm_tools_dir = config.llvm_tools_dir % lit_config.params
+    config.lox_build_path = config.lox_build_path % lit_config.params
+    config.lox_bin_name = config.lox_bin_name % lit_config.params
+    print("llvm_tools_dir:"+config.llvm_tools_dir)
+except KeyError:
+    e = sys.exc_info()[1]
+    key, = e.args
+    lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
+
+import lit.llvm
+lit.llvm.initialize(lit_config, config)
+
+# Let the main config do the real work.
+lit_config.load_config(
+    config, os.path.join(config.lox_test_path, "lit.cfg.py"))

@@ -1,0 +1,6 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+var Nil = nil;
+
+// CHECK: Superclass must be a class.
+class Foo < Nil {} // expect runtime error: Superclass must be a class.

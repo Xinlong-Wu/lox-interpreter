@@ -1,0 +1,13 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: first
+// CHECK: second
+{
+  var a = "first";
+  print a; // expect: first
+}
+
+{
+  var a = "second";
+  print a; // expect: second
+}

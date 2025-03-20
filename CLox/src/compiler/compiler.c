@@ -183,7 +183,7 @@ static ObjFunction* endCompiler() {
   ObjFunction* function = current->function;
 
 #ifdef DEBUG_PRINT_CODE
-  if (!parser.hadError) {
+  if (debug && !parser.hadError) {
     disassembleChunk(currentChunk(), function->name != NULL
         ? function->name->chars : "<script>");
   }
@@ -618,6 +618,9 @@ static uint8_t argumentList() {
   if (!check(TOKEN_RIGHT_PAREN)) {
     do {
       expression();
+      if (argCount == 255) {
+        error("Can't have more than 255 arguments.");
+      }
       argCount++;
     } while (match(TOKEN_COMMA));
   }
@@ -784,7 +787,6 @@ static void forStatement() {
   } else {
     expressionStatement();
   }
-  consume(TOKEN_SEMICOLON, "Expect ';'.");
 
   int loopStart = currentChunk()->count;
   int exitJump = -1;

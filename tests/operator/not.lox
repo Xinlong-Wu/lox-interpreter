@@ -1,0 +1,26 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: false
+print !true;     // expect: false
+
+// CHECK: true
+print !false;    // expect: true
+
+// CHECK: true
+print !!true;    // expect: true
+
+// CHECK: false
+print !123;      // expect: false
+
+// CHECK: false
+print !0;        // expect: false
+
+// CHECK: true
+print !nil;     // expect: true
+
+// CHECK: false
+print !"";       // expect: false
+
+// CHECK: false
+fun foo() {}
+print !foo;      // expect: false

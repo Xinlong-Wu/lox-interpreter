@@ -15,11 +15,11 @@
     "apt": {
       "packages": [
         "lldb",
-        "llvm-dev",
+        "llvm-18-dev",
         "cmake",
-        "make"
+        "ninja-build"
       ]
     }
-  },
+  }
   // "postCreateCommand": "bash tools/installDart.sh"
 }

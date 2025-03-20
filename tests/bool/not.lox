@@ -1,0 +1,9 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL:     false
+// CHECK-NEXT:      true
+// CHECK-NEXT:      true
+
+print !true;    // expect: false
+print !false;   // expect: true
+print !!true;   // expect: true

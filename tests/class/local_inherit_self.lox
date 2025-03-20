@@ -1,0 +1,8 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK:       Error at 'Foo': A class can't inherit from itself.
+// CHECK:       Error at end: Expect '}' after block.
+{
+  class Foo < Foo {} // Error at 'Foo': A class can't inherit from itself.
+}
+// [c line 5] Error at end: Expect '}' after block.

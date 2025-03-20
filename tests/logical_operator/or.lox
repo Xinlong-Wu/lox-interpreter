@@ -1,0 +1,26 @@
+// RUN: %lox %s | FileCheck %s
+
+// CHECK: 1
+// CHECK: 1
+// CHECK: true
+// Return the first true argument.
+print 1 or true; // expect: 1
+print false or 1; // expect: 1
+print false or false or true; // expect: true
+
+// CHECK: false
+// CHECK: false
+// Return the last argument if all are false.
+print false or false; // expect: false
+print false or false or false; // expect: false
+
+// CHECK: false
+// CHECK: true
+// Short-circuit at the first true argument.
+var a = "before";
+var b = "before";
+(a = false) or
+    (b = true) or
+    (a = "bad");
+print a; // expect: false
+print b; // expect: true

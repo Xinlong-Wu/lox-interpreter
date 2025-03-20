@@ -1,0 +1,3 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+// CHECK: Error at 'var': Expect expression.
+for (;;) var foo;

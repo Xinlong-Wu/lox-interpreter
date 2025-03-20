@@ -1,0 +1,10 @@
+// RUN: %lox %s | FileCheck %s
+
+{
+  var local = "local";
+  fun f() {
+    print local; // expect: local
+  }
+// CHECK:       local
+  f();
+}

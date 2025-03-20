@@ -1,0 +1,5 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL:     Error at '=': Invalid assignment target.
+var a = "a";
+(a) = "value"; // Error at '=': Invalid assignment target.

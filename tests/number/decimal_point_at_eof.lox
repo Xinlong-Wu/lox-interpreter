@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+123. // expect runtime error: Expect property name after '.'.
+// CHECK: Expect property name after '.'.

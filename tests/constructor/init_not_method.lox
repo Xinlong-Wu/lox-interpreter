@@ -1,0 +1,15 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {
+  init(arg) {
+    print "Foo.init(" + arg + ")";
+    this.field = "init";
+  }
+}
+
+fun init() {
+  print "not initializer";
+}
+
+// CHECK:       not initializer
+init(); // expect: not initializer

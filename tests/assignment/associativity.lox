@@ -1,0 +1,17 @@
+// RUN: %lox %s | FileCheck %s
+
+// CHECK-LABEL:     result
+// CHECK-NEXT:      c
+// CHECK-NEXT:      c
+// CHECK-NEXT:      c
+
+var a = "a";
+var b = "b";
+var c = "c";
+
+// Assignment is right-associative.
+a = b = c;
+print "result";
+print a; // expect: c
+print b; // expect: c
+print c; // expect: c

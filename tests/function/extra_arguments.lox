@@ -1,0 +1,8 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+fun f(a, b) {
+  print a;
+  print b;
+}
+
+// CHECK: Expected 2 arguments but got 4.
+f(1, 2, 3, 4);

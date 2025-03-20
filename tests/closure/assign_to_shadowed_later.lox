@@ -1,0 +1,18 @@
+// RUN: %lox %s | FileCheck %s
+
+var a = "global";
+
+{
+  fun assign() {
+    a = "assigned";
+  }
+
+  var a = "inner";
+  assign();
+
+// CHECK:       inner
+  print a; // expect: inner
+}
+
+// CHECK:       assigned
+print a;

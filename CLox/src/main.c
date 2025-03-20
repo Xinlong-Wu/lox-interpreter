@@ -69,6 +69,7 @@ static void runFile(const char *path)
         exit(70);
 }
 
+bool debug = false;
 int main(int argc, const char *argv[])
 {
     initVM();
@@ -77,8 +78,12 @@ int main(int argc, const char *argv[])
     {
         repl();
     }
-    else if (argc == 2)
+    else if (argc >= 2 && argc <= 3)
     {
+        if (argc == 3 && strcmp(argv[2], "--debug") == 0)
+        {
+            debug = true;
+        }
         runFile(argv[1]);
     }
     else

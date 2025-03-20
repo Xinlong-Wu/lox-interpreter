@@ -1,0 +1,5 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Undefined variable 'undefined1'.
+undefined1.bar // expect runtime error: Undefined variable 'undefined1'.
+  = undefined2;

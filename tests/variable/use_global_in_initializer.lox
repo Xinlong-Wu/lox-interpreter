@@ -1,0 +1,6 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: value
+var a = "value";
+var a = a;
+print a; // expect: value

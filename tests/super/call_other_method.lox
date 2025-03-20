@@ -1,0 +1,18 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Derived.bar()
+// CHECK: Base.foo()
+class Base {
+  foo() {
+    print "Base.foo()";
+  }
+}
+
+class Derived < Base {
+  bar() {
+    print "Derived.bar()";
+    super.foo();
+  }
+}
+
+Derived().bar(); // expect: Derived.bar() and Base.foo()

@@ -1,0 +1,29 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: A
+class A {
+  say() {
+    print "A";
+  }
+}
+
+class B < A {
+  getClosure() {
+    fun closure() {
+      super.say();
+    }
+    return closure;
+  }
+
+  say() {
+    print "B";
+  }
+}
+
+class C < B {
+  say() {
+    print "C";
+  }
+}
+
+C().getClosure()(); // expect: A

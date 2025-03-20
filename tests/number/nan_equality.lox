@@ -1,0 +1,14 @@
+// RUN: %lox %s | FileCheck %s
+
+var nan = 0/0;
+
+print nan == 0; // expect: false
+// CHECK: false
+print nan != 1; // expect: true
+// CHECK: true
+
+// NaN is not equal to self.
+print nan == nan; // expect: false
+// CHECK: false
+print nan != nan; // expect: true
+// CHECK: true

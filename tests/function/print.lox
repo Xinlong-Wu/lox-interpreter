@@ -1,0 +1,7 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+fun foo() {}
+// CHECK: <fn foo>
+print foo;
+
+// CHECK-NEXT: <native fn>
+print clock;

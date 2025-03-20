@@ -1,0 +1,5 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL:     Can only call functions and classes.
+
+"str"(); // expect runtime error: Can only call functions and classes.

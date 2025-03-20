@@ -1,0 +1,6 @@
+// RUN: %lox %s | FileCheck %s
+
+print 123 + 456; // expect: 579
+// CHECK: 579
+print "str" + "ing"; // expect: string
+// CHECK: string

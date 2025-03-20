@@ -1,0 +1,9 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: 1
+// CHECK: 2
+// CHECK: 3
+var a = "1
+2
+3";
+print a;

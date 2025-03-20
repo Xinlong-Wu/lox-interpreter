@@ -1,0 +1,7 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Already a variable with this name in this scope.
+{
+  var a = "value";
+  var a = "other"; // Error at 'a': Already a variable with this name in this scope.
+}

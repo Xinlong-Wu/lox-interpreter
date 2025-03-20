@@ -319,16 +319,18 @@ static InterpretResult run()
     for (;;)
     {
 #ifdef DEBUG_TRACE_EXECUTION
-        printf("          ");
-        for (Value *slot = vm.stack; slot < vm.stackTop; slot++)
-        {
-            printf("[ ");
-            printValue(*slot);
-            printf(" ]");
+        if (debug){
+            printf("          ");
+            for (Value *slot = vm.stack; slot < vm.stackTop; slot++)
+            {
+                printf("[ ");
+                printValue(*slot);
+                printf(" ]");
+            }
+            printf("\n");
+            disassembleInstruction(&frame->closure->function->chunk,
+                                (int)(frame->ip - frame->closure->function->chunk.code));
         }
-        printf("\n");
-        disassembleInstruction(&frame->closure->function->chunk,
-                               (int)(frame->ip - frame->closure->function->chunk.code));
 #endif
         uint8_t instruction;
         switch (instruction = READ_BYTE())
@@ -582,7 +584,7 @@ static InterpretResult run()
             break;
         }
         case OP_SUPER_INVOKE: {
-            ObjString* method = READ_STRING();
+            ObjString* method = READ_STRING(READ_BYTE());
             int argCount = READ_BYTE();
             ObjClass* superclass = AS_CLASS(pop());
             if (!invokeFromClass(superclass, method, argCount)) {
