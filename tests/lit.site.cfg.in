@@ -6,7 +6,7 @@ config.lox_build_path = r"@CMAKE_BINARY_DIR@"
 config.lox_src_path = r"@CMAKE_SOURCE_DIR@"
 config.lox_test_path = r"@CMAKE_CURRENT_SOURCE_DIR@"
 config.test_exec_root = r"@CMAKE_CURRENT_BINARY_DIR@"
-config.lox_bin_name = r"@CMAKE_LOX_TARGET@"
+config.lox_bin_name = r"@LOX_TARGET@"
 config.llvm_tools_dir = r"@LLVM_TOOLS_BINARY_DIR@"
 
 # Support substitution of the tools_dir with user parameters. This is
