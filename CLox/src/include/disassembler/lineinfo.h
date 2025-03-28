@@ -3,7 +3,9 @@
 
 #include "common.h"
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct LineInfo
 {
@@ -27,4 +29,7 @@ void initLineInfoArray(LineInfoArray *array);
 void tryAppendUniqueLineInfo(LineInfoArray *array, LineInfo lineinfo);
 void freeLineInfoArray(LineInfoArray *array);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

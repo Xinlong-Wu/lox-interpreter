@@ -6,6 +6,10 @@
 #include "chunk.h"
 #include "table.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
@@ -123,5 +127,9 @@ static inline bool isObjType(Value value, ObjType type)
 {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

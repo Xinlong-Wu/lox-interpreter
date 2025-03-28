@@ -9,6 +9,10 @@
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   ObjClosure* closure;
   uint8_t* ip;
@@ -47,4 +51,7 @@ InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
 
+#ifdef __cplusplus
+}
+#endif
 #endif

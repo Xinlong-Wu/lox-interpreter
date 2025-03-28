@@ -5,6 +5,10 @@
 #include "value.h"
 #include "disassembler/lineinfo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
     OP_CONSTANT,
@@ -65,4 +69,7 @@ void writeConstant(Chunk *chunk, Value value, LineInfo line);
 void freeChunk(Chunk *chunk);
 int addConstant(Chunk *chunk, Value value);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

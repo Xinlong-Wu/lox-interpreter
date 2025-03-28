@@ -4,6 +4,9 @@
 #include <string.h>
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 
@@ -101,4 +104,7 @@ void writeValueArray(ValueArray *array, Value value);
 void freeValueArray(ValueArray *array);
 void printValue(Value value);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

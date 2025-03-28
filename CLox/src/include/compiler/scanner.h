@@ -1,6 +1,10 @@
 #ifndef clox_scanner_h
 #define clox_scanner_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum _TokenType {
     // Single-character tokens.
     TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
@@ -39,4 +43,7 @@ typedef struct Token
 void initScanner(const char *source);
 Token scanToken();
 
+#ifdef __cplusplus
+}
+#endif
 #endif

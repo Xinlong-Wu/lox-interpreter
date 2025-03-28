@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NAN_BOXING
 
 extern bool debug;
@@ -16,4 +20,7 @@ extern bool debug;
 
 struct Chunk;
 
+#ifdef __cplusplus
+}
+#endif
 #endif
