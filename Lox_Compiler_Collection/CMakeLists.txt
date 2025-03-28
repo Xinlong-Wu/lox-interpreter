@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
-project(Clox C CXX)
+project(LCC C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_LOX_TARGET "clox")
+set(CMAKE_LOX_TARGET "lcc")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 
@@ -18,15 +18,13 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/include)
 
-message(STATUS "CLOX SOURCES: ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
-
-file(GLOB_RECURSE CLOX_SOURCES
+file(GLOB_RECURSE LCC_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-add_executable(clox
-    ${CLOX_SOURCES}
+add_executable(LCC
+    ${LCC_SOURCES}
 )
 
 add_subdirectory(
