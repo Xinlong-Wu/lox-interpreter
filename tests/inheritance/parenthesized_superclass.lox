@@ -2,5 +2,5 @@
 
 class Foo {}
 
-// CHECK: Error at '(': Expect superclass name.
+// CHECK: Error: Expect superclass name. at `(`
 class Bar < (Foo) {} // [line 4] Error at '(': Expect superclass name.

@@ -1,4 +1,4 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
-// CHECK: Error at '123': Expect '{' before function body.
-// CHECK: Error at end: Expect '}' after block.
+// CHECK: Expect token { after `)`, but got: `123`
+// CHECK: Expect token } after `;`, but got: [EOF]
 fun f() 123;

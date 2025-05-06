@@ -1,6 +1,6 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
 
-// CHECK:     Error at 'oops': Too many local variables in function.
+// CHECK:     Too many local variables in function. at `oops`, before: `;`
 fun f() {
   // var v00; First slot already taken.
 

@@ -6,6 +6,8 @@ add_executable(lox-interpreter
 target_link_libraries(lox-interpreter
     LoxVM
     LoxCompiler
+    LoxParser
+    LoxToken
     LoxScanner
     LoxDebug
     LoxUtils

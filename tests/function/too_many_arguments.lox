@@ -2,7 +2,7 @@
 fun foo() {}
 {
   var a = 1;
-  // CHECK: Error at 'a': Can't have more than 255 arguments.
+  // CHECK:   Error: Can't have more than 255 arguments. at `a`, before: `,`
   foo(
      a, a, a, a, a, a, a, a, a, a,
      a, a, a, a, a, a, a, a, a, a,

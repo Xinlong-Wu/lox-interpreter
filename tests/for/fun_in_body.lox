@@ -1,3 +1,4 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
-// CHECK: Error at 'fun': Expect expression.
+// CHECK: Error: Expect expression. at `fun`, before: `foo`
+// CHECK: Expect token ; after `)`, but got: `{`
 for (;;) fun foo() {}

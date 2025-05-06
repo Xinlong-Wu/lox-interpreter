@@ -1,8 +1,16 @@
 
 add_library(LoxCompiler STATIC
-    compiler.c
+    Compiler.cpp
+)
+
+add_library(LoxParser STATIC
+    Parser.cpp
+)
+
+add_library(LoxToken STATIC
+    Token.cpp
 )
 
 add_library(LoxScanner STATIC
-    scanner.c
+    Scanner.cpp
 )

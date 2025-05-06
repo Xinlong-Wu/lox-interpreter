@@ -1,4 +1,3 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
-// CHECK: Error at '{': Expect expression.
-// CHECK: Error at ')': Expect ';' after expression.
+// CHECK:   Error: Expect expression. at `{`, before: `}`
 for ({}; a < 2; a = a + 1) {}

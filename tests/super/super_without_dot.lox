@@ -1,6 +1,6 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
 
-// CHECK: Expect '.' after 'super'.
+// CHECK: Expect token . after `super`, but got: `;`
 class A {}
 
 class B < A {

@@ -1,4 +1,4 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
 
-// CHECK: Error at 'class': Expect expression.
-if (true) "ok"; else class Foo {} // [line 2] Error at 'class': Expect expression.
+// CHECK:   Expect expression. at `class`
+if (true) "ok"; else class Foo {}

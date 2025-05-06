@@ -1,7 +1,5 @@
 // RUN: not %lox %s 2>&1 | FileCheck %s
 
-// CHECK: [line 7:-13] Error: Unexpected character.
+// CHECK: Expect token ) after `a`, but got: `|`
 
-// [line 3] Error: Unexpected character.
-// [java line 3] Error at 'b': Expect ')' after arguments.
 foo(a | b);
