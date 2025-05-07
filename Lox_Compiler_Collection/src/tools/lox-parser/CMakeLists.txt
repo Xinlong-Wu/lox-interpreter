@@ -1,8 +1,13 @@
-
-file (GLOB_RECURSE LoxParser
+add_executable(lox-parser
     lox-parser.cpp
 )
 
-add_executable(lox-parser
-    ${LoxParser}
+target_link_libraries(lox-parser
+#    LoxVM
+#    LoxCompiler
+    LoxParser
+    LoxToken
+    LoxScanner
+    LoxDebug
+#    LoxUtils
 )

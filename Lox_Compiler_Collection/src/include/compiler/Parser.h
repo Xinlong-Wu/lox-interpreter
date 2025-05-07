@@ -4,8 +4,8 @@
 
 #include "compiler/Token.h"
 #include "compiler/Scanner.h"
-
-#include <optional>
+#include "compiler/ast/Stmt.h"
+#include "compiler/ast/Expr.h"
 
 namespace lox
 {
@@ -17,10 +17,13 @@ namespace lox
             Token previousToken;
             bool error = false;
             bool panicMode = false;
+
         public:
             Parser(const char *source) : scanner(source) {};
             Parser(Scanner scanner) : scanner(scanner) {};
             ~Parser() {};
+
+            std::unique_ptr<ExprBase> parseExpression();
 
             Token &getCurrentToken() { return currentToken; };
             Token &getPreviousToken() { return previousToken; };
@@ -37,6 +40,7 @@ namespace lox
             void parseError(TokenType tokenType, bool shouldPanic = true);
             void parseError(const Token &token, bool shouldPanic = true);
             void parseError(std::string_view message, bool shouldPanic = true);
+            void parseError(const std::unique_ptr<ExprBase> &expr, std::string_view message, bool shouldPanic = true);
     };
 } // namespace lox
 

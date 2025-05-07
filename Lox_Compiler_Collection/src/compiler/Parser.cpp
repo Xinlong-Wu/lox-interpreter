@@ -1,6 +1,7 @@
 #include "compiler/Parser.h"
 #include "compiler/Token.h"
 #include <sstream>
+#include <unordered_map>
 
 namespace lox
 {
@@ -123,4 +124,18 @@ namespace lox
         std::cerr << os.str() << std::endl;
     }
 
+    void Parser::parseError(const std::unique_ptr<ExprBase> &expr, std::string_view message, bool shouldPanic) {
+        if (panicMode) return;
+        if (shouldPanic) panicMode = true;
+        std::ostringstream os;
+        os << expr->getLoc()
+            << " Error: "
+            << message
+            << " at ";
+        expr->print(os);
+        os  << ", before: "
+        << previousToken;
+        error = true;
+        std::cerr << os.str() << std::endl;
+    }
 } // namespace lox
