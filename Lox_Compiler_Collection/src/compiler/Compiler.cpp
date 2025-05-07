@@ -397,7 +397,7 @@ std::unordered_map<lox::TokenType, ParseRule> rules = {
   {lox::TokenType::TOKEN_IF,            {NULL,     NULL,   PREC_NONE}},
   {lox::TokenType::TOKEN_NIL,           {literal,  NULL,   PREC_NONE}},
   {lox::TokenType::TOKEN_OR,            {NULL,     or_,    PREC_OR}},
-  {lox::TokenType::TOKEN_PRINT,         {NULL,     NULL,   PREC_NONE}},
+  {lox::TokenType::TOKEN_PRINT,         {call,     NULL,   PREC_NONE}},
   {lox::TokenType::TOKEN_RETURN,        {NULL,     NULL,   PREC_NONE}},
   {lox::TokenType::TOKEN_SUPER,         {super_,   NULL,   PREC_NONE}},
   {lox::TokenType::TOKEN_THIS,          {this_,    NULL,   PREC_NONE}},

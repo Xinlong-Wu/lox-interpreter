@@ -6,6 +6,7 @@ add_library(LoxCompiler STATIC
 add_library(LoxParser STATIC
     Parser.cpp
     PrecedenceParser.cpp
+    StatementBuilder.cpp
 )
 
 add_library(LoxToken STATIC

@@ -44,7 +44,7 @@ static void runFile(const char *path)
 
     // parser.parseNumber();
 
-    parser.parseExpression()->dump();
+    parser.parseDeclaration()->dump();
 
     free(source);
 
@@ -71,7 +71,7 @@ static void repl()
 
         parser.advance();
 
-        parser.parseExpression()->dump();
+        parser.parseDeclaration()->dump();
         std::cout << std::endl;
     }
 }

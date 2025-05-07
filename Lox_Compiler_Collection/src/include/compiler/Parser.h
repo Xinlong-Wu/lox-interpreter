@@ -18,12 +18,24 @@ namespace lox
             bool error = false;
             bool panicMode = false;
 
+            std::unique_ptr<ExprBase> parseExpression();
+            std::unique_ptr<StmtBase> parseStatement();
+            std::unique_ptr<ExpressionStmt> parseExpressionStmt();
+            std::unique_ptr<BlockStmt> parseBlockStmt();
+            std::unique_ptr<IfStmt> parseIfStmt();
+            std::unique_ptr<ReturnStmt> parseReturnStmt();
+            std::unique_ptr<ForStmt> parseForStmt();
+            std::unique_ptr<WhileStmt> parseWhileStmt();
+
+            std::unique_ptr<VarDeclStmt> parseVarDecl();
+            std::unique_ptr<FunctionDecl> parseFunctionDecl();
+            std::unique_ptr<ClassDeclStmt> parseClassDecl();
         public:
             Parser(const char *source) : scanner(source) {};
             Parser(Scanner scanner) : scanner(scanner) {};
             ~Parser() {};
 
-            std::unique_ptr<ExprBase> parseExpression();
+            std::unique_ptr<StmtBase> parseDeclaration();
 
             Token &getCurrentToken() { return currentToken; };
             Token &getPreviousToken() { return previousToken; };

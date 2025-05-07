@@ -41,7 +41,7 @@ namespace lox
             case TokenType::TOKEN_FOR:
             case TokenType::TOKEN_IF:
             case TokenType::TOKEN_WHILE:
-            case TokenType::TOKEN_PRINT:
+            // case TokenType::TOKEN_PRINT:
             case TokenType::TOKEN_RETURN:
                 return;
 

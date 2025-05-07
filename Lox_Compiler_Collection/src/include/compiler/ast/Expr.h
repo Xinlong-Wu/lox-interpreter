@@ -51,9 +51,9 @@ namespace lox
         const ExprBase* getExpression() const { return expression.get(); }
 
         void print(std::ostream &os) const override {
-            os << "Grouping: [";
+            os << "( ";
             expression->print(os);
-            os << "]";
+            os << " )";
         }
     };
 

@@ -10,8 +10,8 @@ namespace
     using PrefixFn = std::unique_ptr<ExprBase> (*)(Parser&);
     using InfixFn = std::unique_ptr<ExprBase> (*)(Parser&, std::unique_ptr<ExprBase>);
 
-    #define PrefixHandler(name) static std::unique_ptr<ExprBase> name(Parser& parser)
-    #define InfixHandler(name) static std::unique_ptr<ExprBase> name(Parser& parser, std::unique_ptr<ExprBase> left)
+    #define PrefixHandler(name) std::unique_ptr<ExprBase> name(Parser& parser)
+    #define InfixHandler(name) std::unique_ptr<ExprBase> name(Parser& parser, std::unique_ptr<ExprBase> left)
 
     enum Precedence {
         PREC_NONE,
@@ -61,6 +61,11 @@ namespace
         }
 
         return left;
+    }
+
+    std::unique_ptr<ExprBase> expression(Parser &parser)
+    {
+        return parsePrecedence(parser, PREC_ASSIGNMENT);
     }
 
     PrefixHandler(unary) {
@@ -114,7 +119,7 @@ namespace
 
     PrefixHandler(grouping) {
         // Compile the inner expression.
-        std::unique_ptr<ExprBase> expr = parser.parseExpression();
+        std::unique_ptr<ExprBase> expr = expression(parser);
 
         // Consume the ")"
         parser.parse(lox::TokenType::TOKEN_RIGHT_PAREN);
@@ -163,7 +168,7 @@ namespace
         std::vector<std::unique_ptr<ExprBase>> args;
         if (!parser.match(lox::TokenType::TOKEN_RIGHT_PAREN)) {
             do {
-                args.push_back(parser.parseExpression());
+                args.push_back(expression(parser));
             } while (parser.parseOptional(lox::TokenType::TOKEN_COMMA));
         }
         return args;
@@ -237,7 +242,7 @@ namespace
         {lox::TokenType::TOKEN_IF,            {NULL,     NULL,   PREC_NONE}},
         {lox::TokenType::TOKEN_NIL,           {literal,  NULL,   PREC_NONE}},
         {lox::TokenType::TOKEN_OR,            {NULL,     or_,    PREC_OR}},
-        {lox::TokenType::TOKEN_PRINT,         {NULL,     NULL,   PREC_NONE}},
+        // {lox::TokenType::TOKEN_PRINT,         {NULL,     NULL,   PREC_NONE}},
         {lox::TokenType::TOKEN_RETURN,        {NULL,     NULL,   PREC_NONE}},
         {lox::TokenType::TOKEN_SUPER,         {super_,   NULL,   PREC_SUPER}},
         {lox::TokenType::TOKEN_THIS,          {this_,    NULL,   PREC_THIS}},
@@ -253,6 +258,6 @@ namespace lox
 {
     std::unique_ptr<ExprBase> Parser::parseExpression()
     {
-        return parsePrecedence(*this, PREC_ASSIGNMENT);
+        return expression(*this);
     }
 } // namespace lox

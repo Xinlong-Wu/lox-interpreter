@@ -142,8 +142,8 @@ namespace lox
             identifierType = TokenType::TOKEN_NIL;
         else if (identifier == "or")
             identifierType = TokenType::TOKEN_OR;
-        else if (identifier == "print")
-            identifierType = TokenType::TOKEN_PRINT;
+        // else if (identifier == "print")
+        //     identifierType = TokenType::TOKEN_PRINT;
         else if (identifier == "return")
             identifierType = TokenType::TOKEN_RETURN;
         else if (identifier == "super")

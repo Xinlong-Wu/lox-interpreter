@@ -16,6 +16,14 @@ namespace lox
             int getLine() const { return line; }
             int getColumn() const { return column; }
 
+            Location getNextColumn() const {
+                return Location(line, column + 1);
+            }
+
+            Location getNextLine() const {
+                return Location(line + 1, 1);
+            }
+
             bool operator==(const Location& other) const {
                 return line == other.line && column == other.column;
             }

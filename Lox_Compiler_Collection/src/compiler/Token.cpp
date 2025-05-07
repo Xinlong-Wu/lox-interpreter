@@ -27,7 +27,7 @@ namespace lox
         case TOKEN_LESS_EQUAL: return "<=";
 
         case TOKEN_IDENTIFIER: return "TOKEN_IDENTIFIER";
-        case TOKEN_STRING: return "TOKEN_STRING";
+        // case TOKEN_STRING: return "TOKEN_STRING";
         case TOKEN_NUMBER: return "TOKEN_NUMBER";
 
         // Interpolation
@@ -44,7 +44,7 @@ namespace lox
         case TOKEN_IF: return "if";
         case TOKEN_NIL: return "nil";
         case TOKEN_OR: return "or";
-        case TOKEN_PRINT: return "print";
+        // case TOKEN_PRINT: return "print";
         case TOKEN_RETURN: return "return";
         case TOKEN_SUPER: return "super";
         case TOKEN_THIS: return "this";

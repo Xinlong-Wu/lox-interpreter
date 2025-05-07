@@ -1,20 +1,20 @@
 // RUN: %lox %s | FileCheck %s
 
 class Foo {
-  inFoo() {
-    print "in foo";
+  fun inFoo() {
+    print ("in foo");
   }
 }
 
 class Bar < Foo {
-  inBar() {
-    print "in bar";
+  fun inBar() {
+    print ("in bar");
   }
 }
 
 class Baz < Bar {
-  inBaz() {
-    print "in baz";
+  fun inBaz() {
+    print ("in baz");
   }
 }
 
