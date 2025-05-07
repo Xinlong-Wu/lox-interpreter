@@ -35,23 +35,25 @@ static char *readFile(const char *path)
     return buffer;
 }
 
-static void runFile(const char *path)
+static int runFile(const char *path)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
 
     parser.advance();
 
-    // parser.parseNumber();
-
-    parser.parseDeclaration()->dump();
+    while (parser.hasNext())
+    {
+        parser.parseDeclaration()->dump();
+    }
 
     free(source);
 
-    // if (result == INTERPRET_COMPILE_ERROR)
-    //     exit(65);
-    // if (result == INTERPRET_RUNTIME_ERROR)
-    //     exit(70);
+    if (parser.hasError())
+    {
+        return 65;
+    }
+    return 0;
 }
 
 static void repl()
@@ -83,13 +85,12 @@ int main(int argc, char const *argv[])
         repl();
     }
     else if (argc == 2) {
-        runFile(argv[1]);
+        return runFile(argv[1]);
     }
     else {
         fprintf(stderr, "Usage: lox-parser [path]\n");
         exit(64);
     }
-    std::cout << "Hello, Lox Parser!" << std::endl;
     return 0;
 }
 

@@ -1,9 +1,9 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s –check-prefix=CHECK-PPARSER
 
-// CHECK-LABEL:     result
-// CHECK-NEXT:      c
-// CHECK-NEXT:      c
-// CHECK-NEXT:      c
+// CHECK-PPARSER-LABEL:     result
+// CHECK-PPARSER-NEXT:      c
+// CHECK-PPARSER-NEXT:      c
+// CHECK-PPARSER-NEXT:      c
 
 var a = "a";
 var b = "b";
@@ -11,7 +11,7 @@ var c = "c";
 
 // Assignment is right-associative.
 a = b = c;
-print "result";
-print a; // expect: c
-print b; // expect: c
-print c; // expect: c
+print ("result");
+print (a); // expect: c
+print (b); // expect: c
+print (c); // expect: c

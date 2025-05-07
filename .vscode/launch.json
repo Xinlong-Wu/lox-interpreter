@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/lox-parser",
-            // "args": ["tests/general/unexpected_character.lox", "--debug"],
+            "args": ["tests/parser/constructor/return_in_nested_function.lox"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

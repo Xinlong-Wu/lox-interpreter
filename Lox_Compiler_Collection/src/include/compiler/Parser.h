@@ -46,6 +46,7 @@ namespace lox
             bool hasError() { return error; };
             bool isPanicMode() { return panicMode; };
             void synchronize();
+            void synchronize(TokenType tokenType);
 
             void parse(TokenType type, std::optional<std::string> errorMsg = std::nullopt);
             bool parseOptional(TokenType type);

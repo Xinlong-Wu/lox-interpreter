@@ -79,6 +79,7 @@ namespace lox
                 methods.insert({method->getName(), std::move(method)});
             } else {
                 this->parseError("Expect `var` or `fun`.");
+                this->synchronize(lox::TokenType::TOKEN_RIGHT_BRACE);
             }
         }
 

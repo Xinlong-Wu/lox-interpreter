@@ -52,6 +52,23 @@ namespace lox
         }
     }
 
+    void Parser::synchronize(TokenType tokenType)
+    {
+        if (!panicMode)
+            return;
+
+        panicMode = false;
+
+        advance();
+        while (currentToken != TokenType::TOKEN_EOF)
+        {
+            if (previousToken == tokenType)
+                return;
+
+            advance();
+        }
+    }
+
     void Parser::parse(TokenType type, std::optional<std::string> errorMsg) {
         if (parseOptional(type)) {
             return;
