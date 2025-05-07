@@ -1,0 +1,12 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Undefined property 'doesNotExist'.
+class Base {}
+
+class Derived < Base {
+  foo() {
+    super.doesNotExist(1); // expect runtime error: Undefined property 'doesNotExist'.
+  }
+}
+
+Derived().foo();

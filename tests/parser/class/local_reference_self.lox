@@ -1,0 +1,11 @@
+// RUN: %lox %s | FileCheck %s
+
+{
+  class Foo {
+    returnSelf() {
+      return Foo;
+    }
+  }
+// CHECK:       Foo
+  print Foo().returnSelf(); // expect: Foo
+}

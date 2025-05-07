@@ -1,0 +1,6 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+fun foo() {}
+
+// CHECK: Only instances have properties.
+foo.bar; // expect runtime error: Only instances have properties.

@@ -1,0 +1,28 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {
+  fun inFoo() {
+    print ("in foo");
+  }
+}
+
+class Bar < Foo {
+  fun inBar() {
+    print ("in bar");
+  }
+}
+
+class Baz < Bar {
+  fun inBaz() {
+    print ("in baz");
+  }
+}
+
+var baz = Baz();
+
+// CHECK:       in foo
+// CHECK:       in bar
+// CHECK:       in baz
+baz.inFoo(); // expect: in foo
+baz.inBar(); // expect: in bar
+baz.inBaz(); // expect: in baz

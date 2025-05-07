@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+// CHECK: Expect token { after `)`, but got: `123`
+// CHECK: Expect token } after `;`, but got: [EOF]
+fun f() 123;

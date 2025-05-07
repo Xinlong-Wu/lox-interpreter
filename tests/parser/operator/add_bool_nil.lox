@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+true + nil; // expect runtime error: Operands must be two numbers or two strings.
+// CHECK: Operands must be two numbers or two strings.

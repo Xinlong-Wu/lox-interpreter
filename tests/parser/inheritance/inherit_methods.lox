@@ -1,0 +1,19 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {
+  methodOnFoo() { print "foo"; }
+  override() { print "foo"; }
+}
+
+class Bar < Foo {
+  methodOnBar() { print "bar"; }
+  override() { print "bar"; }
+}
+
+var bar = Bar();
+// CHECK: foo
+bar.methodOnFoo(); // expect: foo
+// CHECK: bar
+bar.methodOnBar(); // expect: bar
+// CHECK: bar
+bar.override(); // expect: bar

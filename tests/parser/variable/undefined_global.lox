@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Undefined variable 'notDefined'.
+print notDefined;  // expect runtime error: Undefined variable 'notDefined'.

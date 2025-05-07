@@ -1,0 +1,15 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+fun isEven(n) {
+  if (n == 0) return true;
+  return isOdd(n - 1);
+}
+
+fun isOdd(n) {
+  if (n == 0) return false;
+  return isEven(n - 1);
+}
+
+// CHECK: true
+print isEven(4);
+// CHECK-NEXT: true
+print isOdd(3);

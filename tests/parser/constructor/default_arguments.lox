@@ -1,0 +1,6 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+class Foo {}
+
+// CHECK:       Expected 0 arguments but got 3.
+var foo = Foo(1, 2, 3); // expect runtime error: Expected 0 arguments but got 3.

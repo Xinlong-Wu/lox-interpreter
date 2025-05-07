@@ -1,0 +1,8 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {
+  bar() {}
+}
+
+print Foo().bar(); // expect: nil
+// CHECK: nil

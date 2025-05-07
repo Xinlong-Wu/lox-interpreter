@@ -1,0 +1,15 @@
+// RUN: %lox %s | FileCheck %s
+
+print 123;     // expect: 123
+// CHECK: 123
+print 987654;  // expect: 987654
+// CHECK: 987654
+print 0;       // expect: 0
+// CHECK: 0
+print -0;      // expect: -0
+// CHECK: -0
+
+print 123.456; // expect: 123.456
+// CHECK: 123.456
+print -0.001;  // expect: -0.001
+// CHECK: -0.001

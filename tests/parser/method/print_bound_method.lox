@@ -1,0 +1,8 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {
+  method() { }
+}
+var foo = Foo();
+print foo.method; // expect: <fn method>
+// CHECK: <fn method>

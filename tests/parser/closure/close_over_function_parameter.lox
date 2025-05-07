@@ -1,0 +1,14 @@
+// RUN: %lox %s | FileCheck %s
+
+var f;
+
+fun foo(param) {
+  fun f_() {
+    print param;
+  }
+  f = f_;
+}
+foo("param");
+
+// CHECK:       param
+f(); // expect: param

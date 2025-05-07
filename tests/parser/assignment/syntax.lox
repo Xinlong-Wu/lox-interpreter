@@ -1,0 +1,10 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL:   var
+// CHECK-LABEL:   var
+
+// Assignment on RHS of variable.
+var a = "before";
+var c = a = "var";
+print a; // expect: var
+print c; // expect: var

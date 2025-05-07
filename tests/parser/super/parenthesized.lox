@@ -1,0 +1,13 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Expect token . after `super`, but got: `)`
+class A {
+  method() {}
+}
+
+class B < A {
+  method() {
+    // [line 8] Error at ')': Expect '.' after 'super'.
+    (super).method();
+  }
+}

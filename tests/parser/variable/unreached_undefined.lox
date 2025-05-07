@@ -1,0 +1,8 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: ok
+if (false) {
+  print notDefined;
+}
+
+print "ok"; // expect: ok

@@ -1,0 +1,10 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+{
+  fun fib(n) {
+    if (n < 2) return n;
+    return fib(n - 1) + fib(n - 2);
+  }
+
+  // CHECK: 21
+  print fib(8);
+}

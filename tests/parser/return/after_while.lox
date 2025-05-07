@@ -1,0 +1,8 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: ok
+fun f() {
+  while (true) return "ok";
+}
+
+print f(); // expect: ok

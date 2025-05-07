@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK:       Only instances have fields.
+nil.foo = "value"; // expect runtime error: Only instances have fields.

@@ -1,0 +1,17 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL:   before
+// CHECK-NEXT:    after
+// CHECK-LABEL:   arg
+// CHECK-NEXT:    arg
+
+{
+  var a = "before";
+  print a; // expect: before
+
+  a = "after";
+  print a; // expect: after
+
+  print a = "arg"; // expect: arg
+  print a; // expect: arg
+}

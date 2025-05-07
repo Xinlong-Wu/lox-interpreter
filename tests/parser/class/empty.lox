@@ -1,0 +1,6 @@
+// RUN: %lox %s | FileCheck %s
+
+class Foo {}
+
+// CHECK:       Foo
+print Foo; // expect: Foo

@@ -1,0 +1,10 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: -3
+print -(3); // expect: -3
+
+// CHECK: 3
+print --(3); // expect: 3
+
+// CHECK: -3
+print ---(3); // expect: -3

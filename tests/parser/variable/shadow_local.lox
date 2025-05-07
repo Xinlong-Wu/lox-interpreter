@@ -1,0 +1,12 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: shadow
+// CHECK: local
+{
+  var a = "local";
+  {
+    var a = "shadow";
+    print a; // expect: shadow
+  }
+  print a; // expect: local
+}

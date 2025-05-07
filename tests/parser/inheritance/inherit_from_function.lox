@@ -1,0 +1,6 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+fun foo() {}
+
+// CHECK: Superclass must be a class.
+class Subclass < foo {} // expect runtime error: Superclass must be a class.

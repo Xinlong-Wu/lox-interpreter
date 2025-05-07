@@ -1,0 +1,16 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Expected 2 arguments but got 1.
+class Base {
+  foo(a, b) {
+    print "Base.foo(" + a + ", " + b + ")";
+  }
+}
+
+class Derived < Base {
+  foo() {
+    super.foo(1); // expect runtime error: Expected 2 arguments but got 1.
+  }
+}
+
+Derived().foo();

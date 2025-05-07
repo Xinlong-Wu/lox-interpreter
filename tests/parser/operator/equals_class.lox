@@ -1,0 +1,23 @@
+// RUN: %lox %s | FileCheck %s
+
+// Bound methods have identity equality.
+class Foo {}
+class Bar {}
+
+print Foo == Foo; // expect: true
+// CHECK: true
+print Foo == Bar; // expect: false
+// CHECK: false
+print Bar == Foo; // expect: false
+// CHECK: false
+print Bar == Bar; // expect: true
+// CHECK: true
+
+print Foo == "Foo"; // expect: false
+// CHECK: false
+print Foo == nil;   // expect: false
+// CHECK: false
+print Foo == 123;   // expect: false
+// CHECK: false
+print Foo == true;  // expect: false
+// CHECK: false

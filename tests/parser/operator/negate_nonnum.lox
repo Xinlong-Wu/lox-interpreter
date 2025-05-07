@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Operand must be a number.
+-"s"; // expect runtime error: Operand must be a number.

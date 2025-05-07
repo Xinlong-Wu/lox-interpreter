@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Expect expression. at `fun`, before: `foo`
+while (true) fun foo() {}

@@ -1,0 +1,36 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+fun f0() { return 0; }
+// CHECK: 0
+print f0();
+
+fun f1(a) { return a; }
+// CHECK-NEXT: 1
+print f1(1);
+
+fun f2(a, b) { return a + b; }
+// CHECK-NEXT: 3
+print f2(1, 2);
+
+fun f3(a, b, c) { return a + b + c; }
+// CHECK-NEXT: 6
+print f3(1, 2, 3);
+
+fun f4(a, b, c, d) { return a + b + c + d; }
+// CHECK-NEXT: 10
+print f4(1, 2, 3, 4);
+
+fun f5(a, b, c, d, e) { return a + b + c + d + e; }
+// CHECK-NEXT: 15
+print f5(1, 2, 3, 4, 5);
+
+fun f6(a, b, c, d, e, f) { return a + b + c + d + e + f; }
+// CHECK-NEXT: 21
+print f6(1, 2, 3, 4, 5, 6);
+
+fun f7(a, b, c, d, e, f, g) { return a + b + c + d + e + f + g; }
+// CHECK-NEXT: 28
+print f7(1, 2, 3, 4, 5, 6, 7);
+
+fun f8(a, b, c, d, e, f, g, h) { return a + b + c + d + e + f + g + h; }
+// CHECK-NEXT: 36
+print f8(1, 2, 3, 4, 5, 6, 7, 8);

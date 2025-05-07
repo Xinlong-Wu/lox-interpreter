@@ -1,0 +1,6 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+fun foo() {}
+
+// CHECK:       Only instances have fields.
+foo.bar = "value"; // expect runtime error: Only instances have fields.

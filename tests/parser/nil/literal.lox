@@ -1,0 +1,4 @@
+// RUN: %lox %s | FileCheck %s
+
+print nil; // expect: nil
+// CHECK: nil

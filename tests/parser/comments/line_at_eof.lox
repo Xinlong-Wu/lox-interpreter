@@ -1,0 +1,5 @@
+// RUN: %lox %s | FileCheck %s
+
+// CHECK:       ok
+print "ok"; // expect: ok
+// comment

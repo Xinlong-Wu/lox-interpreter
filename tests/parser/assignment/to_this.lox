@@ -1,0 +1,11 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL:     Error: Invalid assignment target. at `=`, before: `"value"`
+
+class Foo {
+  Foo() {
+    this = "value";
+  }
+}
+
+Foo();

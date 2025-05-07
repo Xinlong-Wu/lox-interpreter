@@ -1,0 +1,7 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Error: Can't read local variable in its own initializer. at `a`, before: `;`
+var a = "outer";
+{
+  var a = a; // Error at 'a': Can't read local variable in its own initializer.
+}

@@ -1,0 +1,5 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK-LABEL: Undefined variable 'unknown'.
+
+unknown = "what"; // expect runtime error: Undefined variable 'unknown'.

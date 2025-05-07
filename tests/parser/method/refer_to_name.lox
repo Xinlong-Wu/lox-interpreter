@@ -1,0 +1,10 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+class Foo {
+  method() {
+    print method; // expect runtime error: Undefined variable 'method'.
+  }
+}
+
+Foo().method();
+// CHECK: Undefined variable 'method'.

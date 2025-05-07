@@ -1,0 +1,9 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: outer
+{
+  var a = "outer";
+  {
+    print a; // expect: outer
+  }
+}

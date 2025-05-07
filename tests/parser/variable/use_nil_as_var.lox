@@ -1,0 +1,4 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Error: Invalid assignment target. at `=`, before: `"value"`
+var nil = "value";

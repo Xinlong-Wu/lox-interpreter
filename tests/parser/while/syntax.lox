@@ -1,0 +1,21 @@
+// RUN: %lox %s 2>&1 | FileCheck %s
+
+// CHECK: 1
+// CHECK: 2
+// CHECK: 3
+var c = 0;
+while (c < 3) print c = c + 1;
+
+// CHECK: 0
+// CHECK: 1
+// CHECK: 2
+var a = 0;
+while (a < 3) {
+  print a;
+  a = a + 1;
+}
+
+// No output for the following code as all conditions are false.
+while (false) if (true) 1; else 2;
+while (false) while (true) 1;
+while (false) for (;;) 1;

@@ -1,0 +1,5 @@
+// RUN: not %lox %s 2>&1 | FileCheck %s
+
+// CHECK: Expect token ) after `a`, but got: `|`
+
+foo(a | b);
