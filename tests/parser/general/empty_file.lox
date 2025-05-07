@@ -1,4 +1,4 @@
-// RUN: %lox %s --debug | FileCheck %s
+// RUN: %parser %s --debug | FileCheck %s
 
 // CHECK-LABEL:     == <script> ==
 // CHECK-NEXT:      0000 [  -1:  -1]  OP_NIL

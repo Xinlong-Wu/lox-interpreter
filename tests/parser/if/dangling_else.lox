@@ -1,4 +1,4 @@
-// RUN: %lox %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s
 
 // CHECK: good
 // A dangling else binds to the right-most if.

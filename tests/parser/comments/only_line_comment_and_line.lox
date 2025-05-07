@@ -1,3 +1,3 @@
-// RUN: %lox %s
+// RUN: %parser %s
 
 // comment

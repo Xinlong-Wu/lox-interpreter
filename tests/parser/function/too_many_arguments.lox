@@ -1,4 +1,4 @@
-// RUN: not %lox %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s
 fun foo() {}
 {
   var a = 1;

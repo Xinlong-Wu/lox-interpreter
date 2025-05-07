@@ -1,4 +1,4 @@
-// RUN: not %lox %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s
 
 // CHECK: Error: Can't have more than 255 parameters. at `,`, before: `a`
 class Foo {

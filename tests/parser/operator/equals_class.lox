@@ -1,4 +1,4 @@
-// RUN: %lox %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s
 
 // Bound methods have identity equality.
 class Foo {}

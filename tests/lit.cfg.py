@@ -31,3 +31,4 @@ tools = [
 
 llvm_config.add_tool_substitutions(tools, tool_dirs)
 config.substitutions.append(("%lox", os.path.join(config.lox_build_path, "bin", config.lox_bin_name)))
+config.substitutions.append(("%parser", os.path.join(config.lox_build_path, "bin", "lox-parser")))

@@ -1,4 +1,4 @@
-// RUN: not %lox %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s
 
 // CHECK: Can't return from top-level code.
 return "wat"; // Error at 'return': Can't return from top-level code.

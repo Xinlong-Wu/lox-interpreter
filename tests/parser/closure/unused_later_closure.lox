@@ -1,4 +1,4 @@
-// RUN: %lox %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s
 
 // This is a regression test. When closing upvalues for discarded locals, it
 // wouldn't make sure it discarded the upvalue for the correct stack slot.

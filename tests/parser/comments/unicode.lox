@@ -1,4 +1,4 @@
-// RUN: %lox %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s
 
 // Unicode characters are allowed in comments.
 //

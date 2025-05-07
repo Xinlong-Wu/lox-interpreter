@@ -1,4 +1,4 @@
-// RUN: %lox %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s
 
 print 8 / 2;         // expect: 4
 // CHECK: 4

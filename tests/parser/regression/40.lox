@@ -1,4 +1,4 @@
-// RUN: %lox %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s
 
 // CHECK: false
 fun caller(g) {

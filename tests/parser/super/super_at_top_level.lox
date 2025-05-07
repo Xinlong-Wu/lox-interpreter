@@ -1,4 +1,4 @@
-// RUN: not %lox %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s
 
 // CHECK: Can't use 'super' outside of a class.
 super.foo("bar"); // Error at 'super': Can't use 'super' outside of a class.

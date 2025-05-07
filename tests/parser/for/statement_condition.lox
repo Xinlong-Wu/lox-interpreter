@@ -1,4 +1,4 @@
-// RUN: not %lox %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s
 // CHECK: Error: Expect expression. at `{`, before: `}`
 // CHECK: Expect token ; after `1`, but got: `)`
 for (var a = 1; {}; a = a + 1) {}
