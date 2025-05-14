@@ -1,10 +1,17 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:           BlockStmt: {
+// CHECK-PARSER-NEXT:        var local = String: ["local"];
+// CHECK-PARSER-NEXT:        function f()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          Call: [Variable: [print](Variable: [local], )];
+// CHECK-PARSER-NEXT:        }
+// CHECK-PARSER:             Call: [Variable: [f]()];
 
 {
   var local = "local";
   fun f() {
-    print local; // expect: local
+    print (local); // expect: local
   }
-// CHECK:       local
   f();
 }

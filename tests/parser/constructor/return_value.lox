@@ -1,8 +1,12 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER-LABEL:   class Foo {
+// CHECK-PARSER-NEXT:     function init()
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       return String: ["result"];
 
 class Foo {
   init() {
-// CHECK:       Can't return a value from an initializer.
     return "result"; // Error at 'return': Can't return a value from an initializer.
   }
 }

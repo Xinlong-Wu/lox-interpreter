@@ -1,8 +1,8 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 class Foo {
-  method(a, b) {}
+  fun method(a, b) {}
 }
 
 Foo().method(1); // expect runtime error: Expected 2 arguments but got 1.
-// CHECK: Expected 2 arguments but got 1.
+// CHECK-PARSER: Expected 2 arguments but got 1.

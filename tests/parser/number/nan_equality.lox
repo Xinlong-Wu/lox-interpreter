@@ -1,14 +1,14 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
 var nan = 0/0;
 
-print nan == 0; // expect: false
-// CHECK: false
-print nan != 1; // expect: true
-// CHECK: true
+print (nan == 0); // expect: false
+// CHECK-PARSER: false
+print (nan != 1); // expect: true
+// CHECK-PARSER: true
 
 // NaN is not equal to self.
-print nan == nan; // expect: false
-// CHECK: false
-print nan != nan; // expect: true
-// CHECK: true
+print (nan == nan); // expect: false
+// CHECK-PARSER: false
+print (nan != nan); // expect: true
+// CHECK-PARSER: true

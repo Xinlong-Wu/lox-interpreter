@@ -44,7 +44,10 @@ static int runFile(const char *path)
 
     while (parser.hasNext())
     {
-        parser.parseDeclaration()->dump();
+        std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
+        if (stmt != nullptr){
+            stmt->dump();
+        }
     }
 
     free(source);
@@ -73,7 +76,10 @@ static void repl()
 
         parser.advance();
 
-        parser.parseDeclaration()->dump();
+        std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
+        if (stmt != nullptr){
+            stmt->dump();
+        }
         std::cout << std::endl;
     }
 }

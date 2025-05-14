@@ -1,4 +1,6 @@
-// Note: This is just for the expression evaluating chapter which evaluates an
-// expression directly.
-(5 - (3 - 1)) + -1
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:   Binary: [( Binary: [Number: [5] - ( Binary: [Number: [3] - Number: [1]] )] ) + Unary: [- Number: [1]]];
+
+(5 - (3 - 1)) + -1;
 // expect: 2

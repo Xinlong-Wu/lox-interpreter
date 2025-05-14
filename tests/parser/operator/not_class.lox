@@ -1,9 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 class Bar {}
 
-// CHECK: false
-print !Bar;      // expect: false
+// CHECK-PARSER: false
+print (!Bar);      // expect: false
 
-// CHECK: false
-print !Bar();    // expect: false
+// CHECK-PARSER: false
+print (!Bar());    // expect: false

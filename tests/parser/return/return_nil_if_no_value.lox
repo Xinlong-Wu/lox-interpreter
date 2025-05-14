@@ -1,9 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: nil
+// CHECK-PARSER: nil
 fun f() {
   return;
-  print "bad";
+  print ("bad");
 }
 
-print f(); // expect: nil
+print (f()); // expect: nil

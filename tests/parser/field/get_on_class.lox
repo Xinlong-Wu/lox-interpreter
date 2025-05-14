@@ -1,6 +1,7 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        Access: [ Variable: [Foo].bar ];
 
 class Foo {}
 
-// CHECK: Only instances have properties.
 Foo.bar; // expect runtime error: Only instances have properties.

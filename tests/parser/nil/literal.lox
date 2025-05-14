@@ -1,4 +1,4 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-print nil; // expect: nil
-// CHECK: nil
+// CHECK-PARSER:    Call: [Variable: [print](Literal: [nil], )];
+print (nil); // expect: nil

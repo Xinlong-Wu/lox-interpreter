@@ -1,4 +1,19 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+
+// CHECK-PARSER:         var a = String: ["global"];
+// CHECK-PARSER-NEXT:    BlockStmt: {
+// CHECK-PARSER-NEXT:      function assign()
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:        Assign: [Variable: [a] = String: ["assigned"]];
+// CHECK-PARSER-NEXT:      }
+
+// CHECK-PARSER:           var a = String: ["inner"];
+// CHECK-PARSER-NEXT:      Call: [Variable: [assign]()];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:    }
+
+// CHECK-PARSER:           Call: [Variable: [print](Variable: [a], )];
 
 var a = "global";
 
@@ -10,9 +25,7 @@ var a = "global";
   var a = "inner";
   assign();
 
-// CHECK:       inner
-  print a; // expect: inner
+  print (a);
 }
 
-// CHECK:       assigned
-print a;
+print (a);

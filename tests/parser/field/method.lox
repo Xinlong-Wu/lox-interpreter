@@ -1,13 +1,15 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        var bar = Access: [ Call: [Variable: [Foo]()].bar ];
+// CHECK-PARSER-NEXT:   Call: [Variable: [print](String: ["got method"], )];
+// CHECK-PARSER-NEXT:   Call: [Variable: [bar](String: ["arg"], )];
 
 class Foo {
-  bar(arg) {
-    print arg;
+  fun bar(arg) {
+    print (arg);
   }
 }
 
 var bar = Foo().bar;
-// CHECK:     got method
-// CHECK-NEXT: arg
-print "got method"; // expect: got method
+print ("got method"); // expect: got method
 bar("arg");          // expect: arg

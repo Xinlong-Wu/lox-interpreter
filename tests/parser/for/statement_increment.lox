@@ -1,3 +1,3 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
-// CHECK: Error: Expect expression. at `{`, before: `}`
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// CHECK-PARSER: Error: Expect expression. at `{`, before: `}`
 for (var a = 1; a < 2; {}) {}

@@ -1,47 +1,47 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
-print 1 < 2;    // expect: true
-// CHECK: true
-print 2 < 2;    // expect: false
-// CHECK: false
-print 2 < 1;    // expect: false
-// CHECK: false
+print (1 < 2);    // expect: true
+// CHECK-PARSER: true
+print (2 < 2);    // expect: false
+// CHECK-PARSER: false
+print (2 < 1);    // expect: false
+// CHECK-PARSER: false
 
-print 1 <= 2;    // expect: true
-// CHECK: true
-print 2 <= 2;    // expect: true
-// CHECK: true
-print 2 <= 1;    // expect: false
-// CHECK: false
+print (1 <= 2);    // expect: true
+// CHECK-PARSER: true
+print (2 <= 2);    // expect: true
+// CHECK-PARSER: true
+print (2 <= 1);    // expect: false
+// CHECK-PARSER: false
 
-print 1 > 2;    // expect: false
-// CHECK: false
-print 2 > 2;    // expect: false
-// CHECK: false
-print 2 > 1;    // expect: true
-// CHECK: true
+print (1 > 2);    // expect: false
+// CHECK-PARSER: false
+print (2 > 2);    // expect: false
+// CHECK-PARSER: false
+print (2 > 1);    // expect: true
+// CHECK-PARSER: true
 
-print 1 >= 2;    // expect: false
-// CHECK: false
-print 2 >= 2;    // expect: true
-// CHECK: true
-print 2 >= 1;    // expect: true
-// CHECK: true
+print (1 >= 2);    // expect: false
+// CHECK-PARSER: false
+print (2 >= 2);    // expect: true
+// CHECK-PARSER: true
+print (2 >= 1);    // expect: true
+// CHECK-PARSER: true
 
 // Zero and negative zero compare the same.
-print 0 < -0; // expect: false
-// CHECK: false
-print -0 < 0; // expect: false
-// CHECK: false
-print 0 > -0; // expect: false
-// CHECK: false
-print -0 > 0; // expect: false
-// CHECK: false
-print 0 <= -0; // expect: true
-// CHECK: true
-print -0 <= 0; // expect: true
-// CHECK: true
-print 0 >= -0; // expect: true
-// CHECK: true
-print -0 >= 0; // expect: true
-// CHECK: true
+print (0 < -0); // expect: false
+// CHECK-PARSER: false
+print (-0 < 0); // expect: false
+// CHECK-PARSER: false
+print (0 > -0); // expect: false
+// CHECK-PARSER: false
+print (-0 > 0); // expect: false
+// CHECK-PARSER: false
+print (0 <= -0); // expect: true
+// CHECK-PARSER: true
+print (-0 <= 0); // expect: true
+// CHECK-PARSER: true
+print (0 >= -0); // expect: true
+// CHECK-PARSER: true
+print (-0 >= 0); // expect: true
+// CHECK-PARSER: true

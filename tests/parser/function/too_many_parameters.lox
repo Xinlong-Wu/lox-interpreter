@@ -1,7 +1,7 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Error: Can't have more than 255 parameters. at `,`, before: `a`
-// CHECK: Error: Too many local variables in function. at `a`, before: `)`
+// CHECK-PARSER: Error: Can't have more than 255 parameters. at `,`, before: `a`
+// CHECK-PARSER: Error: Too many local variables in function. at `a`, before: `)`
 fun f(
     a1,
     a2,

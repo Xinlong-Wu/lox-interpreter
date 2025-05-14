@@ -1,10 +1,11 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:   var
-// CHECK-LABEL:   var
+// CHECK-PARSER-LABEL:     var a = String: ["before"];
+// CHECK-PARSER-NEXT:      var c = Assign: [Variable: [a] = String: ["var"]];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [c], )];
 
-// Assignment on RHS of variable.
 var a = "before";
 var c = a = "var";
-print a; // expect: var
-print c; // expect: var
+print (a); // expect: var
+print (c); // expect: var

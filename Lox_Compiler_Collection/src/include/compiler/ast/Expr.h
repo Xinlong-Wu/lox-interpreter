@@ -13,6 +13,8 @@ namespace lox
         virtual ~ExprBase() = default;
 
         virtual const Location &getLoc() const { return loc; };
+        virtual bool isValidLValue() const { return false; }
+        virtual bool isCallable() const { return false; }
         virtual void print(std::ostream &os) const = 0;
         virtual void dump() const {
             this->print(std::cout);
@@ -26,6 +28,8 @@ namespace lox
     public:
         ThisExpr(lox::Token token) : ExprBase(token.getLoction()) {}
 
+        virtual bool isValidLValue() const override { return true; }
+        virtual bool isCallable() const override { return true; }
         void print(std::ostream &os) const override {
             os << "this";
         }
@@ -36,7 +40,9 @@ namespace lox
         std::string method;
     public:
         SuperExpr(lox::Token token) : ExprBase(token.getLoction()) {}
-
+        
+        virtual bool isValidLValue() const override { return true; }
+        virtual bool isCallable() const override { return true; }
         void print(std::ostream &os) const override {
             os << "super";
         }
@@ -50,6 +56,8 @@ namespace lox
 
         const ExprBase* getExpression() const { return expression.get(); }
 
+        virtual bool isValidLValue() const override { return expression->isValidLValue(); }
+        virtual bool isCallable() const override { return expression->isCallable(); }
         void print(std::ostream &os) const override {
             os << "( ";
             expression->print(os);
@@ -65,6 +73,10 @@ namespace lox
         CallExpr(std::unique_ptr<ExprBase> callee, std::vector<std::unique_ptr<ExprBase>> arguments)
             : ExprBase(callee->getLoc()), callee(std::move(callee)), arguments(std::move(arguments)) {}
 
+        virtual bool isValidLValue() const override { return callee->isValidLValue(); }
+        // Depending on the return type of the callee, we don't know if the call is callable or not.
+        // So we return true here.
+        virtual bool isCallable() const override { return true; }
         const ExprBase* getCallee() const { return callee.get(); }
         const ExprBase* getArgument(size_t index) const {
             if (index < arguments.size()) {
@@ -93,6 +105,10 @@ namespace lox
         VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
 
         const std::string &getSymName() const { return name; }
+        virtual bool isValidLValue() const override { return true; }
+        // depending on the return type of the variable, we don't know if the variable is callable or not.
+        // So we return true here.
+        virtual bool isCallable() const override { return true; }
 
         void print(std::ostream &os) const override {
             os << "Variable: [" << name << "]";
@@ -161,6 +177,10 @@ namespace lox
 
         const ExprBase* getLeft() const { return left.get(); }
         const std::string& getProperty() const { return property; }
+        // depending on the return type of the property, we don't know if the property is callable or not.
+        // So we return true here.
+        virtual bool isValidLValue() const override { return true; }
+        virtual bool isCallable() const override { return true; }
 
         void print(std::ostream &os) const override {
             os << "Access: [ ";
@@ -180,6 +200,10 @@ namespace lox
 
         virtual const ExprBase* getLeft() const { return left.get(); }
         virtual const ExprBase* getRight() const { return right.get(); }
+
+        // depending on the return type of the left and right
+        // we return true here.
+        virtual bool isCallable() const override { return true; }
 
         virtual void print(std::ostream &os) const override {
             os << "Binary: [";
@@ -201,14 +225,6 @@ namespace lox
             os << " = ";
             right->print(os);
             os << "]";
-        }
-
-        static bool isValidLValue(const std::unique_ptr<ExprBase> &expr) {
-            // Check if the expression is a variable or an access expression
-            if (dynamic_cast<VariableExpr*>(expr.get()) || dynamic_cast<AccessExpr*>(expr.get())) {
-                return true;
-            }
-            return false;
         }
     };
 } // namespace lox

@@ -1,15 +1,15 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: ok
-// CHECK: ok
-// CHECK: true
-// CHECK: 0
-// CHECK: s
+// CHECK-PARSER: ok
+// CHECK-PARSER: ok
+// CHECK-PARSER: true
+// CHECK-PARSER: 0
+// CHECK-PARSER: s
 // False and nil are false.
-print false or "ok"; // expect: ok
-print nil or "ok"; // expect: ok
+print (false or "ok"); // expect: ok
+print (nil or "ok"); // expect: ok
 
 // Everything else is true.
-print true or "ok"; // expect: true
-print 0 or "ok"; // expect: 0
-print "s" or "ok"; // expect: s
+print (true or "ok"); // expect: true
+print (0 or "ok"); // expect: 0
+print ("s" or "ok"); // expect: s

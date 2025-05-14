@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK:     Too many local variables in function. at `oops`, before: `;`
+// CHECK-PARSER:     Too many local variables in function. at `oops`, before: `;`
 fun f() {
   // var v00; First slot already taken.
 

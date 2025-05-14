@@ -1,4 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        for (
+// CHECK-PARSER-NEXT:   ) BlockStmt: {
+// CHECK-PARSER-NEXT:     var i = String: ["i"];
+// CHECK-PARSER-NEXT:     return Variable: [i];
 
 fun f() {
   for (;;) {
@@ -7,5 +12,4 @@ fun f() {
   }
 }
 
-// CHECK: i
-print f();
+print (f());

@@ -1,17 +1,21 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        for (
+// CHECK-PARSER-NEXT:   initializer: var i = Number: [0];
+// CHECK-PARSER-NEXT:   condition: Binary: [Variable: [i] < Number: [1]]; 
+// CHECK-PARSER-NEXT:   increment: Assign: [Variable: [i] = Binary: [Variable: [i] + Number: [1]]]
+// CHECK-PARSER-NEXT:   ) BlockStmt: {
 
 {
   var i = "before";
 
   // New variable is in inner scope.
   for (var i = 0; i < 1; i = i + 1) {
-    // CHECK: 0
-    print i;
+    print (i);
 
     // Loop body is in second inner scope.
     var i = -1;
-    // CHECK: -1
-    print i;
+    print (i);
   }
 }
 
@@ -21,12 +25,10 @@
 
   // Goes out of scope after loop.
   var i = "after";
-  // CHECK: after
-  print i;
+  print (i);
 
   // Can reuse an existing variable.
   for (i = 0; i < 1; i = i + 1) {
-    // CHECK: 0
-    print i;
+    print (i);
   }
 }

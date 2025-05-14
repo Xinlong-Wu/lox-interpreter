@@ -1,12 +1,12 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: outer
-// CHECK: inner
+// CHECK-PARSER: outer
+// CHECK-PARSER: inner
 {
   var a = "outer";
   {
-    print a; // expect: outer
+    print (a); // expect: outer
     var a = "inner";
-    print a; // expect: inner
+    print (a); // expect: inner
   }
 }

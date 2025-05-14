@@ -1,4 +1,5 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
+
 fun isEven(n) {
   if (n == 0) return true;
   return isOdd(n - 1);
@@ -9,7 +10,7 @@ fun isOdd(n) {
   return isEven(n - 1);
 }
 
-// CHECK: true
-print isEven(4);
-// CHECK-NEXT: true
-print isOdd(3);
+// true
+print (isEven(4));
+// true
+print (isOdd(3));

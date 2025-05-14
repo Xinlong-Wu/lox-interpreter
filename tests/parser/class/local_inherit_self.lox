@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK:       Error: A class can't inherit from itself. at `Foo`, before: `{`
+// CHECK-PARSER:       Error: A class can't inherit from itself. at `Foo`, before: `{`
 {
   class Foo < Foo {}
 }

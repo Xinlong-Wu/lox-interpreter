@@ -1,4 +1,4 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
 class Foo {
   fun inFoo() {
@@ -20,9 +20,9 @@ class Baz < Bar {
 
 var baz = Baz();
 
-// CHECK:       in foo
-// CHECK:       in bar
-// CHECK:       in baz
+// CHECK-PARSER:       in foo
+// CHECK-PARSER:       in bar
+// CHECK-PARSER:       in baz
 baz.inFoo(); // expect: in foo
 baz.inBar(); // expect: in bar
 baz.inBaz(); // expect: in baz

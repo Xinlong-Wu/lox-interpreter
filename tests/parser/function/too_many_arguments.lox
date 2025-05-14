@@ -1,8 +1,8 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 fun foo() {}
 {
   var a = 1;
-  // CHECK:   Error: Can't have more than 255 arguments. at `a`, before: `,`
+  // CHECK-PARSER:   Error: Can't have more than 255 arguments. at `a`, before: `,`
   foo(
      a, a, a, a, a, a, a, a, a, a,
      a, a, a, a, a, a, a, a, a, a,

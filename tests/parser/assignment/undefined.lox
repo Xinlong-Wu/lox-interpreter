@@ -1,5 +1,5 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL: Undefined variable 'unknown'.
+// CHECK-PARSER-LABEL: Assign: [Variable: [unknown] = String: ["what"]];
 
-unknown = "what"; // expect runtime error: Undefined variable 'unknown'.
+unknown = "what"; 

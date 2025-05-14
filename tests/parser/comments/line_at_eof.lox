@@ -1,5 +1,6 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK:       ok
-print "ok"; // expect: ok
+// CHECK-PARSER: Call: [Variable: [print](String: ["ok"], )];
+
+print ("ok"); // expect: ok
 // comment

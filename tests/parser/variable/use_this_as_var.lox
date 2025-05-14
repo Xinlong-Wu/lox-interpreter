@@ -1,4 +1,4 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: Error: Can't use 'this' outside of a class. at `this`, before: `=`
+// CHECK-PARSER:    Error: Expect a variable name at `this`, after`var`
 var this = "value";

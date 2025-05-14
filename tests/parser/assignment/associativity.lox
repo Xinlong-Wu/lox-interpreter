@@ -1,17 +1,20 @@
-// RUN: %parser %s | FileCheck %s –check-prefix=CHECK-PPARSER
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-PPARSER-LABEL:     result
-// CHECK-PPARSER-NEXT:      c
-// CHECK-PPARSER-NEXT:      c
-// CHECK-PPARSER-NEXT:      c
+// CHECK-PARSER-LABEL:     var a = String: ["a"];
+// CHECK-PARSER-NEXT:      var b = String: ["b"];
+// CHECK-PARSER-NEXT:      var c = String: ["c"];
+// CHECK-PARSER-NEXT:      Assign: [Variable: [a] = Assign: [Variable: [b] = Variable: [c]]];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](String: ["result"], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [b], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [c], )];
 
 var a = "a";
 var b = "b";
 var c = "c";
 
-// Assignment is right-associative.
 a = b = c;
 print ("result");
-print (a); // expect: c
-print (b); // expect: c
-print (c); // expect: c
+print (a);
+print (b);
+print (c);

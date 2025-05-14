@@ -21,7 +21,10 @@ namespace lox
     }
 
     std::unique_ptr<VarDeclStmt> Parser::parseVarDecl() {
-        this->parse(lox::TokenType::TOKEN_IDENTIFIER);
+        this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a variable name");
+        if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
+            return nullptr;
+        }
         std::string name = std::string(this->getPreviousToken().getTokenString());
         std::unique_ptr<ExprBase> initializer;
         if (this->parseOptional(lox::TokenType::TOKEN_EQUAL)) {
@@ -57,13 +60,15 @@ namespace lox
         std::string name = std::string(this->getPreviousToken().getTokenString());
         std::optional<std::string> superclass;
         if (this->parseOptional(lox::TokenType::TOKEN_LESS)) {
-            this->parse(lox::TokenType::TOKEN_IDENTIFIER);
-            superclass = std::string(this->getPreviousToken().getTokenString());
-            if (name == *superclass) {
-                this->parseError("A class can't inherit from itself.");
-            }
-            else if (!ClassDeclStmt::validSuperclass(*superclass)) {
-                this->parseError("Invalid superclass.");
+            this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect superclass name");
+            if (this->getPreviousToken() == lox::TokenType::TOKEN_IDENTIFIER) {
+                superclass = std::string(this->getPreviousToken().getTokenString());
+                if (name == *superclass) {
+                    this->parseError("A class can't inherit from itself.");
+                }
+                else if (!ClassDeclStmt::validSuperclass(*superclass)) {
+                    this->parseError("Invalid superclass.");
+                }
             }
         }
         std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
@@ -73,12 +78,13 @@ namespace lox
             // if (this->parseOptional(lox::TokenType::TOKEN_VAR)) {
             //     std::unique_ptr<VarDeclStmt> field = this->parseVarDecl();
             //     fields.insert({field->getName(), std::move(field)});
-            // } else 
-            if (this->parseOptional(lox::TokenType::TOKEN_FUN)) {
+            // } else
+            if (this->parseOptional(lox::TokenType::TOKEN_FUN) ||
+                (this->match(TokenType::TOKEN_IDENTIFIER) && this->getCurrentToken() == "init")) {
                 std::unique_ptr<FunctionDecl> method = this->parseFunctionDecl();
                 methods.insert({method->getName(), std::move(method)});
             } else {
-                this->parseError("Expect `var` or `fun`.");
+                this->parseError("Expect `var` or `fun` or constructor.");
                 this->synchronize(lox::TokenType::TOKEN_RIGHT_BRACE);
             }
         }
@@ -108,7 +114,10 @@ namespace lox
     std::unique_ptr<BlockStmt> Parser::parseBlockStmt() {
         std::vector<std::unique_ptr<StmtBase>> statements;
         while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) && this->hasNext()) {
-            statements.push_back(this->parseDeclaration());
+            std::unique_ptr<StmtBase> stmt = this->parseDeclaration();
+            if (stmt != nullptr) {
+                statements.push_back(std::move(stmt));
+            }
         }
 
         return std::make_unique<BlockStmt>(std::move(statements), this->getPreviousToken().getLoction());
@@ -117,6 +126,9 @@ namespace lox
     std::unique_ptr<ExpressionStmt> Parser::parseExpressionStmt() {
         std::unique_ptr<ExprBase> expr = this->parseExpression();
         this->parse(lox::TokenType::TOKEN_SEMICOLON);
+        if (!expr) {
+            return nullptr;
+        }
         return std::make_unique<ExpressionStmt>(std::move(expr));
     }
 
@@ -124,12 +136,33 @@ namespace lox
         this->parse(lox::TokenType::TOKEN_LEFT_PAREN);
         std::unique_ptr<ExprBase> condition = this->parseExpression();
         this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
-        this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
-        std::unique_ptr<BlockStmt> thenBranch = this->parseBlockStmt();
+        std::unique_ptr<BlockStmt> thenBranch = nullptr;
+        if (this->parseOptional(lox::TokenType::TOKEN_LEFT_BRACE)) {
+            thenBranch = this->parseBlockStmt();
+        }
+        else {
+            std::unique_ptr<StmtBase> stmt = this->parseStatement();
+            std::vector<std::unique_ptr<StmtBase>> statements;
+            statements.push_back(std::move(stmt));
+            thenBranch = std::make_unique<BlockStmt>(std::move(statements), this->getPreviousToken().getLoction());
+        }
+
+        if (thenBranch == nullptr) {
+            this->parseError("Expect a statement or a block after `if`.");
+            return nullptr;
+        }
+
         std::unique_ptr<BlockStmt> elseBranch;
         if (this->parseOptional(lox::TokenType::TOKEN_ELSE)) {
-            this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
-            elseBranch = this->parseBlockStmt();
+            if (this->parseOptional(lox::TokenType::TOKEN_LEFT_BRACE)) {
+                elseBranch = this->parseBlockStmt();
+            }
+            else {
+                std::unique_ptr<StmtBase> stmt = this->parseStatement();
+                std::vector<std::unique_ptr<StmtBase>> statements;
+                statements.push_back(std::move(stmt));
+                elseBranch = std::make_unique<BlockStmt>(std::move(statements), this->getPreviousToken().getLoction());
+            }
         }
 
         return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch), std::move(elseBranch), this->getPreviousToken().getLoction());
@@ -166,15 +199,27 @@ namespace lox
             this->parse(lox::TokenType::TOKEN_SEMICOLON);
         }
 
+        if (this->getPreviousToken() != lox::TokenType::TOKEN_SEMICOLON) {
+            this->synchronize();
+        }
+
         std::unique_ptr<ExprBase> increment;
         if (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_PAREN)) {
             increment = this->parseExpression();
+            this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
         }
 
-        this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
-        this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
-        std::unique_ptr<BlockStmt> body = this->parseBlockStmt();
-
+        std::unique_ptr<BlockStmt> body;
+        if (this->parseOptional(lox::TokenType::TOKEN_LEFT_BRACE)) {
+            body = this->parseBlockStmt();
+        }
+        else {
+            std::unique_ptr<StmtBase> stmt = this->parseStatement();
+            std::vector<std::unique_ptr<StmtBase>> statements;
+            statements.push_back(std::move(stmt));
+            body = std::make_unique<BlockStmt>(std::move(statements), this->getPreviousToken().getLoction());
+        }
+    
         return std::make_unique<ForStmt>(std::move(initializer), std::move(condition), std::move(increment), std::move(body));
     }
 
@@ -182,8 +227,17 @@ namespace lox
         this->parse(lox::TokenType::TOKEN_LEFT_PAREN);
         std::unique_ptr<ExprBase> condition = this->parseExpression();
         this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
-        this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
-        std::unique_ptr<BlockStmt> body = this->parseBlockStmt();
+        std::unique_ptr<BlockStmt> body;
+        if (this->parseOptional(lox::TokenType::TOKEN_LEFT_BRACE)) {
+            body = this->parseBlockStmt();
+        }
+        else {
+            std::unique_ptr<StmtBase> stmt = this->parseStatement();
+            std::vector<std::unique_ptr<StmtBase>> statements;
+            if (stmt != nullptr)
+                statements.push_back(std::move(stmt));
+            body = std::make_unique<BlockStmt>(std::move(statements), this->getPreviousToken().getLoction());
+        }
 
         return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
     }

@@ -1,26 +1,26 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
-print nil == nil; // expect: true
-// CHECK: true
+print (nil == nil); // expect: true
+// CHECK-PARSER: true
 
-print true == true; // expect: true
-// CHECK: true
-print true == false; // expect: false
-// CHECK: false
+print (true == true); // expect: true
+// CHECK-PARSER: true
+print (true == false); // expect: false
+// CHECK-PARSER: false
 
-print 1 == 1; // expect: true
-// CHECK: true
-print 1 == 2; // expect: false
-// CHECK: false
+print (1 == 1); // expect: true
+// CHECK-PARSER: true
+print (1 == 2); // expect: false
+// CHECK-PARSER: false
 
-print "str" == "str"; // expect: true
-// CHECK: true
-print "str" == "ing"; // expect: false
-// CHECK: false
+print ("str" == "str"); // expect: true
+// CHECK-PARSER: true
+print ("str" == "ing"); // expect: false
+// CHECK-PARSER: false
 
-print nil == false; // expect: false
-// CHECK: false
-print false == 0; // expect: false
-// CHECK: false
-print 0 == "0"; // expect: false
-// CHECK: false
+print (nil == false); // expect: false
+// CHECK-PARSER: false
+print (false == 0); // expect: false
+// CHECK-PARSER: false
+print (0 == "0"); // expect: false
+// CHECK-PARSER: false

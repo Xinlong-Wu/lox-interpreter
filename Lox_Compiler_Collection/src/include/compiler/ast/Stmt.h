@@ -95,7 +95,7 @@ namespace lox
             os << "}" << std::endl;
         }
     };
-    
+
     class FunctionDecl : public DeclarationStmt
     {
     private:
@@ -113,9 +113,9 @@ namespace lox
                 param->print(os);
                 os << ", ";
             }
-            os << ") {" << std::endl;
+            os << ") " << std::endl;
             body->print(os);
-            os << "}" << std::endl;
+            os << std::endl;
         }
     };
 
@@ -133,7 +133,7 @@ namespace lox
             classTable.insert(this->name);
         }
         ClassDeclStmt(std::string name, std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods, std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields, Location loc) : ClassDeclStmt(std::move(name), std::nullopt, std::move(methods), std::move(fields), loc) {}
-        
+
         // no fields constructor
         ClassDeclStmt(std::string name, std::optional<std::string> superclass, std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods, Location loc) : DeclarationStmt(std::move(name), loc), superclass(std::move(superclass)), methods(std::move(methods)) {
             // assert(!this->superclass || validSuperclass(*this->superclass) && "Invalid superclass");
@@ -175,10 +175,9 @@ namespace lox
 
         virtual void print(std::ostream &os) const override
         {
-            os << "IfStmt: " << std::endl;
             os << "if (";
             condition->print(os);
-            os << ") ";
+            os << ") " << std::endl;
             thenBlock->print(os);
             if (elseBlock)
             {
@@ -226,7 +225,7 @@ namespace lox
             {
                 os << "initializer: ";
                 initializer->print(os);
-                os << "; " << std::endl;
+                os << std::endl;
             }
             if (condition)
             {

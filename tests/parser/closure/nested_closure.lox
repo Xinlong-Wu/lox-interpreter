@@ -1,4 +1,29 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:         var f;
+// CHECK-PARSER-NEXT:    function f1()
+// CHECK-PARSER-NEXT:    BlockStmt: {
+// CHECK-PARSER-NEXT:      var a = String: ["a"];
+// CHECK-PARSER-NEXT:      function f2()
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:        var b = String: ["b"];
+// CHECK-PARSER-NEXT:        function f3()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          var c = String: ["c"];
+// CHECK-PARSER-NEXT:          function f4()
+// CHECK-PARSER-NEXT:          BlockStmt: {
+// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [b], )];
+// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [c], )];
+// CHECK-PARSER-NEXT:          }
+// CHECK-PARSER:               Assign: [Variable: [f] = Variable: [f4]];
+// CHECK-PARSER-NEXT:        }
+// CHECK-PARSER:             Call: [Variable: [f3]()];
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:           Call: [Variable: [f2]()];
+// CHECK-PARSER-NEXT:    }
+// CHECK-PARSER:         Call: [Variable: [f1]()];
+// CHECK-PARSER-NEXT:    Call: [Variable: [f]()];
 
 var f;
 
@@ -9,9 +34,9 @@ fun f1() {
     fun f3() {
       var c = "c";
       fun f4() {
-        print a;
-        print b;
-        print c;
+        print (a);
+        print (b);
+        print (c);
       }
       f = f4;
     }
@@ -21,7 +46,4 @@ fun f1() {
 }
 f1();
 
-// CHECK:       a
-// CHECK:       b
-// CHECK:       c
 f();

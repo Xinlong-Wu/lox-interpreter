@@ -1,11 +1,11 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: outer
-// CHECK: outer
+// CHECK-PARSER: outer
+// CHECK-PARSER: outer
 var a = "outer";
 {
   fun foo() {
-    print a;
+    print (a);
   }
 
   foo(); // expect: outer

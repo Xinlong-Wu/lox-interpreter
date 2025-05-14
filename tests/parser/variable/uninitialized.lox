@@ -1,5 +1,5 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: nil
+// CHECK-PARSER: nil
 var a;
-print a; // expect: nil
+print (a); // expect: nil

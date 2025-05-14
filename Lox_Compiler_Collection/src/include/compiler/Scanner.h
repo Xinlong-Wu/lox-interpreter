@@ -18,7 +18,7 @@ namespace lox {
         bool isInterpolationStart = false;
 
         bool isAtEnd() {return current == buffer.end();};
-        bool isDigit(char c) {return c >= '0' && c <= '9';};
+        bool isDigit(char c) {return (c >= '0' && c <= '9') || (c == '.' && isDigit(peek(1)));};
         bool isAlpha(char c) {return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');};
         bool isAlphaOrUnderScore(char c) {return isAlpha(c) || c == '_';};
 

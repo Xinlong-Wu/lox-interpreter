@@ -1,16 +1,16 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Derived.foo()
-// CHECK: Base.foo()
+// CHECK-PARSER: Derived.foo()
+// CHECK-PARSER: Base.foo()
 class Base {
-  foo() {
-    print "Base.foo()";
+  fun foo() {
+    print ("Base.foo()");
   }
 }
 
 class Derived < Base {
-  foo() {
-    print "Derived.foo()";
+  fun foo() {
+    print ("Derived.foo()");
     super.foo();
   }
 }

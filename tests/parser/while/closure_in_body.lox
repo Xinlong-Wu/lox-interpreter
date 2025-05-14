@@ -1,4 +1,4 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 var f1;
 var f2;
@@ -7,7 +7,7 @@ var f3;
 var i = 1;
 while (i < 4) {
   var j = i;
-  fun f() { print j; }
+  fun f() { print (j); }
 
   if (j == 1) f1 = f;
   else if (j == 2) f2 = f;
@@ -16,11 +16,11 @@ while (i < 4) {
   i = i + 1;
 }
 
-// CHECK: 1
+// CHECK-PARSER: 1
 f1(); // expect: 1
 
-// CHECK: 2
+// CHECK-PARSER: 2
 f2(); // expect: 2
 
-// CHECK: 3
+// CHECK-PARSER: 3
 f3(); // expect: 3

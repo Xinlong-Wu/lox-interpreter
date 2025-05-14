@@ -1,11 +1,18 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:         BlockStmt: {
+// CHECK-PARSER-NEXT:      class Foo {
+// CHECK-PARSER-NEXT:        function returnSelf()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          return Variable: [Foo];
+// CHECK-PARSER-NEXT:        }
+// CHECK-PARSER:           }
 
 {
   class Foo {
-    returnSelf() {
+    fun returnSelf() {
       return Foo;
     }
   }
-// CHECK:       Foo
-  print Foo().returnSelf(); // expect: Foo
+  print (Foo().returnSelf()); // expect: Foo
 }

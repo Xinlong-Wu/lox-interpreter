@@ -1,4 +1,5 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: Error: Invalid assignment target. at `=`, before: `"value"`
+// CHECK-PARSER:    Error: Expect a variable name at `false`, after`var`
+// CHECK-PARSER:    Error: Invalid left Value at `Literal: [false]`, before: `"value"`
 var false = "value";

@@ -1,5 +1,5 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:     Can only call functions and classes.
+// CHECK-PARSER-LABEL:      Error: Invalid callee at `String: ["str"]`, before: `(`
 
 "str"(); // expect runtime error: Can only call functions and classes.

@@ -1,15 +1,16 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        Call: [Variable: [print](Assign: [Access: [ Variable: [foo].bar ] = String: ["bar value"]], )];
+// CHECK-PARSER-NEXT:   Call: [Variable: [print](Assign: [Access: [ Variable: [foo].baz ] = String: ["baz value"]], )];
+// CHECK-PARSER-NEXT:   Call: [Variable: [print](Access: [ Variable: [foo].bar ], )];
+// CHECK-PARSER-NEXT:   Call: [Variable: [print](Access: [ Variable: [foo].baz ], )];
 
 class Foo {}
 
 var foo = Foo();
 
-// CHECK:       bar value
-// CHECK-NEXT:  baz value
-print foo.bar = "bar value"; // expect: bar value
-print foo.baz = "baz value"; // expect: baz value
+print (foo.bar = "bar value"); // expect: bar value
+print (foo.baz = "baz value"); // expect: baz value
 
-// CHECK:       bar value
-// CHECK-NEXT:  baz value
-print foo.bar; // expect: bar value
-print foo.baz; // expect: baz value
+print (foo.bar); // expect: bar value
+print (foo.baz); // expect: baz value

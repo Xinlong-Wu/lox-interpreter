@@ -1,4 +1,4 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1
 
 class Foo {}
 
@@ -88,164 +88,166 @@ fun setFields() {
 setFields();
 
 fun printFields() {
-  print foo.apple; // expect: apple
-  print foo.apricot; // expect: apricot
-  print foo.avocado; // expect: avocado
-  print foo.banana; // expect: banana
-  print foo.bilberry; // expect: bilberry
-  print foo.blackberry; // expect: blackberry
-  print foo.blackcurrant; // expect: blackcurrant
-  print foo.blueberry; // expect: blueberry
-  print foo.boysenberry; // expect: boysenberry
-  print foo.cantaloupe; // expect: cantaloupe
-  print foo.cherimoya; // expect: cherimoya
-  print foo.cherry; // expect: cherry
-  print foo.clementine; // expect: clementine
-  print foo.cloudberry; // expect: cloudberry
-  print foo.coconut; // expect: coconut
-  print foo.cranberry; // expect: cranberry
-  print foo.currant; // expect: currant
-  print foo.damson; // expect: damson
-  print foo.date; // expect: date
-  print foo.dragonfruit; // expect: dragonfruit
-  print foo.durian; // expect: durian
-  print foo.elderberry; // expect: elderberry
-  print foo.feijoa; // expect: feijoa
-  print foo.fig; // expect: fig
-  print foo.gooseberry; // expect: gooseberry
-  print foo.grape; // expect: grape
-  print foo.grapefruit; // expect: grapefruit
-  print foo.guava; // expect: guava
-  print foo.honeydew; // expect: honeydew
-  print foo.huckleberry; // expect: huckleberry
-  print foo.jabuticaba; // expect: jabuticaba
-  print foo.jackfruit; // expect: jackfruit
-  print foo.jambul; // expect: jambul
-  print foo.jujube; // expect: jujube
-  print foo.juniper; // expect: juniper
-  print foo.kiwifruit; // expect: kiwifruit
-  print foo.kumquat; // expect: kumquat
-  print foo.lemon; // expect: lemon
-  print foo.lime; // expect: lime
-  print foo.longan; // expect: longan
-  print foo.loquat; // expect: loquat
-  print foo.lychee; // expect: lychee
-  print foo.mandarine; // expect: mandarine
-  print foo.mango; // expect: mango
-  print foo.marionberry; // expect: marionberry
-  print foo.melon; // expect: melon
-  print foo.miracle; // expect: miracle
-  print foo.mulberry; // expect: mulberry
-  print foo.nance; // expect: nance
-  print foo.nectarine; // expect: nectarine
-  print foo.olive; // expect: olive
-  print foo.orange; // expect: orange
-  print foo.papaya; // expect: papaya
-  print foo.passionfruit; // expect: passionfruit
-  print foo.peach; // expect: peach
-  print foo.pear; // expect: pear
-  print foo.persimmon; // expect: persimmon
-  print foo.physalis; // expect: physalis
-  print foo.pineapple; // expect: pineapple
-  print foo.plantain; // expect: plantain
-  print foo.plum; // expect: plum
-  print foo.plumcot; // expect: plumcot
-  print foo.pomegranate; // expect: pomegranate
-  print foo.pomelo; // expect: pomelo
-  print foo.quince; // expect: quince
-  print foo.raisin; // expect: raisin
-  print foo.rambutan; // expect: rambutan
-  print foo.raspberry; // expect: raspberry
-  print foo.redcurrant; // expect: redcurrant
-  print foo.salak; // expect: salak
-  print foo.salmonberry; // expect: salmonberry
-  print foo.satsuma; // expect: satsuma
-  print foo.strawberry; // expect: strawberry
-  print foo.tamarillo; // expect: tamarillo
-  print foo.tamarind; // expect: tamarind
-  print foo.tangerine; // expect: tangerine
-  print foo.tomato; // expect: tomato
-  print foo.watermelon; // expect: watermelon
-  print foo.yuzu; // expect: yuzu
+  print (foo.apple); // expect: apple
+  print (foo.apricot); // expect: apricot
+  print (foo.avocado); // expect: avocado
+  print (foo.banana); // expect: banana
+  print (foo.bilberry); // expect: bilberry
+  print (foo.blackberry); // expect: blackberry
+  print (foo.blackcurrant); // expect: blackcurrant
+  print (foo.blueberry); // expect: blueberry
+  print (foo.boysenberry); // expect: boysenberry
+  print (foo.cantaloupe); // expect: cantaloupe
+  print (foo.cherimoya); // expect: cherimoya
+  print (foo.cherry); // expect: cherry
+  print (foo.clementine); // expect: clementine
+  print (foo.cloudberry); // expect: cloudberry
+  print (foo.coconut); // expect: coconut
+  print (foo.cranberry); // expect: cranberry
+  print (foo.currant); // expect: currant
+  print (foo.damson); // expect: damson
+  print (foo.date); // expect: date
+  print (foo.dragonfruit); // expect: dragonfruit
+  print (foo.durian); // expect: durian
+  print (foo.elderberry); // expect: elderberry
+  print (foo.feijoa); // expect: feijoa
+  print (foo.fig); // expect: fig
+  print (foo.gooseberry); // expect: gooseberry
+  print (foo.grape); // expect: grape
+  print (foo.grapefruit); // expect: grapefruit
+  print (foo.guava); // expect: guava
+  print (foo.honeydew); // expect: honeydew
+  print (foo.huckleberry); // expect: huckleberry
+  print (foo.jabuticaba); // expect: jabuticaba
+  print (foo.jackfruit); // expect: jackfruit
+  print (foo.jambul); // expect: jambul
+  print (foo.jujube); // expect: jujube
+  print (foo.juniper); // expect: juniper
+  print (foo.kiwifruit); // expect: kiwifruit
+  print (foo.kumquat); // expect: kumquat
+  print (foo.lemon); // expect: lemon
+  print (foo.lime); // expect: lime
+  print (foo.longan); // expect: longan
+  print (foo.loquat); // expect: loquat
+  print (foo.lychee); // expect: lychee
+  print (foo.mandarine); // expect: mandarine
+  print (foo.mango); // expect: mango
+  print (foo.marionberry); // expect: marionberry
+  print (foo.melon); // expect: melon
+  print (foo.miracle); // expect: miracle
+  print (foo.mulberry); // expect: mulberry
+  print (foo.nance); // expect: nance
+  print (foo.nectarine); // expect: nectarine
+  print (foo.olive); // expect: olive
+  print (foo.orange); // expect: orange
+  print (foo.papaya); // expect: papaya
+  print (foo.passionfruit); // expect: passionfruit
+  print (foo.peach); // expect: peach
+  print (foo.pear); // expect: pear
+  print (foo.persimmon); // expect: persimmon
+  print (foo.physalis); // expect: physalis
+  print (foo.pineapple); // expect: pineapple
+  print (foo.plantain); // expect: plantain
+  print (foo.plum); // expect: plum
+  print (foo.plumcot); // expect: plumcot
+  print (foo.pomegranate); // expect: pomegranate
+  print (foo.pomelo); // expect: pomelo
+  print (foo.quince); // expect: quince
+  print (foo.raisin); // expect: raisin
+  print (foo.rambutan); // expect: rambutan
+  print (foo.raspberry); // expect: raspberry
+  print (foo.redcurrant); // expect: redcurrant
+  print (foo.salak); // expect: salak
+  print (foo.salmonberry); // expect: salmonberry
+  print (foo.satsuma); // expect: satsuma
+  print (foo.strawberry); // expect: strawberry
+  print (foo.tamarillo); // expect: tamarillo
+  print (foo.tamarind); // expect: tamarind
+  print (foo.tangerine); // expect: tangerine
+  print (foo.tomato); // expect: tomato
+  print (foo.watermelon); // expect: watermelon
+  print (foo.yuzu); // expect: yuzu
 }
 
-// CHECK:         apple
-// CHECK-NEXT:    apricot
-// CHECK-NEXT:    avocado
-// CHECK-NEXT:    banana
-// CHECK-NEXT:    bilberry
-// CHECK-NEXT:    blackberry
-// CHECK-NEXT:    blackcurrant
-// CHECK-NEXT:    blueberry
-// CHECK-NEXT:    boysenberry
-// CHECK-NEXT:    cantaloupe
-// CHECK-NEXT:    cherimoya
-// CHECK-NEXT:    cherry
-// CHECK-NEXT:    clementine
-// CHECK-NEXT:    cloudberry
-// CHECK-NEXT:    coconut
-// CHECK-NEXT:    cranberry
-// CHECK-NEXT:    currant
-// CHECK-NEXT:    damson
-// CHECK-NEXT:    date
-// CHECK-NEXT:    dragonfruit
-// CHECK-NEXT:    durian
-// CHECK-NEXT:    elderberry
-// CHECK-NEXT:    feijoa
-// CHECK-NEXT:    fig
-// CHECK-NEXT:    gooseberry
-// CHECK-NEXT:    grape
-// CHECK-NEXT:    grapefruit
-// CHECK-NEXT:    guava
-// CHECK-NEXT:    honeydew
-// CHECK-NEXT:    huckleberry
-// CHECK-NEXT:    jabuticaba
-// CHECK-NEXT:    jackfruit
-// CHECK-NEXT:    jambul
-// CHECK-NEXT:    jujube
-// CHECK-NEXT:    juniper
-// CHECK-NEXT:    kiwifruit
-// CHECK-NEXT:    kumquat
-// CHECK-NEXT:    lemon
-// CHECK-NEXT:    lime
-// CHECK-NEXT:    longan
-// CHECK-NEXT:    loquat
-// CHECK-NEXT:    lychee
-// CHECK-NEXT:    mandarine
-// CHECK-NEXT:    mango
-// CHECK-NEXT:    marionberry
-// CHECK-NEXT:    melon
-// CHECK-NEXT:    miracle
-// CHECK-NEXT:    mulberry
-// CHECK-NEXT:    nance
-// CHECK-NEXT:    nectarine
-// CHECK-NEXT:    olive
-// CHECK-NEXT:    orange
-// CHECK-NEXT:    papaya
-// CHECK-NEXT:    passionfruit
-// CHECK-NEXT:    peach
-// CHECK-NEXT:    pear
-// CHECK-NEXT:    persimmon
-// CHECK-NEXT:    physalis
-// CHECK-NEXT:    pineapple
-// CHECK-NEXT:    plantain
-// CHECK-NEXT:    plum
-// CHECK-NEXT:    plumcot
-// CHECK-NEXT:    pomegranate
-// CHECK-NEXT:    pomelo
-// CHECK-NEXT:    quince
-// CHECK-NEXT:    raisin
-// CHECK-NEXT:    rambutan
-// CHECK-NEXT:    raspberry
-// CHECK-NEXT:    redcurrant
-// CHECK-NEXT:    salak
-// CHECK-NEXT:    salmonberry
-// CHECK-NEXT:    satsuma
-// CHECK-NEXT:    strawberry
-// CHECK-NEXT:    tamarillo
-// CHECK-NEXT:    tamarind
-// CHECK-NEXT:    tangerine
-// CHECK-NEXT:    tomato
-// CHECK-NEXT:    watermelon
-// CHECK-NEXT:    yuzu
+
+// CHECK-PARSER:         apple
+// CHECK-PARSER-NEXT:    apricot
+// CHECK-PARSER-NEXT:    avocado
+// CHECK-PARSER-NEXT:    banana
+// CHECK-PARSER-NEXT:    bilberry
+// CHECK-PARSER-NEXT:    blackberry
+// CHECK-PARSER-NEXT:    blackcurrant
+// CHECK-PARSER-NEXT:    blueberry
+// CHECK-PARSER-NEXT:    boysenberry
+// CHECK-PARSER-NEXT:    cantaloupe
+// CHECK-PARSER-NEXT:    cherimoya
+// CHECK-PARSER-NEXT:    cherry
+// CHECK-PARSER-NEXT:    clementine
+// CHECK-PARSER-NEXT:    cloudberry
+// CHECK-PARSER-NEXT:    coconut
+// CHECK-PARSER-NEXT:    cranberry
+// CHECK-PARSER-NEXT:    currant
+// CHECK-PARSER-NEXT:    damson
+// CHECK-PARSER-NEXT:    date
+// CHECK-PARSER-NEXT:    dragonfruit
+// CHECK-PARSER-NEXT:    durian
+// CHECK-PARSER-NEXT:    elderberry
+// CHECK-PARSER-NEXT:    feijoa
+// CHECK-PARSER-NEXT:    fig
+// CHECK-PARSER-NEXT:    gooseberry
+// CHECK-PARSER-NEXT:    grape
+// CHECK-PARSER-NEXT:    grapefruit
+// CHECK-PARSER-NEXT:    guava
+// CHECK-PARSER-NEXT:    honeydew
+// CHECK-PARSER-NEXT:    huckleberry
+// CHECK-PARSER-NEXT:    jabuticaba
+// CHECK-PARSER-NEXT:    jackfruit
+// CHECK-PARSER-NEXT:    jambul
+// CHECK-PARSER-NEXT:    jujube
+// CHECK-PARSER-NEXT:    juniper
+// CHECK-PARSER-NEXT:    kiwifruit
+// CHECK-PARSER-NEXT:    kumquat
+// CHECK-PARSER-NEXT:    lemon
+// CHECK-PARSER-NEXT:    lime
+// CHECK-PARSER-NEXT:    longan
+// CHECK-PARSER-NEXT:    loquat
+// CHECK-PARSER-NEXT:    lychee
+// CHECK-PARSER-NEXT:    mandarine
+// CHECK-PARSER-NEXT:    mango
+// CHECK-PARSER-NEXT:    marionberry
+// CHECK-PARSER-NEXT:    melon
+// CHECK-PARSER-NEXT:    miracle
+// CHECK-PARSER-NEXT:    mulberry
+// CHECK-PARSER-NEXT:    nance
+// CHECK-PARSER-NEXT:    nectarine
+// CHECK-PARSER-NEXT:    olive
+// CHECK-PARSER-NEXT:    orange
+// CHECK-PARSER-NEXT:    papaya
+// CHECK-PARSER-NEXT:    passionfruit
+// CHECK-PARSER-NEXT:    peach
+// CHECK-PARSER-NEXT:    pear
+// CHECK-PARSER-NEXT:    persimmon
+// CHECK-PARSER-NEXT:    physalis
+// CHECK-PARSER-NEXT:    pineapple
+// CHECK-PARSER-NEXT:    plantain
+// CHECK-PARSER-NEXT:    plum
+// CHECK-PARSER-NEXT:    plumcot
+// CHECK-PARSER-NEXT:    pomegranate
+// CHECK-PARSER-NEXT:    pomelo
+// CHECK-PARSER-NEXT:    quince
+// CHECK-PARSER-NEXT:    raisin
+// CHECK-PARSER-NEXT:    rambutan
+// CHECK-PARSER-NEXT:    raspberry
+// CHECK-PARSER-NEXT:    redcurrant
+// CHECK-PARSER-NEXT:    salak
+// CHECK-PARSER-NEXT:    salmonberry
+// CHECK-PARSER-NEXT:    satsuma
+// CHECK-PARSER-NEXT:    strawberry
+// CHECK-PARSER-NEXT:    tamarillo
+// CHECK-PARSER-NEXT:    tamarind
+// CHECK-PARSER-NEXT:    tangerine
+// CHECK-PARSER-NEXT:    tomato
+// CHECK-PARSER-NEXT:    watermelon
+// CHECK-PARSER-NEXT:    yuzu
+
 printFields();

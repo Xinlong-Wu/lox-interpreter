@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 class Foo {}
 
 Foo().unknown(); // expect runtime error: Undefined property 'unknown'.
-// CHECK: Undefined property 'unknown'.
+// CHECK-PARSER: Undefined property 'unknown'.

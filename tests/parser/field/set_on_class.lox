@@ -1,5 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK:       Only instances have fields.
+// CHECK-PARSER:        Assign: [Access: [ Variable: [Foo].bar ] = String: ["value"]];
+
 class Foo {}
 Foo.bar = "value"; // expect runtime error: Only instances have fields.

@@ -1,7 +1,7 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: 15
-print 5 * 3; // expect: 15
+// CHECK-PARSER: 15
+print (5 * 3); // expect: 15
 
-// CHECK: 3.702
-print 12.34 * 0.3; // expect: 3.702
+// CHECK-PARSER: 3.702
+print (12.34 * 0.3); // expect: 3.702

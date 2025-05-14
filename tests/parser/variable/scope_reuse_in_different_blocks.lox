@@ -1,13 +1,13 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: first
-// CHECK: second
+// CHECK-PARSER: first
+// CHECK-PARSER: second
 {
   var a = "first";
-  print a; // expect: first
+  print (a); // expect: first
 }
 
 {
   var a = "second";
-  print a; // expect: second
+  print (a); // expect: second
 }

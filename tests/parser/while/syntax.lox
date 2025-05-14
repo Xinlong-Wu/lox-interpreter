@@ -1,17 +1,57 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: 1
-// CHECK: 2
-// CHECK: 3
+// CHECK-PARSER:          var c = Number: [0];
+// CHECK-PARSER-NEXT:     while (
+// CHECK-PARSER-NEXT:       condition: Binary: [Variable: [c] < Number: [3]]
+// CHECK-PARSER-NEXT:     ) BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](Assign: [Variable: [c] = Binary: [Variable: [c] + Number: [1]]], )];
+// CHECK-PARSER-NEXT:     }
+
+// CHECK-PARSER:          var a = Number: [0];
+// CHECK-PARSER-NEXT:     while (
+// CHECK-PARSER-NEXT:       condition: Binary: [Variable: [a] < Number: [3]]
+// CHECK-PARSER-NEXT:     ) BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:         Assign: [Variable: [a] = Binary: [Variable: [a] + Number: [1]]];
+// CHECK-PARSER-NEXT:     }
+
+// CHECK-PARSER:          while (
+// CHECK-PARSER-NEXT:       condition: Literal: [false]
+// CHECK-PARSER-NEXT:     ) BlockStmt: {
+// CHECK-PARSER-NEXT:         if (Literal: [true]) 
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           Number: [1];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER-NEXT:         else BlockStmt: {
+// CHECK-PARSER-NEXT:           Number: [2];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER:          }
+
+// CHECK-PARSER:          while (
+// CHECK-PARSER-NEXT:       condition: Literal: [false]
+// CHECK-PARSER-NEXT:     ) BlockStmt: {
+// CHECK-PARSER-NEXT:         while (
+// CHECK-PARSER-NEXT:           condition: Literal: [true]
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Number: [1];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER:          }
+
+// CHECK-PARSER:          while (
+// CHECK-PARSER-NEXT:       condition: Literal: [false]
+// CHECK-PARSER-NEXT:     ) BlockStmt: {
+// CHECK-PARSER-NEXT:         for (
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Number: [1];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER:          }
+
 var c = 0;
-while (c < 3) print c = c + 1;
+while (c < 3) print (c = c + 1);
 
-// CHECK: 0
-// CHECK: 1
-// CHECK: 2
 var a = 0;
 while (a < 3) {
-  print a;
+  print (a);
   a = a + 1;
 }
 

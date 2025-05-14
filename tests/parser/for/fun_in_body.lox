@@ -1,4 +1,5 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
-// CHECK: Error: Expect expression. at `fun`, before: `foo`
-// CHECK: Expect token ; after `)`, but got: `{`
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:    Error: Expect expression. at `fun`, before: `foo` 
+
 for (;;) fun foo() {}

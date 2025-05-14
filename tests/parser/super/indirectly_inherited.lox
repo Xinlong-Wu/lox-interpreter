@@ -1,18 +1,18 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: C.foo()
-// CHECK: A.foo()
+// CHECK-PARSER: C.foo()
+// CHECK-PARSER: A.foo()
 class A {
-  foo() {
-    print "A.foo()";
+  fun foo() {
+    print ("A.foo()");
   }
 }
 
 class B < A {}
 
 class C < B {
-  foo() {
-    print "C.foo()";
+  fun foo() {
+    print ("C.foo()");
     super.foo();
   }
 }

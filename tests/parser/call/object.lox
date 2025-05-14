@@ -1,8 +1,10 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:     Can only call functions and classes.
+// CHECK-PARSER-LABEL:     class Foo {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:           var foo = Call: [Variable: [Foo]()];
+// CHECK-PARSER-NEXT:      Call: [Variable: [foo]()];
 
 class Foo {}
-
 var foo = Foo();
 foo(); // expect runtime error: Can only call functions and classes.

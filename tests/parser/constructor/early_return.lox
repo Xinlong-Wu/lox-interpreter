@@ -1,14 +1,22 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:         class Foo {
+// CHECK-PARSER-NEXT:      function init()
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["init"], )];
+// CHECK-PARSER-NEXT:           return ;
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["nope"], )];
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:         var foo = Call: [Variable: [Foo]()];
+// CHECK-PARSER-NEXT:    Call: [Variable: [print](Variable: [foo], )];
 
 class Foo {
   init() {
-    print "init";
+    print ("init");
     return;
-    print "nope";
+    print ("nope");
   }
 }
 
-// CHECK:       init
-// CHECK-NEXT: Foo instance
 var foo = Foo(); // expect: init
-print foo; // expect: Foo instance
+print (foo); // expect: Foo instance

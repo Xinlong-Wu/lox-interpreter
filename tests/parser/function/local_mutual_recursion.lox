@@ -1,8 +1,16 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:          function isEven(Variable: [n], ) 
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       if (Binary: [Variable: [n] == Number: [0]])
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         return Literal: [true];
+// CHECK-PARSER-NEXT:       }
+
 {
   fun isEven(n) {
     if (n == 0) return true;
-    // CHECK: Undefined variable 'isOdd'.
+    // Undefined variable 'isOdd'.
     return isOdd(n - 1);
   }
 

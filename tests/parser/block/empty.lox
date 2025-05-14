@@ -1,4 +1,16 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER-LABEL:     BlockStmt: {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER-LABEL:     if (Literal: [true]) 
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER-LABEL:     if (Literal: [false]) 
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER-NEXT:      else BlockStmt: {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER-LABEL:      Call: [Variable: [print](String: ["ok"], )];
 
 {} // By itself.
 
@@ -6,5 +18,4 @@
 if (true) {}
 if (false) {} else {}
 
-// CHECK-LABEL: ok
-print "ok"; // expect: ok
+print ("ok"); // expect: ok

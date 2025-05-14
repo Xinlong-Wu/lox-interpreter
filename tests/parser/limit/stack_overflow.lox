@@ -1,4 +1,4 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 fun foo() {
   var a1;
@@ -20,5 +20,5 @@ fun foo() {
   foo(); // expect runtime error: Stack overflow.
 }
 
-// CHECK: Stack overflow
+// CHECK-PARSER: Stack overflow
 foo();

@@ -116,9 +116,9 @@ namespace lox
             << TokenError(token).getErrorMsg()
             << " at "
             << token;
-        if (token != currentToken) {
+        if (token != previousToken) {
             os  << ", after"
-                << currentToken;
+                << previousToken;
         }
         error = true;
         std::cerr << os.str() << std::endl;
@@ -148,9 +148,9 @@ namespace lox
         os << expr->getLoc()
             << " Error: "
             << message
-            << " at ";
+            << " at `";
         expr->print(os);
-        os  << ", before: "
+        os  << "`, before: "
         << previousToken;
         error = true;
         std::cerr << os.str() << std::endl;

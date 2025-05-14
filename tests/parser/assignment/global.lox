@@ -1,15 +1,17 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:     before
-// CHECK-LABEL:     after
-// CHECK-LABEL:     arg
-// CHECK-LABEL:     arg
+// CHECK-PARSER-LABEL:     var a = String: ["before"];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:      Assign: [Variable: [a] = String: ["after"]];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Assign: [Variable: [a] = String: ["arg"]], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
 
 var a = "before";
-print a; // expect: before
+print (a);
 
 a = "after";
-print a; // expect: after
+print (a);
 
-print a = "arg"; // expect: arg
-print a; // expect: arg
+print (a = "arg");
+print (a);

@@ -1,15 +1,26 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:          class Foo {
+// CHECK-PARSER-NEXT:       function init(Variable: [arg], )
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](Binary: [Binary: [String: ["Foo.init("] + Variable: [arg]] + String: [")"]], )];
+// CHECK-PARSER-NEXT:         Assign: [Access: [ this.field ] = String: ["init"]];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER:          function init()
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["not initializer"], )];
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER:         Call: [Variable: [init]()];
 
 class Foo {
   init(arg) {
-    print "Foo.init(" + arg + ")";
+    print ("Foo.init(" + arg + ")");
     this.field = "init";
   }
 }
 
 fun init() {
-  print "not initializer";
+  print ("not initializer");
 }
 
-// CHECK:       not initializer
 init(); // expect: not initializer

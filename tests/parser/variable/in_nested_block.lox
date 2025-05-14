@@ -1,9 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: outer
+// CHECK-PARSER: outer
 {
   var a = "outer";
   {
-    print a; // expect: outer
+    print (a); // expect: outer
   }
 }

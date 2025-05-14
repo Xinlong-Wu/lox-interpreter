@@ -1,4 +1,5 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK:       Only instances have fields.
+// // CHECK-PARSER:     Error: Except a accessable left Value at `Number: [123]`, before: `.`
+
 123.foo = "value"; // expect runtime error: Only instances have fields.

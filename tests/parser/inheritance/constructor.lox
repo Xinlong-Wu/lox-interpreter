@@ -1,17 +1,34 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        class A {
+// CHECK-PARSER-NEXT:     function test()
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](Access: [ this.field ], )];
+// CHECK-PARSER-NEXT:     }
+
+// CHECK-PARSER:          function init(Variable: [param], )
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       Assign: [Access: [ this.field ] = Variable: [param]];
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER:        }
+
+// CHECK-PARSER:        class B < A {
+// CHECK-PARSER-NEXT:   }
+
+// CHECK-PARSER:        var b = Call: [Variable: [B](String: ["value"], )];
+// CHECK-PARSER-NEXT:     Call: [Access: [ Variable: [b].test ]()];
 
 class A {
   init(param) {
     this.field = param;
   }
 
-  test() {
-    print this.field;
+  fun test() {
+    print (this.field);
   }
 }
 
 class B < A {}
 
 var b = B("value");
-// CHECK: value
 b.test(); // expect: value

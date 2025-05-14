@@ -1,12 +1,21 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:        for (
+// CHECK-PARSER-NEXT:   ) BlockStmt: {
+// CHECK-PARSER-NEXT:     var i = String: ["i"];
+// CHECK-PARSER-NEXT:     function g()
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [i], )];
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER:          return Variable: [g];
+
 fun f() {
   for (;;) {
     var i = "i";
-    fun g() { print i; }
+    fun g() { print (i); }
     return g;
   }
 }
 
 var h = f();
-// CHECK: i
 h();

@@ -1,8 +1,8 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
 class Foo {
-  method() { }
+  fun method() { }
 }
 var foo = Foo();
-print foo.method; // expect: <fn method>
-// CHECK: <fn method>
+print (foo.method); // expect: <fn method>
+// CHECK-PARSER: <fn method>

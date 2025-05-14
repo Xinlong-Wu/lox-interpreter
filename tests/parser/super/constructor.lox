@@ -1,16 +1,16 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Derived.init()
-// CHECK: Base.init(a, b)
+// CHECK-PARSER: Derived.init()
+// CHECK-PARSER: Base.init(a, b)
 class Base {
   init(a, b) {
-    print "Base.init(" + a + ", " + b + ")";
+    print ("Base.init(" + a + ", " + b + ")");
   }
 }
 
 class Derived < Base {
   init() {
-    print "Derived.init()";
+    print ("Derived.init()");
     super.init("a", "b");
   }
 }

@@ -1,11 +1,25 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:         BlockStmt: {
+// CHECK-PARSER-NEXT:      var f;
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:        var a = String: ["a"];
+// CHECK-PARSER-NEXT:        function f_()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:        }
+// CHECK-PARSER:             Assign: [Variable: [f] = Variable: [f_]];
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:           BlockStmt: {
+// CHECK-PARSER-NEXT:        var b = String: ["b"];
+// CHECK-PARSER-NEXT:        Call: [Variable: [f]()];
 
 {
   var f;
 
   {
     var a = "a";
-    fun f_() { print a; }
+    fun f_() { print (a); }
     f = f_;
   }
 
@@ -13,7 +27,6 @@
     // Since a is out of scope, the local slot will be reused by b. Make sure
     // that f still closes over a.
     var b = "b";
-// CHECK:       a
     f(); // expect: a
   }
 }

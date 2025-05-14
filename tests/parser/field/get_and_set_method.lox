@@ -1,14 +1,32 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER-LABEL:   class Foo {
+// CHECK-PARSER-NEXT:     function other(Variable: [a], )
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["other"], )];
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER:          function method(Variable: [a], )
+// CHECK-PARSER-NEXT:     BlockStmt: {
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["method"], )];
+// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:     }
+
+// CHECK-PARSER:         var foo = Call: [Variable: [Foo]()];
+// CHECK-PARSER-NEXT:    var method = Access: [ Variable: [foo].method ];
+// CHECK-PARSER-NEXT:    Assign: [Access: [ Variable: [foo].method ] = Access: [ Variable: [foo].other ]];
+// CHECK-PARSER-NEXT:    Call: [Access: [ Variable: [foo].method ](Number: [1], )];
+// CHECK-PARSER-NEXT:    Call: [Variable: [method](Number: [2], )];
 
 // Bound methods have identity equality.
 class Foo {
-  method(a) {
-    print "method";
-    print a;
+  fun method(a) {
+    print ("method");
+    print (a);
   }
-  other(a) {
-    print "other";
-    print a;
+  fun other(a) {
+    print ("other");
+    print (a);
   }
 }
 
@@ -18,15 +36,11 @@ var method = foo.method;
 // Setting a property shadows the instance method.
 foo.method = foo.other;
 
-// CHECK:     other
-// CHECK-NEXT: 1
 foo.method(1);
 // expect: other
 // expect: 1
 
 // The old method handle still points to the original method.
-// CHECK:     method
-// CHECK-NEXT: 2
 method(2);
 // expect: method
 // expect: 2

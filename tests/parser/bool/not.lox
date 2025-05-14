@@ -1,9 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:     false
-// CHECK-NEXT:      true
-// CHECK-NEXT:      true
+// CHECK-PARSER-LABEL:     Call: [Variable: [print](Unary: [! Literal: [true]], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Unary: [! Literal: [false]], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Unary: [! Unary: [! Literal: [true]]], )];
 
-print !true;    // expect: false
-print !false;   // expect: true
-print !!true;   // expect: true
+print (!true);    // expect: false
+print (!false);   // expect: true
+print (!!true);   // expect: true

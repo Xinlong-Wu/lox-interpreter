@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Can't use 'this' outside of a class.
+// CHECK-PARSER: Can't use 'this' outside of a class.
 fun foo() {
   this; // Error at 'this': Can't use 'this' outside of a class.
 }

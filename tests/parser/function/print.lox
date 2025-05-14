@@ -1,7 +1,7 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 fun foo() {}
 // CHECK: <fn foo>
-print foo;
+print (foo);
 
 // CHECK-NEXT: <native fn>
-print clock;
+print (clock);

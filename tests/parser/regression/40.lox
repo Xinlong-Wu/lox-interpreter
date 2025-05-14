@@ -1,10 +1,10 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: false
+// CHECK-PARSER: false
 fun caller(g) {
   g();
   // g should be a function, not nil.
-  print g == nil; // expect: false
+  print (g == nil); // expect: false
 }
 
 fun callCaller() {

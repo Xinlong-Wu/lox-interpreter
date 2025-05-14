@@ -1,8 +1,8 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
 class Foo {
-  bar() {}
+  fun bar() {}
 }
 
-print Foo().bar(); // expect: nil
-// CHECK: nil
+print (Foo().bar()); // expect: nil
+// CHECK-PARSER: nil

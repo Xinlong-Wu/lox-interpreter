@@ -1,10 +1,10 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 class Foo {
-  method() {
-    print method; // expect runtime error: Undefined variable 'method'.
+  fun method() {
+    print (method); // expect runtime error: Undefined variable 'method'.
   }
 }
 
 Foo().method();
-// CHECK: Undefined variable 'method'.
+// CHECK-PARSER: Undefined variable 'method'.

@@ -1,18 +1,29 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:         BlockStmt: {
+// CHECK-PARSER-NEXT:      var foo = String: ["closure"];
+// CHECK-PARSER-NEXT:      function f()
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](Variable: [foo], )];
+// CHECK-PARSER-NEXT:           var foo = String: ["shadow"];
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](Variable: [foo], )];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER:              Call: [Variable: [print](Variable: [foo], )];
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:           Call: [Variable: [f]()];
+// CHECK-PARSER-NEXT:    }
 
 {
   var foo = "closure";
   fun f() {
     {
-      print foo; // expect: closure
+      print (foo); // expect: closure
       var foo = "shadow";
-      print foo; // expect: shadow
+      print (foo); // expect: shadow
     }
-    print foo; // expect: closure
+    print (foo); // expect: closure
   }
 
-  // CHECK:       closure
-  // CHECK:       shadow
-  // CHECK:       closure
   f();
 }

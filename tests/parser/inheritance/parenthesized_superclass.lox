@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
 class Foo {}
 
-// CHECK: Error: Expect superclass name. at `(`
+// CHECK-PARSER:        Error: Expect superclass name at `(`, after`<`
 class Bar < (Foo) {} // [line 4] Error at '(': Expect superclass name.

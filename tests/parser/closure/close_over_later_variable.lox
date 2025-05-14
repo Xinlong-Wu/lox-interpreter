@@ -1,19 +1,30 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 // This is a regression test. There was a bug where if an upvalue for an
 // earlier local (here "a") was captured *after* a later one ("b"), then it
 // would crash because it walked to the end of the upvalue list (correct), but
 // then didn't handle not finding the variable.
 
+// CHECK-PARSER:             function f()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          var a = String: ["a"];
+// CHECK-PARSER-NEXT:          var b = String: ["b"];
+// CHECK-PARSER-NEXT:          function g()
+// CHECK-PARSER-NEXT:          BlockStmt: {
+// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [b], )];
+// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:          }
+// CHECK-PARSER:               Call: [Variable: [g]()];
+// CHECK-PARSER-NEXT:          }
+// CHECK-PARSER:             Call: [Variable: [f]()];
+
 fun f() {
   var a = "a";
   var b = "b";
   fun g() {
-    print b; // expect: b
-    print a; // expect: a
+    print (b); // expect: b
+    print (a); // expect: a
   }
   g();
 }
 
-// CHECK:       b
-// CHECK:       a
 f();

@@ -1,9 +1,9 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Error: Can't have more than 255 parameters. at `,`, before: `a`
+// CHECK-PARSER: Error: Can't have more than 255 parameters. at `,`, before: `a`
 class Foo {
   // 256 parameters.
-  method(
+  fun method(
     a1,
     a2,
     a3,

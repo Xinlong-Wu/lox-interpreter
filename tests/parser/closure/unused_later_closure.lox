@@ -1,4 +1,4 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
 // This is a regression test. When closing upvalues for discarded locals, it
 // wouldn't make sure it discarded the upvalue for the correct stack slot.
@@ -6,6 +6,25 @@
 // Here we create two locals that can be closed over, but only the first one
 // actually is. When "b" goes out of scope, we need to make sure we don't
 // prematurely close "a".
+
+// CHECK-PARSER:         var closure;
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:        var a = String: ["a"];
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          var b = String: ["b"];
+// CHECK-PARSER-NEXT:          function returnA()
+// CHECK-PARSER-NEXT:          BlockStmt: {
+// CHECK-PARSER-NEXT:             return Variable: [a];
+// CHECK-PARSER-NEXT:          }
+// CHECK-PARSER:               Assign: [Variable: [closure] = Variable: [returnA]];
+// CHECK-PARSER-NEXT:          if (Literal: [false])
+// CHECK-PARSER-NEXT:          BlockStmt: {
+// CHECK-PARSER-NEXT:            function returnB()
+// CHECK-PARSER-NEXT:            BlockStmt: {
+// CHECK-PARSER-NEXT:               return Variable: [b];
+// CHECK-PARSER-NEXT:            }
+// CHECK-PARSER:           Call: [Variable: [print](Call: [Variable: [closure]()], )];
+
 var closure;
 
 {
@@ -26,6 +45,5 @@ var closure;
     }
   }
 
-// CHECK:       a
-  print closure(); // expect: a
+  print (closure()); // expect: a
 }

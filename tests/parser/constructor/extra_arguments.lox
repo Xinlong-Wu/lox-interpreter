@@ -1,4 +1,13 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:         class Foo {
+// CHECK-PARSER:           function init(Variable: [a], Variable: [b], )
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:          Assign: [Access: [ this.a ] = Variable: [a]];
+// CHECK-PARSER-NEXT:          Assign: [Access: [ this.b ] = Variable: [b]];
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:         }
+// CHECK-PARSER:         var foo = Call: [Variable: [Foo](Number: [1], Number: [2], Number: [3], Number: [4], )];
 
 class Foo {
   init(a, b) {
@@ -7,5 +16,4 @@ class Foo {
   }
 }
 
-// CHECK:       Expected 2 arguments but got 4.
 var foo = Foo(1, 2, 3, 4); // expect runtime error: Expected 2 arguments but got 4.

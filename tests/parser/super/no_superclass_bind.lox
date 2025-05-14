@@ -1,8 +1,8 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Can't use 'super' in a class with no superclass.
+// CHECK-PARSER: Can't use 'super' in a class with no superclass.
 class Base {
-  foo() {
+  fun foo() {
     super.doesNotExist; // Error at 'super': Can't use 'super' in a class with no superclass.
   }
 }

@@ -1,10 +1,10 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: ()
-print "(" + "" + ")";   // expect: ()
+// CHECK-PARSER: ()
+print ("(" + "" + ")");   // expect: ()
 
-// CHECK: a string
-print "a string"; // expect: a string
+// CHECK-PARSER: a string
+print ("a string"); // expect: a string
 
-// CHECK: A~¶Þॐஃ
-print "A~¶Þॐஃ"; // expect: A~¶Þॐஃ
+// CHECK-PARSER: A~¶Þॐஃ
+print ("A~¶Þॐஃ"); // expect: A~¶Þॐஃ

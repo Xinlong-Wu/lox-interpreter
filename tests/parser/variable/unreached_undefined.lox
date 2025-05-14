@@ -1,8 +1,8 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: ok
+// CHECK-PARSER: ok
 if (false) {
-  print notDefined;
+  print (notDefined);
 }
 
-print "ok"; // expect: ok
+print ("ok"); // expect: ok

@@ -1,26 +1,21 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: false
-// CHECK: 1
-// CHECK: false
+// CHECK-PARSER:        Binary: [( Assign: [Variable: [a] = Literal: [true]] ) and Binary: [( Assign: [Variable: [b] = Literal: [false]] ) and ( Assign: [Variable: [a] = String: ["bad"]] )]];
+
 // Return the first non-true argument.
-print false and 1; // expect: false
-print true and 1; // expect: 1
-print 1 and 2 and false; // expect: false
+print (false and 1); // expect: false
+print (true and 1); // expect: 1
+print (1 and 2 and false); // expect: false
 
-// CHECK: true
-// CHECK: 3
 // Return the last argument if all are true.
-print 1 and true; // expect: true
-print 1 and 2 and 3; // expect: 3
+print (1 and true); // expect: true
+print (1 and 2 and 3); // expect: 3
 
-// CHECK: true
-// CHECK: false
 // Short-circuit at the first false argument.
 var a = "before";
 var b = "before";
 (a = true) and
     (b = false) and
     (a = "bad");
-print a; // expect: true
-print b; // expect: false
+print (a); // expect: true
+print (b); // expect: false

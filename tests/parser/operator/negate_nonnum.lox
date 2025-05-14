@@ -1,4 +1,4 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Operand must be a number.
+// CHECK-PARSER: Operand must be a number.
 -"s"; // expect runtime error: Operand must be a number.

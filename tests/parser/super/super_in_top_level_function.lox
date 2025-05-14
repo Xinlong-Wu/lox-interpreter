@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Can't use 'super' outside of a class.
+// CHECK-PARSER: Can't use 'super' outside of a class.
 super.bar(); // Error at 'super': Can't use 'super' outside of a class.
 fun foo() {
 }

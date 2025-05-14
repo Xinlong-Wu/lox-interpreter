@@ -1,26 +1,26 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: false
-print !true;     // expect: false
+// CHECK-PARSER: false
+print (!true);     // expect: false
 
-// CHECK: true
-print !false;    // expect: true
+// CHECK-PARSER: true
+print (!false);    // expect: true
 
-// CHECK: true
-print !!true;    // expect: true
+// CHECK-PARSER: true
+print (!!true);    // expect: true
 
-// CHECK: false
-print !123;      // expect: false
+// CHECK-PARSER: false
+print (!123);      // expect: false
 
-// CHECK: false
-print !0;        // expect: false
+// CHECK-PARSER: false
+print (!0);        // expect: false
 
-// CHECK: true
-print !nil;     // expect: true
+// CHECK-PARSER: true
+print (!nil);     // expect: true
 
-// CHECK: false
-print !"";       // expect: false
+// CHECK-PARSER: false
+print (!"");       // expect: false
 
-// CHECK: false
+// CHECK-PARSER: false
 fun foo() {}
-print !foo;      // expect: false
+print (!foo);      // expect: false

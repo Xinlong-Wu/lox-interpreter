@@ -1,9 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: 1
-// CHECK: 2
-// CHECK: 3
+// CHECK-PARSER: 1
+// CHECK-PARSER: 2
+// CHECK-PARSER: 3
 var a = "1
 2
 3";
-print a;
+print (a);

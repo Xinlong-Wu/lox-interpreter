@@ -1,22 +1,22 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Base.method()
-// CHECK: Base.method()
+// CHECK-PARSER: Base.method()
+// CHECK-PARSER: Base.method()
 class Base {
-  method() {
-    print "Base.method()";
+  fun method() {
+    print ("Base.method()");
   }
 }
 
 class Derived < Base {
-  method() {
+  fun method() {
     super.method();
   }
 }
 
 class OtherBase {
-  method() {
-    print "OtherBase.method()";
+  fun method() {
+    print ("OtherBase.method()");
   }
 }
 

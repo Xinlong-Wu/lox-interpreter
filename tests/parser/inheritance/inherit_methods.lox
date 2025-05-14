@@ -1,19 +1,19 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
 class Foo {
-  methodOnFoo() { print "foo"; }
-  override() { print "foo"; }
+  fun methodOnFoo() { print ("foo"); }
+  fun override() { print ("foo"); }
 }
 
 class Bar < Foo {
-  methodOnBar() { print "bar"; }
-  override() { print "bar"; }
+  fun methodOnBar() { print ("bar"); }
+  fun override() { print ("bar"); }
 }
 
 var bar = Bar();
-// CHECK: foo
+// CHECK-PARSER: foo
 bar.methodOnFoo(); // expect: foo
-// CHECK: bar
+// CHECK-PARSER: bar
 bar.methodOnBar(); // expect: bar
-// CHECK: bar
+// CHECK-PARSER: bar
 bar.override(); // expect: bar

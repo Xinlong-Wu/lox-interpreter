@@ -1,5 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:     Error: Invalid assignment target. at `=`, before: `"value"`
+// CHECK-PARSER-LABEL:     var a = String: ["a"];
+// CHECK-PARSER-NEXT:      Assign: [( Variable: [a] ) = String: ["value"]];
 var a = "a";
 (a) = "value";

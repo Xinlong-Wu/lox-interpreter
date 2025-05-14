@@ -1,7 +1,7 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: a
-// CHECK: b
+// CHECK-PARSER: a
+// CHECK-PARSER: b
 class Base {
   init(a) {
     this.a = a;
@@ -16,5 +16,5 @@ class Derived < Base {
 }
 
 var derived = Derived("a", "b");
-print derived.a; // expect: a
-print derived.b; // expect: b
+print (derived.a); // expect: a
+print (derived.b); // expect: b

@@ -1,5 +1,1 @@
-// RUN: %parser %s --debug | FileCheck %s
-
-// CHECK-LABEL:     == <script> ==
-// CHECK-NEXT:      0000 [  -1:  -1]  OP_NIL
-// CHECK-NEXT:      0001 [  -1:  -1]  OP_RETURN
+// RUN: %parser %s

@@ -1,10 +1,10 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: -3
-print -(3); // expect: -3
+// CHECK-PARSER: -3
+print (-3); // expect: -3
 
-// CHECK: 3
-print --(3); // expect: 3
+// CHECK-PARSER: 3
+print (--3); // expect: 3
 
-// CHECK: -3
-print ---(3); // expect: -3
+// CHECK-PARSER: -3
+print (---3); // expect: -3

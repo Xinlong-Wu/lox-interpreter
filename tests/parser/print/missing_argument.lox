@@ -1,4 +1,4 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: Expect expression.
+// CHECK-PARSER:    Variable: [print];
 print; // expect runtime error: Expect expression.

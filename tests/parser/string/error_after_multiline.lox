@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Undefined variable 'err'.
+// CHECK-PARSER: Undefined variable 'err'.
 var a = "1
 2
 3

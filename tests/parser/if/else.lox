@@ -1,11 +1,32 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: good
-// CHECK: good
-// CHECK: block
+// CHECK-PARSER:            if (Literal: [true]) 
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["good"], )];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       else BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["bad"], )];
+// CHECK-PARSER-NEXT:       }
+
+// CHECK-PARSER:            if (Literal: [false])
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["bad"], )];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       else BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["good"], )];
+// CHECK-PARSER-NEXT:       }
+
+// CHECK-PARSER:            if (Literal: [false])
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Literal: [nil];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       else BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["block"], )];
+// CHECK-PARSER-NEXT:       }
+
 // Evaluate the 'else' expression if the condition is false.
-if (true) print "good"; else print "bad"; // expect: good
-if (false) print "bad"; else print "good"; // expect: good
+if (true) print ("good"); else print ("bad"); // expect: good
+if (false) print ("bad"); else print ("good"); // expect: good
 
 // Allow block body.
-if (false) nil; else { print "block"; } // expect: block
+if (false) nil; else { print ("block"); } // expect: block

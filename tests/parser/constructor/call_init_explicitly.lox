@@ -1,21 +1,30 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:           class Foo {
+// CHECK-PARSER-NEXT:        function init(Variable: [arg], )
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](Binary: [Binary: [String: ["Foo.init("] + Variable: [arg]] + String: [")"]], )];
+// CHECK-PARSER-NEXT:           Assign: [Access: [ this.field ] = String: ["init"]];
+// CHECK-PARSER-NEXT:         }
+
+// CHECK-PARSER:           var foo = Call: [Variable: [Foo](String: ["one"], )];
+// CHECK-PARSER-NEXT:      Assign: [Access: [ Variable: [foo].field ] = String: ["field"]];
+// CHECK-PARSER-NEXT:      var foo2 = Call: [Access: [ Variable: [foo].init ](String: ["two"], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [foo2], )];
+// CHECK-PARSER-NEXT:      Call: [Variable: [print](Access: [ Variable: [foo].field ], )];
 
 class Foo {
   init(arg) {
-    print "Foo.init(" + arg + ")";
+    print ("Foo.init(" + arg + ")");
     this.field = "init";
   }
 }
 
-// CHECK:       Foo.init(one)
 var foo = Foo("one"); // expect: Foo.init(one)
 foo.field = "field";
 
-// CHECK-NEXT: Foo.init(two)
-// CHECK-NEXT: Foo instance
 var foo2 = foo.init("two"); // expect: Foo.init(two)
-print foo2; // expect: Foo instance
+print (foo2); // expect: Foo instance
 
-// CHECK-NEXT: init
 // Make sure init() doesn't create a fresh instance.
-print foo.field; // expect: init
+print (foo.field); // expect: init

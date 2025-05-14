@@ -1,43 +1,48 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:         14
-// CHECK-LABEL:          8
-// CHECK-LABEL:          4
-// CHECK-LABEL:          0
-// CHECK-LABEL:          0
-// CHECK-LABEL:          0
-// CHECK-LABEL:          0
-// CHECK-LABEL:          4
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [2] + Binary: [Number: [3] * Number: [4]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [20] - Binary: [Number: [3] * Number: [4]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [2] + Binary: [Number: [6] / Number: [3]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [2] - Binary: [Number: [6] / Number: [3]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Literal: [false] == Binary: [Number: [2] < Number: [1]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Literal: [false] == Binary: [Number: [1] > Number: [2]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Literal: [false] == Binary: [Number: [2] <= Number: [1]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Literal: [false] == Binary: [Number: [1] >= Number: [2]]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [1] - Number: [1]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [1] - Number: [1]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [1] - Number: [1]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](Binary: [Number: [1] - Number: [1]], )];
+// CHECK-PARSER-LABEL:         Call: [Variable: [print](( Binary: [Number: [2] * ( Binary: [Number: [6] - ( Binary: [Number: [2] + Number: [2]] )] )] ), )];
 
 // * has higher precedence than +.
-print 2 + 3 * 4; // expect: 14
+print (2 + 3 * 4); // expect: 14
 
 // * has higher precedence than -.
-print 20 - 3 * 4; // expect: 8
+print (20 - 3 * 4); // expect: 8
 
 // / has higher precedence than +.
-print 2 + 6 / 3; // expect: 4
+print (2 + 6 / 3); // expect: 4
 
 // / has higher precedence than -.
-print 2 - 6 / 3; // expect: 0
+print (2 - 6 / 3); // expect: 0
 
 // < has higher precedence than ==.
-print false == 2 < 1; // expect: true
+print (false == 2 < 1); // expect: true
 
 // > has higher precedence than ==.
-print false == 1 > 2; // expect: true
+print (false == 1 > 2); // expect: true
 
 // <= has higher precedence than ==.
-print false == 2 <= 1; // expect: true
+print (false == 2 <= 1); // expect: true
 
 // >= has higher precedence than ==.
-print false == 1 >= 2; // expect: true
+print (false == 1 >= 2); // expect: true
 
 // 1 - 1 is not space-sensitive.
-print 1 - 1; // expect: 0
-print 1 -1;  // expect: 0
-print 1- 1;  // expect: 0
-print 1-1;   // expect: 0
+print (1 - 1); // expect: 0
+print (1 -1);  // expect: 0
+print (1- 1);  // expect: 0
+print (1-1);   // expect: 0
 
 // Using () for grouping.
-print (2 * (6 - (2 + 2))); // expect: 4
+print ((2 * (6 - (2 + 2)))); // expect: 4

@@ -1,16 +1,16 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Foo
+// CHECK-PARSER: Foo
 class Foo {
-  getClosure() {
+  fun getClosure() {
     fun closure() {
       return this.toString();
     }
     return closure;
   }
 
-  toString() { return "Foo"; }
+  fun toString() { return "Foo"; }
 }
 
 var closure = Foo().getClosure();
-print closure(); // expect: Foo
+print (closure()); // expect: Foo

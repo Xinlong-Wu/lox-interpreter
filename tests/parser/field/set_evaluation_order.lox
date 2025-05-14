@@ -1,5 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: Undefined variable 'undefined1'.
+// CHECK-PARSER:        Assign: [Access: [ Variable: [undefined1].bar ] = Variable: [undefined2]];
+
 undefined1.bar // expect runtime error: Undefined variable 'undefined1'.
   = undefined2;

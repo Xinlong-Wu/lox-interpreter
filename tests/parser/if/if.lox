@@ -1,15 +1,33 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: good
-// CHECK: block
-// CHECK: true
+// CHECK-PARSER:            if (Literal: [true]) 
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["good"], )];
+// CHECK-PARSER-NEXT:       }
+
+// CHECK-PARSER:           if (Literal: [false])
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["bad"], )];
+// CHECK-PARSER-NEXT:       }
+
+// CHECK-PARSER:            if (Literal: [true]) 
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["block"], )];
+// CHECK-PARSER-NEXT:       }
+
+// CHECK-PARSER:           var a = Literal: [false];
+// CHECK-PARSER-NEXT:      if (Assign: [Variable: [a] = Literal: [true]]) 
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:        Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:      }
+
 // Evaluate the 'then' expression if the condition is true.
-if (true) print "good"; // expect: good
-if (false) print "bad";
+if (true) print ("good"); // expect: good
+if (false) print ("bad");
 
 // Allow block body.
-if (true) { print "block"; } // expect: block
+if (true) { print ("block"); } // expect: block
 
 // Assignment in if condition.
 var a = false;
-if (a = true) print a; // expect: true
+if (a = true) print (a); // expect: true

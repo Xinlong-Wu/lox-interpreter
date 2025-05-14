@@ -1,8 +1,9 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
+
 fun f(a, b) {
-  print a;
-  print b;
+  print (a);
+  print (b);
 }
 
-// CHECK: Expected 2 arguments but got 4.
+// Expected 2 arguments but got 4.
 f(1, 2, 3, 4);

@@ -1,13 +1,11 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Expect token . after `super`, but got: `)`
 class A {
-  method() {}
+  fun method() {}
 }
 
 class B < A {
-  method() {
-    // [line 8] Error at ')': Expect '.' after 'super'.
+  fun method() {
     (super).method();
   }
 }

@@ -1,17 +1,97 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:              for (
+// CHECK-PARSER-NEXT:           initializer: var c = Number: [0];
+// CHECK-PARSER-NEXT:           condition: Binary: [Variable: [c] < Number: [3]];
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Call: [Variable: [print](Assign: [Variable: [c] = Binary: [Variable: [c] + Number: [1]]], )];
+// CHECK-PARSER-NEXT:           }
+
+// CHECK-PARSER:              for (
+// CHECK-PARSER-NEXT:           initializer: var a = Number: [0];
+// CHECK-PARSER-NEXT:           condition: Binary: [Variable: [a] < Number: [3]];
+// CHECK-PARSER-NEXT:           increment: Assign: [Variable: [a] = Binary: [Variable: [a] + Number: [1]]]
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:           }
+
+// CHECK-PARSER:              function foo()
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           for (
+// CHECK-PARSER-NEXT:           ) BlockStmt: {
+// CHECK-PARSER-NEXT:             return String: ["done"];
+// CHECK-PARSER-NEXT:           }
+// CHECK-PARSER:              }
+
+// CHECK-PARSER:              Call: [Variable: [print](Call: [Variable: [foo]()], )];
+// CHECK-PARSER-NEXT:         var i = Number: [0];
+// CHECK-PARSER-NEXT:         for (
+// CHECK-PARSER-NEXT:           condition: Binary: [Variable: [i] < Number: [2]];
+// CHECK-PARSER-NEXT:           increment: Assign: [Variable: [i] = Binary: [Variable: [i] + Number: [1]]]
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Call: [Variable: [print](Variable: [i], )];
+// CHECK-PARSER-NEXT:         }
+
+// CHECK-PARSER:              function bar()
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           for (
+// CHECK-PARSER-NEXT:             initializer: var i = Number: [0];
+// CHECK-PARSER-NEXT:             increment: Assign: [Variable: [i] = Binary: [Variable: [i] + Number: [1]]]
+// CHECK-PARSER-NEXT:           ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Call: [Variable: [print](Variable: [i], )];
+// CHECK-PARSER-NEXT:             if (Binary: [Variable: [i] >= Number: [2]]) 
+// CHECK-PARSER-NEXT:             BlockStmt: {
+// CHECK-PARSER-NEXT:               return ;
+// CHECK-PARSER-NEXT:             }
+// CHECK-PARSER:                }
+// CHECK-PARSER:              }
+
+// CHECK-PARSER:              Call: [Variable: [bar]()];
+// CHECK-PARSER-NEXT:         for (
+// CHECK-PARSER-NEXT:           initializer: var i = Number: [0];
+// CHECK-PARSER-NEXT:           condition: Binary: [Variable: [i] < Number: [2]];
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Call: [Variable: [print](Variable: [i], )];
+// CHECK-PARSER-NEXT:             Assign: [Variable: [i] = Binary: [Variable: [i] + Number: [1]]];
+// CHECK-PARSER-NEXT:         }
+
+// CHECK-PARSER:              for (
+// CHECK-PARSER-NEXT:           condition: Literal: [false]; 
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             if (Literal: [true]) 
+// CHECK-PARSER-NEXT:             BlockStmt: {
+// CHECK-PARSER-NEXT:               Number: [1];
+// CHECK-PARSER-NEXT:             }
+// CHECK-PARSER-NEXT:             else BlockStmt: {
+// CHECK-PARSER-NEXT:               Number: [2];
+// CHECK-PARSER-NEXT:             }
+// CHECK-PARSER:                }
+
+// CHECK-PARSER:              for (
+// CHECK-PARSER-NEXT:           condition: Literal: [false];
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:             while (
+// CHECK-PARSER-NEXT:               condition: Literal: [true]
+// CHECK-PARSER-NEXT:             ) BlockStmt: {
+// CHECK-PARSER-NEXT:               Number: [1];
+// CHECK-PARSER-NEXT:             }
+// CHECK-PARSER:                }
+
+// CHECK-PARSER:              for (
+// CHECK-PARSER-NEXT:           condition: Literal: [false];
+// CHECK-PARSER-NEXT:         ) BlockStmt: {
+// CHECK-PARSER-NEXT:           for (
+// CHECK-PARSER-NEXT:           ) BlockStmt: {
+// CHECK-PARSER-NEXT:             Number: [1];
+// CHECK-PARSER-NEXT:           }
+// CHECK-PARSER:              }
 
 // Single-expression body.
-// CHECK: 1
-// CHECK-NEXT: 2
-// CHECK-NEXT: 3
-for (var c = 0; c < 3;) print c = c + 1;
+for (var c = 0; c < 3;) print (c = c + 1);
 
 // Block body.
-// CHECK-NEXT: 0
-// CHECK-NEXT: 1
-// CHECK-NEXT: 2
 for (var a = 0; a < 3; a = a + 1) {
-  print a;
+  print (a);
 }
 
 // No clauses.
@@ -19,32 +99,24 @@ fun foo() {
   for (;;) return "done";
 }
 
-// CHECK-NEXT: done
-print foo();
+print (foo());
 
 // No variable.
 var i = 0;
-// CHECK-NEXT: 0
-// CHECK-NEXT: 1
-for (; i < 2; i = i + 1) print i;
+for (; i < 2; i = i + 1) print (i);
 
 // No condition.
 fun bar() {
   for (var i = 0;; i = i + 1) {
-    print i;
+    print (i);
     if (i >= 2) return;
   }
 }
-// CHECK-NEXT: 0
-// CHECK-NEXT: 1
-// CHECK-NEXT: 2
 bar();
 
 // No increment.
-// CHECK-NEXT: 0
-// CHECK-NEXT: 1
 for (var i = 0; i < 2;) {
-  print i;
+  print (i);
   i = i + 1;
 }
 

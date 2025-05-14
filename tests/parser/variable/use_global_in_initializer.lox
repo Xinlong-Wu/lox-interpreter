@@ -1,6 +1,6 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: value
+// CHECK-PARSER: value
 var a = "value";
 var a = a;
-print a; // expect: value
+print (a); // expect: value

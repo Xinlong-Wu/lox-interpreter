@@ -1,4 +1,14 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER-LABEL:     class A {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER-LABEL:     function f()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          class B < A {
+// CHECK-PARSER-NEXT:          }
+// CHECK-PARSER:               return Variable: [B];
+// CHECK-PARSER-NEXT:        }
+// CHECK-PARSER:           Call: [Variable: [print](Call: [Variable: [f]()], )];
 
 class A {}
 
@@ -7,5 +17,4 @@ fun f() {
   return B;
 }
 
-// CHECK:       B
-print f(); // expect: B
+print (f()); // expect: B

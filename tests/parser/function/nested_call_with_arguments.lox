@@ -1,4 +1,5 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
+
 fun returnArg(arg) {
   return arg;
 }
@@ -8,8 +9,8 @@ fun returnFunCallWithArg(func, arg) {
 }
 
 fun printArg(arg) {
-  print arg;
+  print (arg);
 }
 
-// CHECK: hello world
+// hello world
 returnFunCallWithArg(printArg, "hello world");

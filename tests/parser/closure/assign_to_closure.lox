@@ -1,4 +1,30 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+
+// CHECK-PARSER:           var f;
+// CHECK-PARSER-NEXT:      var g;
+// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-NEXT:        var local = String: ["local"];
+// CHECK-PARSER-NEXT:        function f_()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          Call: [Variable: [print](Variable: [local], )];
+// CHECK-PARSER-NEXT:          Assign: [Variable: [local] = String: ["after f"]];
+// CHECK-PARSER-NEXT:          Call: [Variable: [print](Variable: [local], )];
+// CHECK-PARSER-NEXT:        }
+
+// CHECK-PARSER:             Assign: [Variable: [f] = Variable: [f_]];
+// CHECK-PARSER-NEXT:        function g_()
+// CHECK-PARSER-NEXT:        BlockStmt: {
+// CHECK-PARSER-NEXT:          Call: [Variable: [print](Variable: [local], )];
+// CHECK-PARSER-NEXT:          Assign: [Variable: [local] = String: ["after g"]];
+// CHECK-PARSER-NEXT:          Call: [Variable: [print](Variable: [local], )];
+// CHECK-PARSER-NEXT:        }
+
+// CHECK-PARSER:             Assign: [Variable: [g] = Variable: [g_]];
+// CHECK-PARSER-NEXT:      }
+
+// CHECK-PARSER:           Call: [Variable: [f]()];
+// CHECK-PARSER-NEXT:      Call: [Variable: [g]()];
 
 var f;
 var g;
@@ -6,24 +32,20 @@ var g;
 {
   var local = "local";
   fun f_() {
-    print local;
+    print (local);
     local = "after f";
-    print local;
+    print (local);
   }
   f = f_;
 
   fun g_() {
-    print local;
+    print (local);
     local = "after g";
-    print local;
+    print (local);
   }
   g = g_;
 }
 
-// CHECK:       local
-// CHECK:       after f
 f();
 
-// CHECK:       after f
-// CHECK:       after g
 g();

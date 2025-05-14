@@ -1,6 +1,9 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER-LABEL:     class Foo {
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:           Call: [Variable: [print](Variable: [Foo], )];
 
 class Foo {}
 
-// CHECK:       Foo
-print Foo; // expect: Foo
+print (Foo); // expect: Foo

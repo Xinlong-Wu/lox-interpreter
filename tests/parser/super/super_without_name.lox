@@ -1,10 +1,10 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: Expect superclass method name.
+// CHECK-PARSER:      Error: Expect property name  at `;`, after`.`
 class A {}
 
 class B < A {
-  method() {
+  fun method() {
     super.; // Error at ';': Expect superclass method name.
   }
 }

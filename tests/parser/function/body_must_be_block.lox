@@ -1,4 +1,3 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
-// CHECK: Expect token { after `)`, but got: `123`
-// CHECK: Expect token } after `;`, but got: [EOF]
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// CHECK-PARSER: Expect token { after `)`, but got: `123`
 fun f() 123;

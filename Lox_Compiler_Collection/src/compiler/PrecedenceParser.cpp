@@ -144,7 +144,16 @@ namespace
     }
 
     InfixHandler(dot) {
-        parser.parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect property name after '.'.");
+        if (!left->isValidLValue()) {
+            parser.parseError(left, "Except a accessable left Value");
+            return left;
+        }
+
+        parser.parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect property name");
+        if (parser.getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
+            return left;
+        }
+
         // uint8_t name = parser.identifierConstant(parser.getPreviousToken());
         lox::Token symName = parser.getPreviousToken();
 
@@ -155,9 +164,9 @@ namespace
         // Compile the right operand.
         std::unique_ptr<ExprBase> value = parsePrecedence(parser, PREC_ASSIGNMENT);
 
-        if (!lox::AssignExpr::isValidLValue(left)) {
+        if (!left->isValidLValue()) {
             parser.parseError(left, "Invalid left Value");
-            return nullptr;
+            return left;
         }
 
         // Emit the operator instruction.
@@ -175,6 +184,11 @@ namespace
     }
 
     InfixHandler(call) {
+        if (!left->isCallable()) {
+            parser.parseError(left, "Invalid callee");
+            return left;
+        }
+
         std::vector<std::unique_ptr<ExprBase>> args = {};
         if (!parser.parseOptional(lox::TokenType::TOKEN_RIGHT_PAREN)) {
             args = argumentList(parser);

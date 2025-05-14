@@ -1,19 +1,19 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: A.method(arg)
+// CHECK-PARSER: A.method(arg)
 class A {
-  method(arg) {
-    print "A.method(" + arg + ")";
+  fun method(arg) {
+    print ("A.method(" + arg + ")");
   }
 }
 
 class B < A {
-  getClosure() {
+  fun getClosure() {
     return super.method;
   }
 
-  method(arg) {
-    print "B.method(" + arg + ")";
+  fun method(arg) {
+    print ("B.method(" + arg + ")");
   }
 }
 

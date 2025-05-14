@@ -1,20 +1,20 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Base
+// CHECK-PARSER: Base
 class Base {
-  toString() { return "Base"; }
+  fun toString() { return "Base"; }
 }
 
 class Derived < Base {
-  getClosure() {
+  fun getClosure() {
     fun closure() {
       return super.toString();
     }
     return closure;
   }
 
-  toString() { return "Derived"; }
+  fun toString() { return "Derived"; }
 }
 
 var closure = Derived().getClosure();
-print closure(); // expect: Base
+print (closure()); // expect: Base

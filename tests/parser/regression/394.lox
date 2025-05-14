@@ -1,6 +1,6 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: B
+// CHECK-PARSER: B
 class A {}
 class B < A {}
-print B; // expect: B
+print (B); // expect: B

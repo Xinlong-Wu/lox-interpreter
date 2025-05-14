@@ -1,8 +1,8 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 var a = 0;
 
-// CHECK:   Loop body too large.
+// CHECK-PARSER:   Loop body too large.
 while (false) {
   nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil;
   nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil;

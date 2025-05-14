@@ -1,10 +1,10 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: shadow
-// CHECK: global
+// CHECK-PARSER: shadow
+// CHECK-PARSER: global
 var a = "global";
 {
   var a = "shadow";
-  print a; // expect: shadow
+  print (a); // expect: shadow
 }
-print a; // expect: global
+print (a); // expect: global

@@ -1,6 +1,6 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s
 
-print 123 + 456; // expect: 579
-// CHECK: 579
-print "str" + "ing"; // expect: string
-// CHECK: string
+print (123 + 456); // expect: 579
+// CHECK-PARSER: 579
+print ("str" + "ing"); // expect: string
+// CHECK-PARSER: string

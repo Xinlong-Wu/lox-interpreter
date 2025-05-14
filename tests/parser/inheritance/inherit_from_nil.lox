@@ -1,6 +1,6 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
 var Nil = nil;
 
-// CHECK: Superclass must be a class.
+// CHECK-PARSER:        Error: Invalid superclass. at `Nil`, before: `{`
 class Foo < Nil {} // expect runtime error: Superclass must be a class.

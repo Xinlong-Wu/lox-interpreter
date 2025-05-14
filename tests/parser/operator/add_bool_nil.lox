@@ -1,4 +1,4 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
 true + nil; // expect runtime error: Operands must be two numbers or two strings.
-// CHECK: Operands must be two numbers or two strings.
+// CHECK-PARSER: Operands must be two numbers or two strings.

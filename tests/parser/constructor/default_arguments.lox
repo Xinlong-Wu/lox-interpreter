@@ -1,6 +1,9 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:           class Foo {
+// CHECK-PARSER:           }
+// CHECK-PARSER:           var foo = Call: [Variable: [Foo](Number: [1], Number: [2], Number: [3], )];
 
 class Foo {}
 
-// CHECK:       Expected 0 arguments but got 3.
 var foo = Foo(1, 2, 3); // expect runtime error: Expected 0 arguments but got 3.

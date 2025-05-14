@@ -1,13 +1,17 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-LABEL:   inner
-// CHECK-NEXT:    outer
+// CHECK-PARSER-LABEL:   var a = String: ["outer"];
+// CHECK-PARSER-NEXT:    BlockStmt: {
+// CHECK-PARSER-NEXT:    var a = String: ["inner"];
+// CHECK-PARSER-NEXT:    Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-LABEL:   }
+// CHECK-PARSER:         Call: [Variable: [print](Variable: [a], )];
 
 var a = "outer";
 
 {
   var a = "inner";
-  print a; // expect: inner
+  print (a); // expect: inner
 }
 
-print a; // expect: outer
+print (a); // expect: outer

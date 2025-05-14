@@ -1,11 +1,11 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: variable
+// CHECK-PARSER: variable
 var foo = "variable";
 
 class Foo {
-  method() {
-    print foo;
+  fun method() {
+    print (foo);
   }
 }
 

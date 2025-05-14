@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/lox-parser",
-            "args": ["tests/parser/constructor/return_in_nested_function.lox"],
+            "args": ["tests/parser/while/class_in_body.lox"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

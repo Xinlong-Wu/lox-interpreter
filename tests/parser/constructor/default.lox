@@ -1,7 +1,11 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:           class Foo {
+// CHECK-PARSER:           }
+// CHECK-PARSER:           var foo = Call: [Variable: [Foo]()];
+// CHECK-PARSER:           Call: [Variable: [print](Variable: [foo], )];
 
 class Foo {}
 
 var foo = Foo();
-// CHECK:       Foo instance
-print foo; // expect: Foo instance
+print (foo); // expect: Foo instance

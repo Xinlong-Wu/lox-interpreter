@@ -1,16 +1,26 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:              var f;
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           var a = String: ["a"];
+// CHECK-PARSER-NEXT:           function f_()
+// CHECK-PARSER-NEXT:           BlockStmt: {
+// CHECK-PARSER-NEXT:              Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:              Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER-NEXT:           }
+// CHECK-PARSER:                Assign: [Variable: [f] = Variable: [f_]];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER:              Call: [Variable: [f]()];
 
 var f;
 
 {
   var a = "a";
   fun f_() {
-    print a;
-    print a;
+    print (a);
+    print (a);
   }
   f = f_;
 }
 
-// CHECK:       a
-// CHECK:       a
 f();

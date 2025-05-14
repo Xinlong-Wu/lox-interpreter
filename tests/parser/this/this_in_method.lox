@@ -1,9 +1,9 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: baz
+// CHECK-PARSER: baz
 class Foo {
-  bar() { return this; }
-  baz() { return "baz"; }
+  fun bar() { return this; }
+  fun baz() { return "baz"; }
 }
 
-print Foo().bar().baz(); // expect: baz
+print (Foo().bar().baz()); // expect: baz

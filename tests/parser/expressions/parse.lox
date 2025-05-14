@@ -1,3 +1,6 @@
-// Note: This is just for the expression parsing chapter which prints the AST.
-(5 - (3 - 1)) + -1
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+
+// CHECK-PARSER:   Binary: [( Binary: [Number: [5] - ( Binary: [Number: [3] - Number: [1]] )] ) + Unary: [- Number: [1]]];
+
+(5 - (3 - 1)) + -1;
 // expect: (+ (group (- 5.0 (group (- 3.0 1.0)))) (- 1.0))

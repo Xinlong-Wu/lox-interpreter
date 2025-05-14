@@ -1,8 +1,8 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: Foo
+// CHECK-PARSER: Foo
 class Foo {
-  getClosure() {
+  fun getClosure() {
     fun f() {
       fun g() {
         fun h() {
@@ -15,8 +15,8 @@ class Foo {
     return f;
   }
 
-  toString() { return "Foo"; }
+  fun toString() { return "Foo"; }
 }
 
 var closure = Foo().getClosure();
-print closure()()(); // expect: Foo
+print (closure()()()); // expect: Foo

@@ -1,4 +1,4 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
 // Unicode characters are allowed in comments.
 //
@@ -8,5 +8,5 @@
 // Other stuff: ឃᢆ᯽₪ℜ↩⊗┺░
 // Emoji: ☃☺♣
 
-// CHECK:       ok
-print "ok"; // expect: ok
+// CHECK-PARSER:       Call: [Variable: [print](String: ["ok"], )];
+print ("ok"); // expect: ok

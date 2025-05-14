@@ -1,6 +1,27 @@
-// RUN: %parser %s | FileCheck %s
+// RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK: good
+// CHECK-PARSER:        if (Literal: [true]) 
+// CHECK-PARSER-NEXT:   BlockStmt: {
+// CHECK-PARSER-NEXT:       if (Literal: [false])
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["bad"], )];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       else BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["good"], )];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER:        }
+
+// CHECK-PARSER:        if (Literal: [false])
+// CHECK-PARSER-NEXT:   BlockStmt: {
+// CHECK-PARSER-NEXT:       if (Literal: [true])
+// CHECK-PARSER-NEXT:       BlockStmt: {
+// CHECK-PARSER-NEXT:         Call: [Variable: [print](String: ["bad"], )];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       else BlockStmt: {
+// CHECK-PARSER-NEXT:              Call: [Variable: [print](String: ["bad"], )];
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER:        }
+
 // A dangling else binds to the right-most if.
-if (true) if (false) print "bad"; else print "good"; // expect: good
-if (false) if (true) print "bad"; else print "bad";
+if (true) if (false) print ("bad"); else print ("good"); // expect: good
+if (false) if (true) print ("bad"); else print ("bad");

@@ -1,28 +1,28 @@
-// RUN: %parser %s 2>&1 | FileCheck %s
+// RUN: %parser %s
 
-// CHECK: A
+// CHECK-PARSER: A
 class A {
-  say() {
-    print "A";
+  fun say() {
+    print ("A");
   }
 }
 
 class B < A {
-  getClosure() {
+  fun getClosure() {
     fun closure() {
       super.say();
     }
     return closure;
   }
 
-  say() {
-    print "B";
+  fun say() {
+    print ("B");
   }
 }
 
 class C < B {
-  say() {
-    print "C";
+  fun say() {
+    print ("C");
   }
 }
 
