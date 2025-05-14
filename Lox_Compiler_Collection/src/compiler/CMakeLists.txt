@@ -4,15 +4,15 @@ add_library(LoxCompiler STATIC
 )
 
 add_library(LoxParser STATIC
-    Parser.cpp
-    PrecedenceParser.cpp
-    StatementBuilder.cpp
+    parser/Parser.cpp
+    parser/PrecedenceParser.cpp
+    parser/StatementBuilder.cpp
 )
 
 add_library(LoxToken STATIC
-    Token.cpp
+    scanner/Token.cpp
 )
 
 add_library(LoxScanner STATIC
-    Scanner.cpp
+    scanner/Scanner.cpp
 )
