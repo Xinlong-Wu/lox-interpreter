@@ -1,4 +1,4 @@
-#include "compiler/Parser.h"
+#include "Compiler/Parser/Parser.h"
 
 namespace lox
 {
@@ -219,7 +219,7 @@ namespace lox
             statements.push_back(std::move(stmt));
             body = std::make_unique<BlockStmt>(std::move(statements), this->getPreviousToken().getLoction());
         }
-    
+
         return std::make_unique<ForStmt>(std::move(initializer), std::move(condition), std::move(increment), std::move(body));
     }
 

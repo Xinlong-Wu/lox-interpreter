@@ -8,9 +8,9 @@
 #include "common.h"
 #include "memory.h"
 #include "disassembler/lineinfo.h"
-#include "compiler/Token.h"
-#include "compiler/compiler.h"
-#include "compiler/Parser.h"
+#include "Compiler/Scanner/Token.h"
+#include "Compiler/compiler.h"
+#include "Compiler/Parser/Parser.h"
 #include "vm/object.h"
 
 #ifdef DEBUG_PRINT_CODE

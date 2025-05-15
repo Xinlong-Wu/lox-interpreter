@@ -1,7 +1,7 @@
 #ifndef STMT_H
 #define STMT_H
 
-#include "compiler/ast/Expr.h"
+#include "Compiler/AST/Expr.h"
 
 #include <vector>
 #include <unordered_map>

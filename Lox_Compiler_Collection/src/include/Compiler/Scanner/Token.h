@@ -1,8 +1,8 @@
 #ifndef LOX_COMPILER_TOKEN_H
 #define LOX_COMPILER_TOKEN_H
 
-#include "compiler/TokenType.h"
-#include "compiler/Location.h"
+#include "Compiler/Scanner/TokenType.h"
+#include "Compiler/Location.h"
 
 #include <string>
 #include <optional>

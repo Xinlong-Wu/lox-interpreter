@@ -2,10 +2,10 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "compiler/Token.h"
-#include "compiler/Scanner.h"
-#include "compiler/ast/Stmt.h"
-#include "compiler/ast/Expr.h"
+#include "Compiler/Scanner/Token.h"
+#include "Compiler/Scanner/Scanner.h"
+#include "Compiler/AST/Stmt.h"
+#include "Compiler/AST/Expr.h"
 
 namespace lox
 {

@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "vm/object.h"
-#include "compiler/compiler.h"
+#include "Compiler/compiler.h"
 
 #ifdef __cplusplus
 extern "C" {

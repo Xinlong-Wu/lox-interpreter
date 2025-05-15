@@ -1,4 +1,4 @@
-#include "compiler/TokenType.h"
+#include "Compiler/Scanner/TokenType.h"
 
 namespace lox
 {

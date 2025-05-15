@@ -40,7 +40,7 @@ namespace lox
         std::string method;
     public:
         SuperExpr(lox::Token token) : ExprBase(token.getLoction()) {}
-        
+
         virtual bool isValidLValue() const override { return true; }
         virtual bool isCallable() const override { return true; }
         void print(std::ostream &os) const override {

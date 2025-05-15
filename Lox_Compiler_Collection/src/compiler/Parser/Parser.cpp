@@ -1,5 +1,5 @@
-#include "compiler/Parser.h"
-#include "compiler/Token.h"
+#include "Compiler/Parser/Parser.h"
+#include "Compiler/Scanner/Token.h"
 #include <sstream>
 #include <unordered_map>
 

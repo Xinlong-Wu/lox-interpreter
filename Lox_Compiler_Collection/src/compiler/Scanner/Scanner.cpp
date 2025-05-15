@@ -1,4 +1,4 @@
-#include "compiler/Scanner.h"
+#include "Compiler/Scanner/Scanner.h"
 
 namespace lox
 {
