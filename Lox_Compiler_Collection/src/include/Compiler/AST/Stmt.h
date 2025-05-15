@@ -9,7 +9,10 @@
 
 namespace lox
 {
-    class StmtBase
+    #define ACCEPT() \
+        void accept(ASTVisitor& visitor) override
+
+    class StmtBase : public ASTNode 
     {
     private:
         Location loc;
@@ -26,6 +29,8 @@ namespace lox
             this->print(std::cout);
             std::cout << std::endl;
         }
+
+        virtual void accept(ASTVisitor& visitor) = 0;
     };
 
     class ExpressionStmt : public StmtBase
@@ -41,6 +46,8 @@ namespace lox
             expression->print(os);
             os << ";";
         }
+
+        ACCEPT();
     };
 
     class DeclarationStmt : public StmtBase
@@ -52,6 +59,8 @@ namespace lox
         ~DeclarationStmt() override = default;
 
         const std::string &getName() const { return name; }
+
+        ACCEPT();
     };
 
     class VarDeclStmt : public DeclarationStmt
@@ -72,6 +81,8 @@ namespace lox
             }
             os << ";";
         }
+
+        ACCEPT();
     };
 
     class BlockStmt : public StmtBase
@@ -94,6 +105,8 @@ namespace lox
             }
             os << "}" << std::endl;
         }
+
+        ACCEPT();
     };
 
     class FunctionDecl : public DeclarationStmt
@@ -117,6 +130,8 @@ namespace lox
             body->print(os);
             os << std::endl;
         }
+
+        ACCEPT();
     };
 
     class ClassDeclStmt : public DeclarationStmt
@@ -160,6 +175,8 @@ namespace lox
             }
             os << "}" << std::endl;
         }
+
+        ACCEPT();
     };
 
     class IfStmt : public StmtBase
@@ -185,6 +202,8 @@ namespace lox
                 elseBlock->print(os);
             }
         }
+
+        ACCEPT();
     };
 
     class ReturnStmt : public StmtBase
@@ -205,6 +224,8 @@ namespace lox
             }
             os << ";";
         }
+
+        ACCEPT();
     };
 
     class ForStmt : public StmtBase
@@ -242,6 +263,8 @@ namespace lox
             os << ") ";
             body->print(os);
         }
+
+        ACCEPT();
     };
 
     class WhileStmt : public ForStmt
@@ -258,8 +281,11 @@ namespace lox
             os << std::endl << ") ";
             body->print(os);
         }
+
+        ACCEPT();
     };
 
+    #undef ACCEPT
 } // namespace lox
 
 #endif // STMT_H

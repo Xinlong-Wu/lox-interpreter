@@ -1,4 +1,5 @@
 #include "Compiler/Parser/Parser.h"
+#include "Compiler/SemanticAnalyzer/SemanticAnalyzer.h"
 
 #include<iostream>
 
@@ -39,6 +40,7 @@ static int runFile(const char *path)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
+    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer();
 
     parser.advance();
 
@@ -46,6 +48,7 @@ static int runFile(const char *path)
     {
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
         if (stmt != nullptr){
+            stmt->accept(sa);
             stmt->dump();
         }
     }
@@ -62,6 +65,7 @@ static int runFile(const char *path)
 static void repl()
 {
     char line[1024];
+    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer();
     for (;;)
     {
         printf("> ");
@@ -77,7 +81,13 @@ static void repl()
         parser.advance();
 
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
+        
+        if (parser.hasError()) {
+            continue;
+        }
+
         if (stmt != nullptr){
+            stmt->accept(sa);
             stmt->dump();
         }
         std::cout << std::endl;

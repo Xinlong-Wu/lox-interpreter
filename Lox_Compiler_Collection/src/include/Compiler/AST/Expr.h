@@ -1,13 +1,30 @@
 #ifndef EXPR_H
 #define EXPR_H
 
+#include "Compiler/AST/ASTNode.h"
+#include "Compiler/Scanner/Token.h"
+
 #include <iostream>
 #include <vector>
 #include <memory>
 
 namespace lox
 {
-    class ExprBase {
+    enum Type {
+        TYPE_NONE,
+        TYPE_NUMBER,
+        TYPE_STRING,
+        TYPE_BOOL,
+        TYPE_OBJECT,
+        TYPE_FUNCTION,
+        TYPE_CLASS,
+        TYPE_INSTANCE
+    };
+
+    #define ACCEPT() \
+        void accept(ASTVisitor& visitor) override
+
+    class ExprBase : public ASTNode {
     public:
         ExprBase(Location location) : loc(location) {};
         virtual ~ExprBase() = default;
@@ -20,8 +37,14 @@ namespace lox
             this->print(std::cout);
             std::cout << std::endl;
         }
+
+        void setType(lox::Type type) { this->type = type; }
+        lox::Type getType() const { return type; }
+
     protected:
         Location loc;
+        lox::Type type = lox::Type::TYPE_NONE;
+
     };
 
     class ThisExpr : public ExprBase {
@@ -33,6 +56,8 @@ namespace lox
         void print(std::ostream &os) const override {
             os << "this";
         }
+
+        ACCEPT();
     };
 
     class SuperExpr : public ExprBase {
@@ -46,6 +71,8 @@ namespace lox
         void print(std::ostream &os) const override {
             os << "super";
         }
+
+        ACCEPT();
     };
 
     class GroupingExpr : public ExprBase {
@@ -54,7 +81,7 @@ namespace lox
     public:
         GroupingExpr(std::unique_ptr<ExprBase> expression) : ExprBase(expression->getLoc()), expression(std::move(expression)) {}
 
-        const ExprBase* getExpression() const { return expression.get(); }
+        ExprBase* getExpression() const { return expression.get(); }
 
         virtual bool isValidLValue() const override { return expression->isValidLValue(); }
         virtual bool isCallable() const override { return expression->isCallable(); }
@@ -63,6 +90,8 @@ namespace lox
             expression->print(os);
             os << " )";
         }
+
+        ACCEPT();
     };
 
     class CallExpr : public ExprBase {
@@ -77,7 +106,8 @@ namespace lox
         // Depending on the return type of the callee, we don't know if the call is callable or not.
         // So we return true here.
         virtual bool isCallable() const override { return true; }
-        const ExprBase* getCallee() const { return callee.get(); }
+        ExprBase* getCallee() const { return callee.get(); }
+        const std::vector<std::unique_ptr<ExprBase>>& getArguments() const { return arguments; }
         const ExprBase* getArgument(size_t index) const {
             if (index < arguments.size()) {
                 return arguments[index].get();
@@ -95,6 +125,8 @@ namespace lox
             }
             os << ")]";
         }
+
+        ACCEPT();
     };
 
     class VariableExpr : public ExprBase {
@@ -113,6 +145,8 @@ namespace lox
         void print(std::ostream &os) const override {
             os << "Variable: [" << name << "]";
         }
+
+        ACCEPT();
     };
 
     class LiteralExpr : public ExprBase {
@@ -127,6 +161,8 @@ namespace lox
         void print(std::ostream &os) const override {
             os << "Literal: [" << value << "]";
         }
+
+        ACCEPT();
     };
 
     class NumberExpr : public LiteralExpr {
@@ -140,6 +176,8 @@ namespace lox
         void print(std::ostream &os) const override {
             os << "Number: [" << getValue() << "]";
         }
+
+        ACCEPT();
     };
 
     class StringExpr : public LiteralExpr {
@@ -149,6 +187,8 @@ namespace lox
         void print(std::ostream &os) const override {
             os << "String: [" << getValue() << "]";
         }
+
+        ACCEPT();
     };
 
     class UnaryExpr : public ExprBase {
@@ -158,7 +198,7 @@ namespace lox
     public:
         UnaryExpr(TokenType kind, std::unique_ptr<ExprBase> right) : ExprBase(right->getLoc()), right(std::move(right)), kind(kind) {}
 
-        const ExprBase* getRight() const { return right.get(); }
+        ExprBase* getRight() const { return right.get(); }
         TokenType getKind() const { return kind; }
 
         void print(std::ostream &os) const override {
@@ -166,6 +206,8 @@ namespace lox
             right->print(os);
             os << "]";
         }
+
+        ACCEPT();
     };
 
     class AccessExpr : public ExprBase {
@@ -187,6 +229,8 @@ namespace lox
             left->print(os);
             os << "." << property << " ]";
         }
+
+        ACCEPT();
     };
 
     class BinaryExpr : public ExprBase {
@@ -212,6 +256,8 @@ namespace lox
             right->print(os);
             os << "]";
         }
+
+        ACCEPT();
     };
 
     class AssignExpr : public BinaryExpr {
@@ -226,7 +272,11 @@ namespace lox
             right->print(os);
             os << "]";
         }
+
+        ACCEPT();
     };
+
+    #undef ACCEPT
 } // namespace lox
 
 
