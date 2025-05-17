@@ -6,7 +6,6 @@ target_link_libraries(lox-parser
 #    LoxVM
 #    LoxCompiler
     LoxParser
-    LoxToken
     LoxScanner
     LoxDebug
 #    LoxUtils

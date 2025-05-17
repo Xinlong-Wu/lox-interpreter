@@ -3,6 +3,7 @@
 
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/Scanner/Token.h"
+#include "Compiler/SemanticAnalyzer/SymbolTable.h"
 
 #include <iostream>
 #include <vector>
@@ -10,17 +11,6 @@
 
 namespace lox
 {
-    enum Type {
-        TYPE_NONE,
-        TYPE_NUMBER,
-        TYPE_STRING,
-        TYPE_BOOL,
-        TYPE_OBJECT,
-        TYPE_FUNCTION,
-        TYPE_CLASS,
-        TYPE_INSTANCE
-    };
-
     #define ACCEPT() \
         void accept(ASTVisitor& visitor) override
 
@@ -38,12 +28,15 @@ namespace lox
             std::cout << std::endl;
         }
 
-        void setType(lox::Type type) { this->type = type; }
-        lox::Type getType() const { return type; }
+        virtual void setType(lox::Type type) { this->type = type; }
+        virtual lox::Type getType() const { return type; }
+        virtual bool isa(lox::Type type) const {
+            return this->type == type;
+        }
 
     protected:
         Location loc;
-        lox::Type type = lox::Type::TYPE_NONE;
+        lox::Type type = lox::Type::TYPE_UNKNOWN;
 
     };
 
@@ -108,7 +101,7 @@ namespace lox
         virtual bool isCallable() const override { return true; }
         ExprBase* getCallee() const { return callee.get(); }
         const std::vector<std::unique_ptr<ExprBase>>& getArguments() const { return arguments; }
-        const ExprBase* getArgument(size_t index) const {
+        ExprBase* getArgument(size_t index) const {
             if (index < arguments.size()) {
                 return arguments[index].get();
             }
@@ -130,20 +123,39 @@ namespace lox
     };
 
     class VariableExpr : public ExprBase {
-    protected:
+    private: 
         std::string name;
+    protected:
+        Symbol *symbol;
     public:
-        VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)) {}
+        VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)), symbol(nullptr) {}
         VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
 
-        const std::string &getSymName() const { return name; }
+        const std::string &getSymName() const { return symbol != nullptr ? symbol->name : name; }
+        Symbol *getSymbol() { return symbol; }
+        void setSymbol(Symbol *symbol) { this->symbol = symbol; this->type = symbol->type; }
+
+        virtual void setType(lox::Type type) override { 
+            if (symbol != nullptr) {
+                symbol->type = type;
+            }
+            ExprBase::setType(type);
+        }
+        virtual lox::Type getType() const override { return symbol != nullptr ? symbol->type : type; }
+
         virtual bool isValidLValue() const override { return true; }
         // depending on the return type of the variable, we don't know if the variable is callable or not.
         // So we return true here.
         virtual bool isCallable() const override { return true; }
 
         void print(std::ostream &os) const override {
-            os << "Variable: [" << name << "]";
+            os << "Variable: [";
+            if (symbol != nullptr) {
+                os << *symbol;
+            } else {
+                os << name;
+            }
+            os << "]";
         }
 
         ACCEPT();
@@ -242,8 +254,8 @@ namespace lox
         BinaryExpr(TokenType kind, std::unique_ptr<ExprBase> left, std::unique_ptr<ExprBase> right)
             : ExprBase(right->getLoc()), left(std::move(left)), right(std::move(right)), kind(kind) {}
 
-        virtual const ExprBase* getLeft() const { return left.get(); }
-        virtual const ExprBase* getRight() const { return right.get(); }
+        virtual ExprBase* getLeft() const { return left.get(); }
+        virtual ExprBase* getRight() const { return right.get(); }
 
         // depending on the return type of the left and right
         // we return true here.

@@ -1,4 +1,6 @@
 #include "Common.h"
+#include "Compiler/ErrorReporter.h"
+#include "Compiler/SemanticAnalyzer/SymbolTable.h"
 #include "Compiler/SemanticAnalyzer/SemanticAnalyzer.h"
 
 #include <utility>
@@ -9,10 +11,12 @@ namespace lox
         void SemanticAnalyzer::visit(name& expr)
 
     DEFINE_VISIT(ExpressionStmt) {
-        // expr.getExpression()->accept(*this);
-        // expr.setType(expr.getExpression()->getType());
-
-        std::cout << "Visiting ExpressionStmt" << std::endl;
+        expr.getExpression()->accept(*this);
+        if (expr.getExpression()->getType() == lox::Type::TYPE_UNKNOWN) {
+            ErrorReporter::reportError(expr, "Expression type is unknown");
+            return;
+        }
+        expr.setType(expr.getExpression()->getType());
     }
 
     DEFINE_VISIT(DeclarationStmt) {
@@ -22,9 +26,20 @@ namespace lox
     }
 
     DEFINE_VISIT(VarDeclStmt) {
-        // Handle the variable declaration statement
-        // For example, check if the variable is already declared
-        std::cout << "Visiting VarDeclStmt" << std::endl;
+        if (expr.getInitializer()) {
+            if (expr.getInitializer()->isa(lox::Type::TYPE_UNKNOWN)) {
+                // Handle the case where the initializer is not yet evaluated
+                expr.getInitializer()->accept(*this);
+            }
+            assert(expr.getType() == lox::Type::TYPE_UNKNOWN);
+            expr.setType(expr.getInitializer()->getType());
+        }
+
+        // Declare the variable in the symbol table
+        if (!symbolTable.declare(std::make_shared<Symbol>(expr.getName(), expr.getType()))) {
+            ErrorReporter::reportError(expr, "Variable already declared in this scope");
+            return;
+        }
     }
 
     DEFINE_VISIT(BlockStmt) {
@@ -104,29 +119,47 @@ namespace lox
 
     DEFINE_VISIT(CallExpr) {
         expr.getCallee()->accept(*this);
-        for (const auto& arg : expr.getArguments()) {
-            arg->accept(*this);
+        VariableExpr* callee = dynamic_cast<VariableExpr*>(expr.getCallee());
+        FunctionSymbol* func = dynamic_cast<FunctionSymbol*>(callee->getSymbol());
+        if (func->getParameterCount() != expr.getArguments().size()) {
+            ErrorReporter::reportError(expr, "Function '" + callee->getSymName() + "' expects " +
+                std::to_string(func->getParameterCount()) + " arguments, but got " +
+                std::to_string(expr.getArguments().size()));
+            return;
         }
-        assert_not_reached("return type of call expression is not set");
-        // expr.setType(expr.getCallee()->getType());
+
+        for (size_t i = 0; i < func->getParameterCount(); ++i) {
+            ExprBase *arg = expr.getArgument(i);
+            lox::Type paramType = func->getParameterType(i);
+            arg->accept(*this);
+            if (!arg->isa(paramType)) {
+                ErrorReporter::reportError(expr, "Argument " + std::to_string(i) + " of function '" +
+                    callee->getSymName() + "' is of type " +
+                    convertTypeToString(arg->getType()) + ", but expected " +
+                    convertTypeToString(paramType));
+                return;
+            }
+        }
+        expr.setType(func->type);
     }
 
     DEFINE_VISIT(VariableExpr) {
         // Check if the variable is defined in the symbol table
-        auto it = symbolTable.find(expr.getSymName());
-        if (it != symbolTable.end()) {
-            expr.setType(it->second);
+        Symbol* sym = symbolTable.lookup(expr.getSymName());
+        if (!sym) {
+            ErrorReporter::reportError(expr, "Undefined variable '" + expr.getSymName() + "'");
             return;
         }
-        assert_not_reached("Variable not found in symbol table");
+        // Set the type of the variable expression based on the symbol table
+        expr.setSymbol(sym);
     }
 
     DEFINE_VISIT(LiteralExpr) {
-        if (expr.getValue() == "false" || expr.getValue() == "true") {
-            expr.setType(lox::Type::TYPE_BOOL);
-        } else if (expr.getValue() == "nil") {
-            expr.setType(lox::Type::TYPE_NONE);
-        }
+        // if (expr.getValue() == "false" || expr.getValue() == "true") {
+        //     expr.setType(lox::Type::TYPE_BOOL);
+        // } else if (expr.getValue() == "nil") {
+        //     expr.setType(lox::Type::TYPE_UNKNOWN);
+        // }
         assert_not_reached("unexpected literal type");
     }
 
@@ -167,9 +200,24 @@ namespace lox
     }
 
     DEFINE_VISIT(AssignExpr) {
-        // Handle the assignment expression
-        // For example, check if the assignment is valid
-        std::cout << "Visiting AssignExpr" << std::endl;
+        expr.getLeft()->accept(*this);
+        expr.getRight()->accept(*this);
+        if (expr.getLeft()->getType() == lox::Type::TYPE_UNKNOWN) {
+            ErrorReporter::reportError(expr, "unknown type for left side of assignment");
+            return;
+        }
+        if (expr.getRight()->getType() == lox::Type::TYPE_UNKNOWN) {
+            ErrorReporter::reportError(expr, "unknown type for right side of assignment");
+            return;
+        }
+
+        if (!expr.getLeft()->isa(expr.getLeft()->getType())) {
+            ErrorReporter::reportError(expr, "unable to assign a " + convertTypeToString(expr.getRight()->getType()) +
+                " to a " + convertTypeToString(expr.getLeft()->getType()));
+            return;
+        }
+
+        expr.setType(expr.getLeft()->getType());
     }
 
     #undef DEFINE_VISIT

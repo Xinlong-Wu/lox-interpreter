@@ -2,13 +2,19 @@
 #define SEMANTICANALYZER_H
 
 #include "Compiler/AST/ASTVisitor.h"
+#include "Compiler/ErrorReporter.h"
 
 namespace lox
 {
 
 class SemanticAnalyzer : public ASTVisitor {
-    std::unordered_map<std::string, lox::Type> symbolTable; // name -> type
+private:
+    SymbolTable symbolTable;
 public:
+    // SemanticAnalyzer() = default;
+    SemanticAnalyzer(SymbolTable symbolTable) : symbolTable(std::move(symbolTable)) {
+        ErrorReporter::resetCounts();
+    }
     ~SemanticAnalyzer() override = default;
 
     #define INSTENCE_VISIT(name) \

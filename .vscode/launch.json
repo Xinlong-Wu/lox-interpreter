@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/lox-parser",
-            "args": ["tests/parser/while/class_in_body.lox"],
+            "args": [ "${fileDirname}/${fileBasenameNoExtension}.lox" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

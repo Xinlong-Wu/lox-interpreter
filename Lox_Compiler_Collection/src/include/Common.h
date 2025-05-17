@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <utility>
+#include <functional>
 
 #if __cplusplus >= 202302L
     #define unreachable() std::unreachable()
@@ -20,5 +21,16 @@
 #endif
 
 #define assert_not_reached(msg) do { assert(0 && msg); unreachable(); } while(0)
+
+namespace lox
+{
+
+template <typename T>
+inline void hash_combine(const T& val, std::size_t& seed) {
+    seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+} // namespace lox
+
 
 #endif // COMMON_H

@@ -1,7 +1,7 @@
 #ifndef LOX_COMPILER_TOKEN_H
 #define LOX_COMPILER_TOKEN_H
 
-#include "Compiler/Scanner/TokenType.h"
+#include "Compiler/Enum.h"
 #include "Compiler/Location.h"
 
 #include <string>

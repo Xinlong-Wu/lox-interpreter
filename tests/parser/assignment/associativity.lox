@@ -1,4 +1,5 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SA
 
 // CHECK-PARSER-LABEL:     var a = String: ["a"];
 // CHECK-PARSER-NEXT:      var b = String: ["b"];
@@ -8,6 +9,15 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [b], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [c], )];
+
+// CHECK-SA-LABEL:         var a = String: ["a"];
+// CHECK-SA-NEXT:          var b = String: ["b"];
+// CHECK-SA-NEXT:          var c = String: ["c"];
+// CHECK-SA-NEXT:          Assign: [Variable: [a: string] = Assign: [Variable: [b: string] = Variable: [c: string]]];
+// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](String: ["result"], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [a: string], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [b: string], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [c: string], )];
 
 var a = "a";
 var b = "b";

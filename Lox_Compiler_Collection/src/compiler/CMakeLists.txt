@@ -4,11 +4,15 @@ add_library(LoxCompiler STATIC
 )
 
 add_library(LoxParser STATIC
+    # ErrorReporter
+    ErrorReporter.cpp
+
     # AST
     AST/ASTVisitor.cpp
 
     # SemanticAnalyzer
     SemanticAnalyzer/SemanticAnalyzer.cpp
+    SemanticAnalyzer/SymbolTable.cpp
 
     Parser/Parser.cpp
     Parser/PrecedenceParser.cpp
@@ -18,10 +22,6 @@ add_library(LoxParser STATIC
 # add_library(LoxIR STATIC
 #     IR/IRBuilder.cpp
 # )
-
-add_library(LoxToken STATIC
-    Scanner/Token.cpp
-)
 
 add_library(LoxScanner STATIC
     Scanner/Scanner.cpp

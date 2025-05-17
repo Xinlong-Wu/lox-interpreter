@@ -1,7 +1,17 @@
 #include "Compiler/Parser/Parser.h"
+#include "Compiler/SemanticAnalyzer/SymbolTable.h"
 #include "Compiler/SemanticAnalyzer/SemanticAnalyzer.h"
 
 #include<iostream>
+#include<cstring>
+
+static lox::SymbolTable symbolTable;
+
+static void initSymbolTable()
+{
+    symbolTable.enterScope();
+    symbolTable.declare(std::make_shared<lox::FunctionSymbol>("print", std::vector<lox::Type>{lox::Type::TYPE_STRING}));
+}
 
 static char *readFile(const char *path)
 {
@@ -36,11 +46,12 @@ static char *readFile(const char *path)
     return buffer;
 }
 
-static int runFile(const char *path)
+static int runFile(const char *path, bool enableSemanticAnalyzer)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
-    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer();
+    initSymbolTable();
+    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer(symbolTable);
 
     parser.advance();
 
@@ -48,7 +59,10 @@ static int runFile(const char *path)
     {
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
         if (stmt != nullptr){
-            stmt->accept(sa);
+            if (enableSemanticAnalyzer) {
+                // Perform semantic analysis
+                stmt->accept(sa);
+            }
             stmt->dump();
         }
     }
@@ -65,7 +79,8 @@ static int runFile(const char *path)
 static void repl()
 {
     char line[1024];
-    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer();
+    initSymbolTable();
+    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer(symbolTable);
     for (;;)
     {
         printf("> ");
@@ -81,7 +96,7 @@ static void repl()
         parser.advance();
 
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
-        
+
         if (parser.hasError()) {
             continue;
         }
@@ -94,17 +109,34 @@ static void repl()
     }
 }
 
+static void printUsage()
+{
+    fprintf(stderr, "Usage: lox-parser [path]\n");
+    fprintf(stderr, "       lox-parser --semantic-analyzer [path]\n");
+}
+
 int main(int argc, char const *argv[])
 {
     if (argc == 1)
     {
         repl();
     }
-    else if (argc == 2) {
-        return runFile(argv[1]);
+    else if (argc >= 2) {
+        bool enableSemanticAnalyzer = false;
+        // check flag --semantic-analyzer
+        char const *filePath = argv[1];
+        if (strcmp(argv[1], "--semantic-analyzer") == 0) {
+            if (argc != 3) {
+                printUsage();
+                exit(64);
+            }
+            filePath = argv[2];
+            enableSemanticAnalyzer = true;
+        }
+        return runFile(filePath, enableSemanticAnalyzer);
     }
     else {
-        fprintf(stderr, "Usage: lox-parser [path]\n");
+        printUsage();
         exit(64);
     }
     return 0;

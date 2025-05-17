@@ -12,10 +12,11 @@ namespace lox
     #define ACCEPT() \
         void accept(ASTVisitor& visitor) override
 
-    class StmtBase : public ASTNode 
+    class StmtBase : public ASTNode
     {
-    private:
+    protected:
         Location loc;
+        lox::Type type = lox::Type::TYPE_UNKNOWN;
 
     public:
         StmtBase(Location location) : loc(location) {};
@@ -30,6 +31,13 @@ namespace lox
             std::cout << std::endl;
         }
 
+        void setType(lox::Type type) { this->type = type; }
+        lox::Type getType() const { return type; }
+        bool isa(lox::Type type) const
+        {
+            return this->type == type;
+        }
+
         virtual void accept(ASTVisitor& visitor) = 0;
     };
 
@@ -40,6 +48,8 @@ namespace lox
 
     public:
         ExpressionStmt(std::unique_ptr<ExprBase> expression) : StmtBase(expression->getLoc().getNextColumn()), expression(std::move(expression)) {}
+
+        ExprBase *getExpression() const { return expression.get(); }
 
         virtual void print(std::ostream &os) const override
         {
@@ -72,9 +82,15 @@ namespace lox
         VarDeclStmt(std::string name, Location loc) : DeclarationStmt(std::move(name), loc) {}
         ~VarDeclStmt() override = default;
 
+        ExprBase *getInitializer() const { return initializer ? initializer.get() : nullptr; }
+
         virtual void print(std::ostream &os) const override
         {
             os << "var " << name;
+            if (type != lox::Type::TYPE_UNKNOWN)
+            {
+                os << ": " << convertTypeToString(type);
+            }
             if (initializer) {
                 os << " = ";
                 initializer->print(os);
