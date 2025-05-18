@@ -14,7 +14,27 @@ namespace lox
     #define ACCEPT() \
         void accept(ASTVisitor& visitor) override
 
+    #define TYPEID_SYSTEM(className) \
+        static bool classof(const ExprBase *expr) { return expr->getKind() == Kind::className; } \
+        virtual Kind getKind() const override { return Kind::className; }
+
     class ExprBase : public ASTNode {
+    protected:
+        enum class Kind {
+            ThisExpr,
+            SuperExpr,
+            GroupingExpr,
+            CallExpr,
+            VariableExpr,
+            LiteralExpr,
+            NumberExpr,
+            StringExpr,
+            UnaryExpr,
+            AccessExpr,
+            BinaryExpr,
+            AssignExpr
+        };    
+
     public:
         ExprBase(Location location) : loc(location) {};
         virtual ~ExprBase() = default;
@@ -30,9 +50,9 @@ namespace lox
 
         virtual void setType(lox::Type type) { this->type = type; }
         virtual lox::Type getType() const { return type; }
-        virtual bool isa(lox::Type type) const {
-            return this->type == type;
-        }
+
+        virtual Kind getKind() const = 0;
+        virtual void accept(ASTVisitor& visitor) = 0;
 
     protected:
         Location loc;
@@ -50,6 +70,7 @@ namespace lox
             os << "this";
         }
 
+        TYPEID_SYSTEM(ThisExpr);
         ACCEPT();
     };
 
@@ -65,6 +86,7 @@ namespace lox
             os << "super";
         }
 
+        TYPEID_SYSTEM(SuperExpr);
         ACCEPT();
     };
 
@@ -84,6 +106,7 @@ namespace lox
             os << " )";
         }
 
+        TYPEID_SYSTEM(GroupingExpr);
         ACCEPT();
     };
 
@@ -119,6 +142,7 @@ namespace lox
             os << ")]";
         }
 
+        TYPEID_SYSTEM(CallExpr);
         ACCEPT();
     };
 
@@ -158,6 +182,7 @@ namespace lox
             os << "]";
         }
 
+        TYPEID_SYSTEM(VariableExpr);
         ACCEPT();
     };
 
@@ -174,6 +199,7 @@ namespace lox
             os << "Literal: [" << value << "]";
         }
 
+        TYPEID_SYSTEM(LiteralExpr);
         ACCEPT();
     };
 
@@ -189,6 +215,7 @@ namespace lox
             os << "Number: [" << getValue() << "]";
         }
 
+        TYPEID_SYSTEM(NumberExpr);
         ACCEPT();
     };
 
@@ -200,25 +227,27 @@ namespace lox
             os << "String: [" << getValue() << "]";
         }
 
+        TYPEID_SYSTEM(StringExpr);
         ACCEPT();
     };
 
     class UnaryExpr : public ExprBase {
     protected:
-        TokenType kind;
+        TokenType opKind;
         std::unique_ptr<ExprBase> right;
     public:
-        UnaryExpr(TokenType kind, std::unique_ptr<ExprBase> right) : ExprBase(right->getLoc()), right(std::move(right)), kind(kind) {}
+        UnaryExpr(TokenType opKind, std::unique_ptr<ExprBase> right) : ExprBase(right->getLoc()), right(std::move(right)), opKind(opKind) {}
 
         ExprBase* getRight() const { return right.get(); }
-        TokenType getKind() const { return kind; }
+        TokenType getOpKind() const { return opKind; }
 
         void print(std::ostream &os) const override {
-            os << "Unary: [" << convertTokenTypeToString(kind) << " ";
+            os << "Unary: [" << convertTokenTypeToString(opKind) << " ";
             right->print(os);
             os << "]";
         }
 
+        TYPEID_SYSTEM(UnaryExpr);
         ACCEPT();
     };
 
@@ -242,20 +271,22 @@ namespace lox
             os << "." << property << " ]";
         }
 
+        TYPEID_SYSTEM(AccessExpr);
         ACCEPT();
     };
 
     class BinaryExpr : public ExprBase {
     protected:
-        TokenType kind;
+        TokenType opKind;
         std::unique_ptr<ExprBase> left;
         std::unique_ptr<ExprBase> right;
     public:
-        BinaryExpr(TokenType kind, std::unique_ptr<ExprBase> left, std::unique_ptr<ExprBase> right)
-            : ExprBase(right->getLoc()), left(std::move(left)), right(std::move(right)), kind(kind) {}
+        BinaryExpr(TokenType opKind, std::unique_ptr<ExprBase> left, std::unique_ptr<ExprBase> right)
+            : ExprBase(right->getLoc()), left(std::move(left)), right(std::move(right)), opKind(opKind) {}
 
         virtual ExprBase* getLeft() const { return left.get(); }
         virtual ExprBase* getRight() const { return right.get(); }
+        virtual TokenType getOpKind() const { return opKind; }
 
         // depending on the return type of the left and right
         // we return true here.
@@ -264,11 +295,12 @@ namespace lox
         virtual void print(std::ostream &os) const override {
             os << "Binary: [";
             left->print(os);
-            os << " " << convertTokenTypeToString(kind) << " ";
+            os << " " << convertTokenTypeToString(opKind) << " ";
             right->print(os);
             os << "]";
         }
 
+        TYPEID_SYSTEM(BinaryExpr);
         ACCEPT();
     };
 
@@ -285,9 +317,11 @@ namespace lox
             os << "]";
         }
 
+        TYPEID_SYSTEM(AssignExpr);
         ACCEPT();
     };
 
+    #undef TYPEID_SYSTEM
     #undef ACCEPT
 } // namespace lox
 

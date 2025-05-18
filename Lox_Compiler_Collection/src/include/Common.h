@@ -30,6 +30,22 @@ inline void hash_combine(const T& val, std::size_t& seed) {
     seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
+template <typename To, typename From>
+bool isa(const From* from) {
+    return To::classof(from);
+}
+
+template <typename To, typename From>
+To* dyn_cast(From* from) {
+    return isa<To>(from) ? static_cast<To*>(from) : nullptr;
+}
+
+template <typename To, typename From>
+To* cast(From* from) {
+    assert(isa<To>(from) && "Invalid cast");
+    return static_cast<To*>(from);
+}
+
 } // namespace lox
 
 

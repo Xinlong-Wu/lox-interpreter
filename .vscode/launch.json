@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/lox-parser",
-            "args": [ "${fileDirname}/${fileBasenameNoExtension}.lox" ],
+            "args": [ "--semantic-analyzer","${fileDirname}/${fileBasenameNoExtension}.lox" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

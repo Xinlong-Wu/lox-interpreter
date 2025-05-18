@@ -12,8 +12,18 @@
 
 namespace lox
 {
+    #define TYPEID_SYSTEM(className) \
+        static bool classof(const Symbol *expr) { return expr->getKind() == Kind::className; } \
+        virtual Kind getKind() const override { return Kind::className; }
+
     // Forward declaration of the SymbolTable class
     class Symbol {
+    protected:
+        enum class Kind {
+            Variable,
+            Function,
+            Class
+        };
     public:
         std::string name;
         lox::Type type;
@@ -52,6 +62,11 @@ namespace lox
             this->print(std::cout);
             std::cout << std::endl;
         }
+
+        virtual Kind getKind() const {
+            return Kind::Variable;
+        }
+        static bool classof(const Symbol *expr) { return expr->getKind() == Kind::Variable; }
     };
 
     class FunctionSymbol : public Symbol {
@@ -82,6 +97,8 @@ namespace lox
             }
             os << "): " << convertTypeToString(type);
         }
+
+        TYPEID_SYSTEM(Function)
     };
 
     // Hash function for Symbol
@@ -109,6 +126,7 @@ namespace lox
         std::vector<std::unordered_map<std::string, std::shared_ptr<Symbol>>> scopes;
     };
 
+    #undef TYPEID_SYSTEM
 } // namespace lox
 
 

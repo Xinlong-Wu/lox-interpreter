@@ -12,11 +12,29 @@ namespace lox
     #define ACCEPT() \
         void accept(ASTVisitor& visitor) override
 
+    #define TYPEID_SYSTEM(className) \
+        static bool classof(const StmtBase *expr) { return expr->getKind() == Kind::className; } \
+        virtual Kind getKind() const override { return Kind::className; }
+
     class StmtBase : public ASTNode
     {
     protected:
         Location loc;
         lox::Type type = lox::Type::TYPE_UNKNOWN;
+
+        enum class Kind
+        {
+            ExpressionStmt,
+            DeclarationStmt,
+            VarDeclStmt,
+            BlockStmt,
+            ClassDeclStmt,
+            FunctionDecl,
+            IfStmt,
+            WhileStmt,
+            ForStmt,
+            ReturnStmt
+        };
 
     public:
         StmtBase(Location location) : loc(location) {};
@@ -33,11 +51,8 @@ namespace lox
 
         void setType(lox::Type type) { this->type = type; }
         lox::Type getType() const { return type; }
-        bool isa(lox::Type type) const
-        {
-            return this->type == type;
-        }
 
+        virtual Kind getKind() const = 0;
         virtual void accept(ASTVisitor& visitor) = 0;
     };
 
@@ -57,6 +72,7 @@ namespace lox
             os << ";";
         }
 
+        TYPEID_SYSTEM(ExpressionStmt);
         ACCEPT();
     };
 
@@ -70,6 +86,7 @@ namespace lox
 
         const std::string &getName() const { return name; }
 
+        TYPEID_SYSTEM(DeclarationStmt);
         ACCEPT();
     };
 
@@ -98,19 +115,20 @@ namespace lox
             os << ";";
         }
 
+        TYPEID_SYSTEM(VarDeclStmt);
         ACCEPT();
     };
 
     class BlockStmt : public StmtBase
     {
-    private:
-        std::vector<std::unique_ptr<StmtBase>> statements;
-
     public:
-        BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements, Location location) : StmtBase(location), statements(std::move(statements)) {}
+        BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements, Location location) : StmtBase(location), statements(std::move(statements)) {
+            setType(lox::Type::TYPE_NIL);
+        }
         BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements) : BlockStmt(std::move(statements), statements[statements.size() - 1]->getLoc().getNextColumn()) {}
         ~BlockStmt() override = default;
-
+        
+        std::vector<std::unique_ptr<StmtBase>> statements;
         virtual void print(std::ostream &os) const override
         {
             os << "BlockStmt: " << "{" << std::endl;
@@ -122,6 +140,7 @@ namespace lox
             os << "}" << std::endl;
         }
 
+        TYPEID_SYSTEM(BlockStmt);
         ACCEPT();
     };
 
@@ -147,6 +166,7 @@ namespace lox
             os << std::endl;
         }
 
+        TYPEID_SYSTEM(FunctionDecl);
         ACCEPT();
     };
 
@@ -192,6 +212,7 @@ namespace lox
             os << "}" << std::endl;
         }
 
+        TYPEID_SYSTEM(ClassDeclStmt);
         ACCEPT();
     };
 
@@ -219,6 +240,7 @@ namespace lox
             }
         }
 
+        TYPEID_SYSTEM(IfStmt);
         ACCEPT();
     };
 
@@ -241,6 +263,7 @@ namespace lox
             os << ";";
         }
 
+        TYPEID_SYSTEM(ReturnStmt);
         ACCEPT();
     };
 
@@ -280,6 +303,7 @@ namespace lox
             body->print(os);
         }
 
+        TYPEID_SYSTEM(ForStmt);
         ACCEPT();
     };
 
@@ -298,6 +322,7 @@ namespace lox
             body->print(os);
         }
 
+        TYPEID_SYSTEM(WhileStmt);
         ACCEPT();
     };
 

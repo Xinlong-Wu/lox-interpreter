@@ -28,25 +28,28 @@ namespace lox
     {
         return warningCount;
     }
-    void ErrorReporter::reportError(const StmtBase& stmt, const std::string &message, std::ostream &os)
+    void ErrorReporter::reportError(const StmtBase* stmt, const std::string &message, std::ostream &os)
     {
-        os << "Error: " << message << " at " << stmt.getLoc() << std::endl;
+        os << "Error: " << message << " at " << stmt->getLoc() << std::endl;
         errorCount++;
     }
-    void ErrorReporter::reportWarning(const StmtBase& stmt, const std::string &message, std::ostream &os)
+    void ErrorReporter::reportWarning(const StmtBase* stmt, const std::string &message, std::ostream &os)
     {
-        os << "Warning: " << message << " at " << stmt.getLoc() << std::endl;
+        os << "Warning: " << message << " at " << stmt->getLoc() << std::endl;
         warningCount++;
     }
 
-    void ErrorReporter::reportError(const ExprBase& expr, const std::string &message, std::ostream &os)
+    void ErrorReporter::reportError(const ExprBase* expr, const std::string &message, std::ostream &os)
     {
-        os << "Error: " << message << " at " << expr.getLoc() << std::endl;
+        os << "Error: " << message << " at " << expr->getLoc() << std::endl;
+        os << "\t Expression: ";
+        expr->print(os);
         errorCount++;
     }
-    void ErrorReporter::reportWarning(const ExprBase& expr, const std::string &message, std::ostream &os)
+    void ErrorReporter::reportWarning(const ExprBase* expr, const std::string &message, std::ostream &os)
     {
-        os << "Warning: " << message << " at " << expr.getLoc() << std::endl;
+        os << "Warning: " << message << " at " << expr->getLoc() << std::endl;
+        expr->print(os);
         warningCount++;
     }
 } // namespace lox

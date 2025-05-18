@@ -13,7 +13,7 @@ namespace lox
     DEFINE_VISIT(ExpressionStmt) {
         expr.getExpression()->accept(*this);
         if (expr.getExpression()->getType() == lox::Type::TYPE_UNKNOWN) {
-            ErrorReporter::reportError(expr, "Expression type is unknown");
+            ErrorReporter::reportError(&expr, "Unable to determine type of expression");
             return;
         }
         expr.setType(expr.getExpression()->getType());
@@ -27,7 +27,7 @@ namespace lox
 
     DEFINE_VISIT(VarDeclStmt) {
         if (expr.getInitializer()) {
-            if (expr.getInitializer()->isa(lox::Type::TYPE_UNKNOWN)) {
+            if (expr.getInitializer()->getType() == lox::Type::TYPE_UNKNOWN) {
                 // Handle the case where the initializer is not yet evaluated
                 expr.getInitializer()->accept(*this);
             }
@@ -37,16 +37,26 @@ namespace lox
 
         // Declare the variable in the symbol table
         if (!symbolTable.declare(std::make_shared<Symbol>(expr.getName(), expr.getType()))) {
-            ErrorReporter::reportError(expr, "Variable already declared in this scope");
+            ErrorReporter::reportError(&expr, "Variable already declared in this scope");
             return;
         }
     }
 
     DEFINE_VISIT(BlockStmt) {
-        // for (const auto& stmt : expr.getStatements()) {
-        //     stmt->accept(*this);
-        // }
-        std::cout << "Visiting BlockStmt" << std::endl;
+        for (auto& stmt : expr.statements) {
+            if (ReturnStmt* returnStmt = dyn_cast<ReturnStmt>(stmt.get())) {
+                if (expr.getType() == lox::Type::TYPE_UNKNOWN) {
+                    expr.setType(returnStmt->getType());
+                }
+                else if (expr.getType() != returnStmt->getType()) {
+                    ErrorReporter::reportError(returnStmt, "Return conflict type: expected " +
+                        convertTypeToString(expr.getType()) + ", but got " +
+                        convertTypeToString(returnStmt->getType()));
+                    return;
+                }
+            }
+            stmt->accept(*this);
+        }
     }
 
     DEFINE_VISIT(ClassDeclStmt) {
@@ -119,10 +129,10 @@ namespace lox
 
     DEFINE_VISIT(CallExpr) {
         expr.getCallee()->accept(*this);
-        VariableExpr* callee = dynamic_cast<VariableExpr*>(expr.getCallee());
-        FunctionSymbol* func = dynamic_cast<FunctionSymbol*>(callee->getSymbol());
+        VariableExpr* callee = cast<VariableExpr>(expr.getCallee());
+        FunctionSymbol* func = cast<FunctionSymbol>(callee->getSymbol());
         if (func->getParameterCount() != expr.getArguments().size()) {
-            ErrorReporter::reportError(expr, "Function '" + callee->getSymName() + "' expects " +
+            ErrorReporter::reportError(&expr, "Function '" + callee->getSymName() + "' expects " +
                 std::to_string(func->getParameterCount()) + " arguments, but got " +
                 std::to_string(expr.getArguments().size()));
             return;
@@ -132,8 +142,8 @@ namespace lox
             ExprBase *arg = expr.getArgument(i);
             lox::Type paramType = func->getParameterType(i);
             arg->accept(*this);
-            if (!arg->isa(paramType)) {
-                ErrorReporter::reportError(expr, "Argument " + std::to_string(i) + " of function '" +
+            if (arg->getType() != paramType) {
+                ErrorReporter::reportError(&expr, "Argument " + std::to_string(i) + " of function '" +
                     callee->getSymName() + "' is of type " +
                     convertTypeToString(arg->getType()) + ", but expected " +
                     convertTypeToString(paramType));
@@ -147,7 +157,7 @@ namespace lox
         // Check if the variable is defined in the symbol table
         Symbol* sym = symbolTable.lookup(expr.getSymName());
         if (!sym) {
-            ErrorReporter::reportError(expr, "Undefined variable '" + expr.getSymName() + "'");
+            ErrorReporter::reportError(&expr, "Undefined variable '" + expr.getSymName() + "'");
             return;
         }
         // Set the type of the variable expression based on the symbol table
@@ -173,7 +183,7 @@ namespace lox
 
     DEFINE_VISIT(UnaryExpr) {
         expr.getRight()->accept(*this);
-        switch (expr.getKind())
+        switch (expr.getOpKind())
         {
         case lox::TokenType::TOKEN_BANG:
             expr.setType(lox::Type::TYPE_BOOL);
@@ -188,9 +198,51 @@ namespace lox
     }
 
     DEFINE_VISIT(BinaryExpr) {
-        // Handle the binary expression
-        // For example, check if the binary operation is valid
-        std::cout << "Visiting BinaryExpr" << std::endl;
+        ExprBase* left = expr.getLeft();
+        ExprBase* right = expr.getRight();
+        left->accept(*this);
+        right->accept(*this);
+        
+        if (left->getType() == lox::Type::TYPE_UNKNOWN) {
+            ErrorReporter::reportError(&expr, "Unable to determine type of expression");
+            return;
+        }
+        if (right->getType() == lox::Type::TYPE_UNKNOWN) {
+            ErrorReporter::reportError(&expr, "unknown type for right side of binary expression");
+            return;
+        }
+
+        switch (expr.getOpKind())
+        {
+        case lox::TokenType::TOKEN_PLUS:
+            if (left->getType() == lox::Type::TYPE_STRING && right->getType() == lox::Type::TYPE_STRING) {
+                expr.setType(lox::Type::TYPE_STRING);
+            } else if (left->getType() == lox::Type::TYPE_NUMBER && right->getType() == lox::Type::TYPE_NUMBER) {
+                expr.setType(lox::Type::TYPE_NUMBER);
+            } else {
+                ErrorReporter::reportError(&expr, "Unable to add " +
+                    convertTypeToString(left->getType()) + " and " +
+                    convertTypeToString(right->getType()));
+            }
+            return;
+        case lox::TokenType::TOKEN_MINUS:
+        case lox::TokenType::TOKEN_SLASH:
+        case lox::TokenType::TOKEN_STAR:
+            if (left->getType() == lox::Type::TYPE_NUMBER && right->getType() == lox::Type::TYPE_NUMBER) {
+                expr.setType(lox::Type::TYPE_NUMBER);
+            } else {
+                ErrorReporter::reportError(&expr, "Unable to perform " +
+                    convertTokenTypeToString(expr.getOpKind()) + " on " +
+                    convertTypeToString(left->getType()) + " and " +
+                    convertTypeToString(right->getType()));
+            }
+            return;
+        
+        default:
+            ErrorReporter::reportError(&expr, "Unexpected binary operator: " +
+                convertTokenTypeToString(expr.getOpKind()));
+            return;
+        }
     }
 
     DEFINE_VISIT(AccessExpr) {
@@ -203,16 +255,16 @@ namespace lox
         expr.getLeft()->accept(*this);
         expr.getRight()->accept(*this);
         if (expr.getLeft()->getType() == lox::Type::TYPE_UNKNOWN) {
-            ErrorReporter::reportError(expr, "unknown type for left side of assignment");
+            ErrorReporter::reportError(&expr, "unknown type for left side of assignment");
             return;
         }
         if (expr.getRight()->getType() == lox::Type::TYPE_UNKNOWN) {
-            ErrorReporter::reportError(expr, "unknown type for right side of assignment");
+            ErrorReporter::reportError(&expr, "unknown type for right side of assignment");
             return;
         }
 
-        if (!expr.getLeft()->isa(expr.getLeft()->getType())) {
-            ErrorReporter::reportError(expr, "unable to assign a " + convertTypeToString(expr.getRight()->getType()) +
+        if (expr.getLeft()->getType() != expr.getRight()->getType()) {
+            ErrorReporter::reportError(&expr, "unable to assign a " + convertTypeToString(expr.getRight()->getType()) +
                 " to a " + convertTypeToString(expr.getLeft()->getType()));
             return;
         }
