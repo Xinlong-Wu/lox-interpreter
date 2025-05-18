@@ -101,6 +101,45 @@ namespace lox
         TYPEID_SYSTEM(Function)
     };
 
+    class ClassSymbol : public Symbol {
+    private:
+        ClassSymbol* superClass;
+        std::unordered_map<std::string, std::shared_ptr<Symbol>> members;
+    public:
+        ClassSymbol(std::string name)
+            : Symbol(std::move(name), lox::Type::TYPE_OBJECT), superClass(nullptr) {}
+
+        void setSuperClass(ClassSymbol* super) {
+            assert(isa<ClassSymbol>(super) && "Super class is not a ClassSymbol");
+            superClass = super;
+        }
+        ClassSymbol* getSuperClass() const {
+            return superClass;
+        }
+
+        void setMembers(std::unordered_map<std::string, std::shared_ptr<Symbol>> members) {
+            assert(this->members.empty() && "Fields already set");
+            this->members = std::move(members);
+        }
+
+        Symbol* lookupMember(const std::string& name) const {
+            auto it = members.find(name);
+            if (it != members.end()) {
+                return it->second.get();
+            }
+            if (superClass) {
+                return superClass->lookupMember(name);
+            }
+            return nullptr;
+        }
+
+        void print(std::ostream &os) const override {
+            os << "class " << name;
+        }
+
+        TYPEID_SYSTEM(Class)
+    };
+
     // Hash function for Symbol
     struct SymbolHash {
         std::size_t operator()(const Symbol& sym) const {
@@ -116,10 +155,11 @@ namespace lox
     class SymbolTable {
     public:
         void enterScope();
-        void exitScope();
+        std::unordered_map<std::string, std::shared_ptr<Symbol>> exitScope();
 
         bool declare(std::shared_ptr<Symbol> sym);
         Symbol* lookup(const std::string& name);
+        ClassSymbol* lookupClass(const std::string& name);
 
     private:
         int currentScope = -1;

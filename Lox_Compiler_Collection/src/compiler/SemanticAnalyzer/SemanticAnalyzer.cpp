@@ -58,9 +58,33 @@ namespace lox
     }
 
     DEFINE_VISIT(ClassDeclStmt) {
-        // Handle the class declaration statement
-        // For example, check if the class is already declared
-        std::cout << "Visiting ClassDeclStmt" << std::endl;
+        std::shared_ptr<ClassSymbol> classSymbol = std::make_shared<ClassSymbol>(expr.getName());
+        if (expr.hasSuperclass()) {
+            ClassSymbol* superClass = symbolTable.lookupClass(expr.getSuperclass());
+            if (!superClass) {
+                ErrorReporter::reportError(&expr, "Invalid Superclass '" + expr.getSuperclass() + "', class not found.");
+                return;
+            }
+            classSymbol->setSuperClass(superClass);
+        }
+
+        // declare the class in the symbol table
+        if (!symbolTable.declare(classSymbol)) {
+            ErrorReporter::reportError(&expr, "'" + expr.getName() + "' already declared in this scope");
+            return;
+        }
+        
+        // declare the class fields in the symbol table
+        symbolTable.enterScope();
+        for (auto& field : expr.getFields()) {
+            field.second->accept(*this);
+            if (field.second->getType() == lox::Type::TYPE_UNKNOWN) {
+                ErrorReporter::reportError(field.second.get(), "Unable to determine type of field");
+                return;
+            }
+        }
+        std::unordered_map<std::string, std::shared_ptr<Symbol>> classFields = symbolTable.exitScope();
+        classSymbol->setMembers(std::move(classFields));
     }
 
     DEFINE_VISIT(FunctionDecl) {

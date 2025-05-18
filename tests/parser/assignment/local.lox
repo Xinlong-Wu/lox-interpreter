@@ -1,4 +1,5 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:   BlockStmt: {
 // CHECK-PARSER-NEXT:      var a = String: ["before"];
@@ -7,6 +8,13 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Assign: [Variable: [a] = String: ["arg"]], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
+
+// CHECK-SEMANTIC-LABEL:     var a: string = String: ["before"];
+// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print (string): nil](Variable: [a: string], )];
+// CHECK-SEMANTIC-NEXT:      Assign: [Variable: [a: string] = String: ["after"]];
+// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print (string): nil](Variable: [a: string], )];
+// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print (string): nil](Assign: [Variable: [a: string] = String: ["arg"]], )];
+// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print (string): nil](Variable: [a: string], )];
 
 {
   var a = "before";

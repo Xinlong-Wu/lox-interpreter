@@ -4,7 +4,7 @@
 // CHECK-PARSER-LABEL:     var a = String: ["a"];
 // CHECK-PARSER-NEXT:      Assign: [( Variable: [a] ) = String: ["value"]];
 
-// CHECK-SA-LABEL:         var a = String: ["a"];
+// CHECK-SA-LABEL:         var a: string = String: ["a"];
 // CHECK-SA-NEXT:          Assign: [( Variable: [a: string] ) = String: ["value"]];
 
 var a = "a";

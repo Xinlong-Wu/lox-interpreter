@@ -8,7 +8,7 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Assign: [Variable: [a] = String: ["arg"]], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
 
-// CHECK-SA-LABEL:         var a = String: ["before"];
+// CHECK-SA-LABEL:         var a: string = String: ["before"];
 // CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [a: string], )];
 // CHECK-SA-NEXT:          Assign: [Variable: [a: string] = String: ["after"]];
 // CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [a: string], )];

@@ -8,6 +8,7 @@ namespace lox
 {
 
 struct SemanticContext {
+    bool insideClass = false;
     bool insideFunction = false;
     bool insideLoop = false;
     std::optional<Type> returnType;

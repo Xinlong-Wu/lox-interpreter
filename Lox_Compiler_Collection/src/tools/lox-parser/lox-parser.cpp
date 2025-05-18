@@ -1,6 +1,7 @@
 #include "Compiler/Parser/Parser.h"
 #include "Compiler/SemanticAnalyzer/SymbolTable.h"
 #include "Compiler/SemanticAnalyzer/SemanticAnalyzer.h"
+#include "Compiler/ErrorReporter.h"
 
 #include<iostream>
 #include<cstring>
@@ -69,7 +70,7 @@ static int runFile(const char *path, bool enableSemanticAnalyzer)
 
     free(source);
 
-    if (parser.hasError())
+    if (parser.hasError() || lox::ErrorReporter::hasError())
     {
         return 65;
     }

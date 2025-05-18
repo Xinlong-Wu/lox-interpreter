@@ -1,6 +1,10 @@
-// RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 var Number = 123;
 
-// CHECK-PARSER:        Error: Invalid superclass. at `Number`, before: `{`
+// CHECK-PARSER:        class Foo < Number {
+
+// CHECK-SEMANTIC:      Error: Invalid Superclass 'Number', class not found
+
 class Foo < Number {} // expect runtime error: Superclass must be a class.

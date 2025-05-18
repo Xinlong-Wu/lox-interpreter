@@ -174,30 +174,17 @@ namespace lox
     class ClassDeclStmt : public DeclarationStmt
     {
     private:
-        static std::unordered_set<std::string> classTable;
-
         std::optional<std::string> superclass;
-        std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
-        std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
+        std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields;
     public:
-        ClassDeclStmt(std::string name, std::optional<std::string> superclass, std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods, std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields, Location loc) : DeclarationStmt(std::move(name), loc), superclass(std::move(superclass)), methods(std::move(methods)), fields(std::move(fields)) {
-            // assert(!this->superclass || validSuperclass(*this->superclass) && "Invalid superclass");
-            classTable.insert(this->name);
-        }
-        ClassDeclStmt(std::string name, std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods, std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields, Location loc) : ClassDeclStmt(std::move(name), std::nullopt, std::move(methods), std::move(fields), loc) {}
-
-        // no fields constructor
-        ClassDeclStmt(std::string name, std::optional<std::string> superclass, std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods, Location loc) : DeclarationStmt(std::move(name), loc), superclass(std::move(superclass)), methods(std::move(methods)) {
-            // assert(!this->superclass || validSuperclass(*this->superclass) && "Invalid superclass");
-            classTable.insert(this->name);
-        }
-        ClassDeclStmt(std::string name, std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods, Location loc) : ClassDeclStmt(std::move(name), std::nullopt, std::move(methods), loc) {}
+        ClassDeclStmt(std::string name, std::optional<std::string> superclass, std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields, Location loc) : DeclarationStmt(std::move(name), loc), superclass(std::move(superclass)), fields(std::move(fields)) {}
+        ClassDeclStmt(std::string name, std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields, Location loc) : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields), loc) {}
         ~ClassDeclStmt() override = default;
 
-        static bool validSuperclass(const std::string &name)
-        {
-            return classTable.find(name) != classTable.end();
-        }
+        bool hasSuperclass() const { return superclass.has_value(); }
+        const std::string &getSuperclass() const { return *superclass; }
+        std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> &getFields() { return fields; }
+
 
         virtual void print(std::ostream &os) const override
         {
@@ -206,8 +193,8 @@ namespace lox
                 os << " < " << *superclass;
             }
             os << " {" << std::endl;
-            for (const auto &method : methods) {
-                method.second->print(os);
+            for (const auto &field : fields) {
+                field.second->print(os);
                 os << std::endl;
             }
             os << "}" << std::endl;

@@ -1,9 +1,15 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:     var a = String: ["before"];
 // CHECK-PARSER-NEXT:      var c = Assign: [Variable: [a] = String: ["var"]];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [c], )];
+
+// CHECK-SEMANTIC-LABEL:     var a: string = String: ["before"];
+// CHECK-SEMANTIC-NEXT:      var c: string = Assign: [Variable: [a: string] = String: ["var"]];
+// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print (string): nil](Variable: [a: string], )];
+// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print (string): nil](Variable: [c: string], )];
 
 var a = "before";
 var c = a = "var";

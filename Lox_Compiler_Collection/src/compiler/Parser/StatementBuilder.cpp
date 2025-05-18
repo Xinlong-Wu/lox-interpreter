@@ -2,8 +2,6 @@
 
 namespace lox
 {
-    std::unordered_set<std::string> ClassDeclStmt::classTable;
-
     std::unique_ptr<StmtBase> Parser::parseDeclaration() {
         std::unique_ptr<StmtBase> stmt;
         if (this->parseOptional(lox::TokenType::TOKEN_CLASS)) {
@@ -66,22 +64,19 @@ namespace lox
                 if (name == *superclass) {
                     this->parseError("A class can't inherit from itself.");
                 }
-                else if (!ClassDeclStmt::validSuperclass(*superclass)) {
-                    this->parseError("Invalid superclass.");
-                }
             }
         }
-        std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
+        std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> methods;
         // std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
         this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
         while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) && this->hasNext()) {
             // if (this->parseOptional(lox::TokenType::TOKEN_VAR)) {
-            //     std::unique_ptr<VarDeclStmt> field = this->parseVarDecl();
+            //     std::unique_ptr<DeclarationStmt> field = this->parseVarDecl();
             //     fields.insert({field->getName(), std::move(field)});
             // } else
             if (this->parseOptional(lox::TokenType::TOKEN_FUN) ||
                 (this->match(TokenType::TOKEN_IDENTIFIER) && this->getCurrentToken() == "init")) {
-                std::unique_ptr<FunctionDecl> method = this->parseFunctionDecl();
+                std::unique_ptr<DeclarationStmt> method = this->parseFunctionDecl();
                 methods.insert({method->getName(), std::move(method)});
             } else {
                 this->parseError("Expect `var` or `fun` or constructor.");
