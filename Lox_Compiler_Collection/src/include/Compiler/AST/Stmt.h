@@ -122,13 +122,14 @@ namespace lox
     class BlockStmt : public StmtBase
     {
     public:
+        std::vector<std::unique_ptr<StmtBase>> statements;
+
         BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements, Location location) : StmtBase(location), statements(std::move(statements)) {
-            setType(lox::Type::TYPE_NIL);
+            setType(lox::Type::TYPE_UNKNOWN);
         }
         BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements) : BlockStmt(std::move(statements), statements[statements.size() - 1]->getLoc().getNextColumn()) {}
         ~BlockStmt() override = default;
         
-        std::vector<std::unique_ptr<StmtBase>> statements;
         virtual void print(std::ostream &os) const override
         {
             os << "BlockStmt: " << "{" << std::endl;

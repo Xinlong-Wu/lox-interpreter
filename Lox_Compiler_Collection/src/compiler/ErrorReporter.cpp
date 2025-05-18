@@ -41,15 +41,16 @@ namespace lox
 
     void ErrorReporter::reportError(const ExprBase* expr, const std::string &message, std::ostream &os)
     {
-        os << "Error: " << message << " at " << expr->getLoc() << std::endl;
-        os << "\t Expression: ";
+        os << "Error: " << message << " at " << expr->getLoc() << std::endl << "\t ";
         expr->print(os);
+        os << std::endl;
         errorCount++;
     }
     void ErrorReporter::reportWarning(const ExprBase* expr, const std::string &message, std::ostream &os)
     {
-        os << "Warning: " << message << " at " << expr->getLoc() << std::endl;
+        os << "Warning: " << message << " at " << expr->getLoc() << std::endl << "\t ";
         expr->print(os);
+        os << std::endl;
         warningCount++;
     }
 } // namespace lox

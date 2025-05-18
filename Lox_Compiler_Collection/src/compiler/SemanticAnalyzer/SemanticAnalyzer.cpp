@@ -43,19 +43,17 @@ namespace lox
     }
 
     DEFINE_VISIT(BlockStmt) {
+        bool hasExitStmt = false;
         for (auto& stmt : expr.statements) {
-            if (ReturnStmt* returnStmt = dyn_cast<ReturnStmt>(stmt.get())) {
-                if (expr.getType() == lox::Type::TYPE_UNKNOWN) {
-                    expr.setType(returnStmt->getType());
-                }
-                else if (expr.getType() != returnStmt->getType()) {
-                    ErrorReporter::reportError(returnStmt, "Return conflict type: expected " +
-                        convertTypeToString(expr.getType()) + ", but got " +
-                        convertTypeToString(returnStmt->getType()));
-                    return;
-                }
+            if (hasExitStmt) {
+                ErrorReporter::reportWarning(stmt.get(), "Unreachable code after return statement");
+                hasExitStmt = false;
             }
+
             stmt->accept(*this);
+        }
+        if (expr.statements.size() > 0) {
+            expr.setType((*expr.statements.rbegin())->getType());
         }
     }
 
@@ -258,6 +256,8 @@ namespace lox
             ErrorReporter::reportError(&expr, "unknown type for left side of assignment");
             return;
         }
+        expr.setType(expr.getLeft()->getType());
+
         if (expr.getRight()->getType() == lox::Type::TYPE_UNKNOWN) {
             ErrorReporter::reportError(&expr, "unknown type for right side of assignment");
             return;
@@ -268,8 +268,6 @@ namespace lox
                 " to a " + convertTypeToString(expr.getLeft()->getType()));
             return;
         }
-
-        expr.setType(expr.getLeft()->getType());
     }
 
     #undef DEFINE_VISIT

@@ -7,15 +7,39 @@
 namespace lox
 {
 
+struct SemanticContext {
+    bool insideFunction = false;
+    bool insideLoop = false;
+    std::optional<Type> returnType;
+};
+
 class SemanticAnalyzer : public ASTVisitor {
 private:
     SymbolTable symbolTable;
+    std::vector<SemanticContext> contextStack;
 public:
     // SemanticAnalyzer() = default;
     SemanticAnalyzer(SymbolTable symbolTable) : symbolTable(std::move(symbolTable)) {
         ErrorReporter::resetCounts();
+        contextStack.emplace_back(SemanticContext());
     }
     ~SemanticAnalyzer() override = default;
+
+    void pushContext(SemanticContext ctx) {
+        contextStack.push_back(std::move(ctx));
+    }
+
+    void popContext() {
+        contextStack.pop_back();
+    }
+
+    SemanticContext& currentContext() {
+        return contextStack.back();
+    }
+
+    void analyze(std::unique_ptr<StmtBase>& stmt) {
+        stmt->accept(*this);
+    }
 
     #define INSTENCE_VISIT(name) \
         void visit(name& expr) override
