@@ -154,6 +154,12 @@ namespace lox
         FunctionDecl(std::string name, std::vector<std::unique_ptr<VariableExpr>> parameters, std::unique_ptr<BlockStmt> body) : DeclarationStmt(std::move(name), body->getLoc()), parameters(std::move(parameters)), body(std::move(body)) {}
         ~FunctionDecl() override = default;
 
+        void setReturnType(lox::Type type) { this->type = type; }
+        Type getReturnType() const { return type; }
+
+        std::vector<std::unique_ptr<VariableExpr>> &getParameters() { return parameters; }
+        BlockStmt *getBody() const { return body.get(); }
+
         virtual void print(std::ostream &os) const override
         {
             os << "function " << name << "(";

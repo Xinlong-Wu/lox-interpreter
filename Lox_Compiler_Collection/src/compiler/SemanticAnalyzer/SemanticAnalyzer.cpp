@@ -75,22 +75,51 @@ namespace lox
         }
         
         // declare the class fields in the symbol table
-        symbolTable.enterScope();
+        enterClassScope();
         for (auto& field : expr.getFields()) {
             field.second->accept(*this);
-            if (field.second->getType() == lox::Type::TYPE_UNKNOWN) {
-                ErrorReporter::reportError(field.second.get(), "Unable to determine type of field");
+            if (!isa<FunctionDecl>(field.second.get()) && field.second->getType() == lox::Type::TYPE_UNKNOWN) {
+                ErrorReporter::reportError(field.second.get(), "Unable to determine type of field '" + field.first + "'");
                 return;
             }
         }
-        std::unordered_map<std::string, std::shared_ptr<Symbol>> classFields = symbolTable.exitScope();
+
+        std::unordered_map<std::string, std::shared_ptr<Symbol>> classFields = exitScope();
         classSymbol->setMembers(std::move(classFields));
     }
 
     DEFINE_VISIT(FunctionDecl) {
-        // Handle the function declaration
-        // For example, check if the function is already declared
-        std::cout << "Visiting FunctionDecl" << std::endl;
+        std::vector<lox::Type> paramTypes;
+        for (const auto& param : expr.getParameters()) {
+            paramTypes.push_back(param->getType());
+        }
+
+        if (!symbolTable.declare(std::make_shared<FunctionSymbol>(expr.getName(), paramTypes))) {
+            ErrorReporter::reportError(&expr, "Function '" + expr.getName() + "' already declared in this scope");
+            return;
+        }
+
+        // Enter a new scope for the function body
+        enterFunctionScope();
+
+        // Declare the function parameters in the symbol table
+        for (const auto& param : expr.getParameters()) {
+            if (!symbolTable.declare(std::make_shared<ArgumentSymbol>(param->getSymName()))) {
+                ErrorReporter::reportError(&expr, "Parameter '" + param->getSymName() + "' already declared in this scope");
+                return;
+            }
+            param->accept(*this);
+        }
+
+        // Visit the function body
+        expr.getBody()->accept(*this);
+
+        SemanticContext ctx = currentContext();
+        if (ctx.returnType)
+            expr.setReturnType(*ctx.returnType);
+
+        // Exit the function scope
+        exitScope();
     }
 
     DEFINE_VISIT(IfStmt) {
@@ -133,9 +162,15 @@ namespace lox
 
     // Expression visitors
     DEFINE_VISIT(ThisExpr) {
-        // Handle the 'this' expression
-        // For example, check if 'this' is used in a valid context
-        std::cout << "Visiting ThisExpr" << std::endl;
+        if (!currentContext().insideClass) {
+            ErrorReporter::reportError(&expr, "Cannot use 'this' outside of a class");
+            return;
+        }
+        else if (!currentContext().insideFunction) {
+            ErrorReporter::reportError(&expr, "Cannot use 'this' outside of a function");
+            return;
+        }
+        expr.setType(lox::Type::TYPE_OBJECT);
     }
 
     DEFINE_VISIT(SuperExpr) {
@@ -152,7 +187,14 @@ namespace lox
     DEFINE_VISIT(CallExpr) {
         expr.getCallee()->accept(*this);
         VariableExpr* callee = cast<VariableExpr>(expr.getCallee());
-        FunctionSymbol* func = cast<FunctionSymbol>(callee->getSymbol());
+        FunctionSymbol* func = nullptr;
+        if (ClassSymbol* classSymbol = dyn_cast<ClassSymbol>(callee->getSymbol())) {
+            func = cast<FunctionSymbol>(classSymbol->lookupMember(callee->getSymName()));
+        }
+        else {
+            func = cast<FunctionSymbol>(callee->getSymbol());
+        }
+
         if (func->getParameterCount() != expr.getArguments().size()) {
             ErrorReporter::reportError(&expr, "Function '" + callee->getSymName() + "' expects " +
                 std::to_string(func->getParameterCount()) + " arguments, but got " +
@@ -187,12 +229,11 @@ namespace lox
     }
 
     DEFINE_VISIT(LiteralExpr) {
-        // if (expr.getValue() == "false" || expr.getValue() == "true") {
-        //     expr.setType(lox::Type::TYPE_BOOL);
-        // } else if (expr.getValue() == "nil") {
-        //     expr.setType(lox::Type::TYPE_UNKNOWN);
-        // }
-        assert_not_reached("unexpected literal type");
+        if (expr.getValue() == "false" || expr.getValue() == "true") {
+            expr.setType(lox::Type::TYPE_BOOL);
+        } else if (expr.getValue() == "nil") {
+            expr.setType(lox::Type::TYPE_NIL);
+        }
     }
 
     DEFINE_VISIT(NumberExpr) {

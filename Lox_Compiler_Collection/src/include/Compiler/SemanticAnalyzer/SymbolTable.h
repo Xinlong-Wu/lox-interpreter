@@ -22,6 +22,7 @@ namespace lox
         enum class Kind {
             Variable,
             Function,
+            Argument,
             Class
         };
     public:
@@ -99,6 +100,27 @@ namespace lox
         }
 
         TYPEID_SYSTEM(Function)
+    };
+
+    class ArgumentSymbol : public Symbol {
+    public:
+        ArgumentSymbol(std::string name, lox::Type type = lox::Type::TYPE_UNKNOWN)
+            : Symbol(std::move(name), type, false) {}
+
+        Type getType() const {
+            return type;
+        }
+        void setType(Type type) {
+            assert(this->type == lox::Type::TYPE_UNKNOWN && "Type already set");
+            assert(type != lox::Type::TYPE_UNKNOWN && "Type cannot be unknown");
+            this->type = type;
+        }
+
+        void print(std::ostream &os) const override {
+            os << "argument " << name << ": " << convertTypeToString(type);
+        }
+
+        TYPEID_SYSTEM(Argument)
     };
 
     class ClassSymbol : public Symbol {

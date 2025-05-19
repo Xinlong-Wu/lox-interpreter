@@ -18,13 +18,6 @@ class SemanticAnalyzer : public ASTVisitor {
 private:
     SymbolTable symbolTable;
     std::vector<SemanticContext> contextStack;
-public:
-    // SemanticAnalyzer() = default;
-    SemanticAnalyzer(SymbolTable symbolTable) : symbolTable(std::move(symbolTable)) {
-        ErrorReporter::resetCounts();
-        contextStack.emplace_back(SemanticContext());
-    }
-    ~SemanticAnalyzer() override = default;
 
     void pushContext(SemanticContext ctx) {
         contextStack.push_back(std::move(ctx));
@@ -36,6 +29,46 @@ public:
 
     SemanticContext& currentContext() {
         return contextStack.back();
+    }
+
+public:
+    // SemanticAnalyzer() = default;
+    SemanticAnalyzer(SymbolTable symbolTable) : symbolTable(std::move(symbolTable)) {
+        ErrorReporter::resetCounts();
+        contextStack.emplace_back(SemanticContext());
+    }
+    ~SemanticAnalyzer() override = default;
+
+    void enterClassScope() {
+        symbolTable.enterScope();
+        SemanticContext ctx = currentContext();
+        ctx.insideClass = true;
+        pushContext(ctx);
+    }
+
+    void enterFunctionScope() {
+        symbolTable.enterScope();
+        SemanticContext ctx = currentContext();
+        ctx.insideFunction = true;
+        ctx.returnType = Type::TYPE_UNKNOWN;
+        pushContext(ctx);
+    }
+
+    void enterLoopScope() {
+        symbolTable.enterScope();
+        SemanticContext ctx = currentContext();
+        ctx.insideLoop = true;
+        pushContext(ctx);
+    }
+
+    void enterScope() {
+        symbolTable.enterScope();
+        contextStack.emplace_back(SemanticContext());
+    }
+
+    std::unordered_map<std::string, std::shared_ptr<Symbol>> exitScope() {
+        popContext();
+        return symbolTable.exitScope();
     }
 
     void analyze(std::unique_ptr<StmtBase>& stmt) {
