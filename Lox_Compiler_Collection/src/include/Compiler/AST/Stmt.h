@@ -221,6 +221,10 @@ namespace lox
         IfStmt(std::unique_ptr<ExprBase> condition, std::unique_ptr<BlockStmt> thenBlock, std::unique_ptr<BlockStmt> elseBlock, Location location) : StmtBase(location), condition(std::move(condition)), thenBlock(std::move(thenBlock)), elseBlock(std::move(elseBlock)) {}
         ~IfStmt() override = default;
 
+        ExprBase *getCondition() const { return condition.get(); }
+        BlockStmt *getThenBranch() const { return thenBlock.get(); }
+        BlockStmt *getElseBranch() const { return elseBlock.get(); }
+
         virtual void print(std::ostream &os) const override
         {
             os << "if (";

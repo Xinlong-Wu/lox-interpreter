@@ -43,6 +43,9 @@ namespace lox
     }
 
     DEFINE_VISIT(BlockStmt) {
+        if (!currentContext().insideFunction && !currentContext().insideClass) {
+            enterScope();
+        }
         bool hasExitStmt = false;
         for (auto& stmt : expr.statements) {
             if (hasExitStmt) {
@@ -54,6 +57,9 @@ namespace lox
         }
         if (expr.statements.size() > 0) {
             expr.setType((*expr.statements.rbegin())->getType());
+        }
+        if (!currentContext().insideFunction && !currentContext().insideClass) {
+            exitScope();
         }
     }
 
@@ -123,12 +129,20 @@ namespace lox
     }
 
     DEFINE_VISIT(IfStmt) {
-        // expr.getCondition()->accept(*this);
-        // expr.getThenBranch()->accept(*this);
-        // if (expr.getElseBranch()) {
-        //     expr.getElseBranch()->accept(*this);
-        // }
-        std::cout << "Visiting IfStmt" << std::endl;
+        expr.getCondition()->accept(*this);
+        if (expr.getCondition()->getType() == lox::Type::TYPE_UNKNOWN) {
+            ErrorReporter::reportError(&expr, "Unable to determine type of condition");
+            return;
+        }
+        if (expr.getCondition()->getType() != lox::Type::TYPE_BOOL) {
+            ErrorReporter::reportError(&expr, "Condition must be a boolean expression");
+            return;
+        }
+        expr.getThenBranch()->accept(*this);
+        if (expr.getElseBranch()) {
+            expr.getElseBranch()->accept(*this);
+        }
+        expr.setType(expr.getThenBranch()->getType());
     }
 
     DEFINE_VISIT(WhileStmt) {
