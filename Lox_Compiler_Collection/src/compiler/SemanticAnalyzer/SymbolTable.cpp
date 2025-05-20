@@ -3,10 +3,21 @@
 namespace lox
 {
     bool SymbolTable::declare(std::shared_ptr<Symbol> sym) {
+        assert(!isa<FunctionSymbol>(sym.get()) && "Use declareFunction() for functions");
         if (this->scopes[this->currentScope].find(sym->name) != this->scopes[this->currentScope].end()) {
             return false; // Variable already defined in this scope
         }
         this->scopes[this->currentScope][sym->name] = std::move(sym);
+        return true;
+    }
+
+    bool SymbolTable::declareFunction(std::shared_ptr<FunctionSymbol> sym) {
+        assert(isa<FunctionSymbol>(sym.get()) && "Use declare() for non-function symbols");
+        std::string signature = sym->getSignature();
+        if (this->scopes[this->currentScope].find(signature) != this->scopes[this->currentScope].end()) {
+            return false; // Function already defined in this scope
+        }
+        this->scopes[this->currentScope][signature] = std::move(sym);
         return true;
     }
 

@@ -314,7 +314,17 @@ namespace lox
                     convertTypeToString(right->getType()));
             }
             return;
-        
+        case lox::TokenType::TOKEN_EQUAL_EQUAL:
+            if (left->getType() == right->getType()) {
+                expr.setType(lox::Type::TYPE_BOOL);
+            } else if (left->getType() == lox::Type::TYPE_NIL || right->getType() == lox::Type::TYPE_NIL) {
+                expr.setType(lox::Type::TYPE_BOOL);
+            } else {
+                ErrorReporter::reportError(&expr, "Unable to compare " +
+                    convertTypeToString(left->getType()) + " and " +
+                    convertTypeToString(right->getType()));
+            }
+            return;
         default:
             ErrorReporter::reportError(&expr, "Unexpected binary operator: " +
                 convertTokenTypeToString(expr.getOpKind()));

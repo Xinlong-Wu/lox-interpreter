@@ -28,11 +28,9 @@ namespace lox
     public:
         std::string name;
         lox::Type type;
-        bool isFunction;
-        int slot;
 
-        Symbol(std::string name, Type type = lox::Type::TYPE_UNKNOWN, bool isFunction = false)
-            : name(std::move(name)), type(type), isFunction(isFunction), slot(0) {}
+        Symbol(std::string name, Type type = lox::Type::TYPE_UNKNOWN)
+            : name(std::move(name)), type(type){}
 
         Symbol() = default;
         Symbol(Symbol&&) = default;
@@ -75,8 +73,20 @@ namespace lox
         std::vector<lox::Type> parameterTypes;
     public:
         FunctionSymbol(std::string name, std::vector<lox::Type> types, lox::Type returnType = lox::Type::TYPE_NIL)
-            : Symbol(std::move(name), returnType, true), parameterTypes(std::move(types)) {}
-        
+            : Symbol(std::move(name), returnType), parameterTypes(std::move(types)) {}
+
+        std::string getSignature() const {
+            std::string signature = name + "(";
+            for (const auto& type : parameterTypes) {
+                signature += convertTypeToString(type) + ", ";
+            }
+            if (!parameterTypes.empty()) {
+                signature.erase(signature.size() - 2); // Remove last comma and space
+            }
+            signature += "): " + convertTypeToString(type);
+            return signature;
+        }
+
         size_t getParameterCount() const {
             return parameterTypes.size();
         }
@@ -105,7 +115,7 @@ namespace lox
     class ArgumentSymbol : public Symbol {
     public:
         ArgumentSymbol(std::string name, lox::Type type = lox::Type::TYPE_UNKNOWN)
-            : Symbol(std::move(name), type, false) {}
+            : Symbol(std::move(name), type) {}
 
         Type getType() const {
             return type;
@@ -180,6 +190,7 @@ namespace lox
         std::unordered_map<std::string, std::shared_ptr<Symbol>> exitScope();
 
         bool declare(std::shared_ptr<Symbol> sym);
+        bool declareFunction(std::shared_ptr<FunctionSymbol> sym);
         Symbol* lookup(const std::string& name);
         ClassSymbol* lookupClass(const std::string& name);
 
