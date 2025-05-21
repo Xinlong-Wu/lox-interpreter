@@ -52,6 +52,8 @@ namespace lox
             return Token(TokenType::TOKEN_SLASH, buffer.begin(), current, line, column);
         case '*':
             return Token(TokenType::TOKEN_STAR, buffer.begin(), current, line, column);
+        case ':':
+            return Token(TokenType::TOKEN_COLON, buffer.begin(), current, line, column);
         case '!':
             return Token(match('=') ? TokenType::TOKEN_BANG_EQUAL : TokenType::TOKEN_BANG, buffer.begin(), current, line, column);
         case '=':

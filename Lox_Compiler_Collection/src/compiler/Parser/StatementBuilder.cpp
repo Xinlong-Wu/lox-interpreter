@@ -24,15 +24,23 @@ namespace lox
             return nullptr;
         }
         std::string name = std::string(this->getPreviousToken().getTokenString());
+        if (this->parseOptional(lox::TokenType::TOKEN_COLON)) {
+            this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a type");
+            if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
+                return nullptr;
+            }
+            name = std::string(this->getPreviousToken().getTokenString());
+        }
+
         std::unique_ptr<ExprBase> initializer;
         if (this->parseOptional(lox::TokenType::TOKEN_EQUAL)) {
             initializer = this->parseExpression();
         }
         this->parse(lox::TokenType::TOKEN_SEMICOLON);
         if (initializer == nullptr) {
-            return std::make_unique<VarDeclStmt>(std::move(name), this->getPreviousToken().getLoction());
+            return std::make_unique<VarDeclStmt>(name, this->getPreviousToken().getLoction());
         }
-        return std::make_unique<VarDeclStmt>(std::move(name), std::move(initializer));
+        return std::make_unique<VarDeclStmt>(name, std::move(initializer));
     }
 
     std::unique_ptr<FunctionDecl> Parser::parseFunctionDecl() {

@@ -1,6 +1,8 @@
 #ifndef STMT_H
 #define STMT_H
 
+#include "Common.h"
+#include "Compiler/AST/ASTNode.h"
 #include "Compiler/AST/Expr.h"
 
 #include <vector>
@@ -9,18 +11,9 @@
 
 namespace lox
 {
-    #define ACCEPT() \
-        void accept(ASTVisitor& visitor) override
-
-    #define TYPEID_SYSTEM(className) \
-        static bool classof(const StmtBase *expr) { return expr->getKind() == Kind::className; } \
-        virtual Kind getKind() const override { return Kind::className; }
-
-    class StmtBase : public ASTNode
-    {
+    class StmtBase : public ASTNode {
     protected:
         Location loc;
-        lox::Type type = lox::Type::TYPE_UNKNOWN;
 
         enum class Kind
         {
@@ -49,9 +42,6 @@ namespace lox
             std::cout << std::endl;
         }
 
-        void setType(lox::Type type) { this->type = type; }
-        lox::Type getType() const { return type; }
-
         virtual Kind getKind() const = 0;
         virtual void accept(ASTVisitor& visitor) = 0;
     };
@@ -72,8 +62,8 @@ namespace lox
             os << ";";
         }
 
-        TYPEID_SYSTEM(ExpressionStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, ExpressionStmt);
+        ACCEPT_DECL();
     };
 
     class DeclarationStmt : public StmtBase
@@ -86,8 +76,8 @@ namespace lox
 
         const std::string &getName() const { return name; }
 
-        TYPEID_SYSTEM(DeclarationStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, DeclarationStmt);
+        ACCEPT_DECL();
     };
 
     class VarDeclStmt : public DeclarationStmt
@@ -95,8 +85,8 @@ namespace lox
     private:
         std::unique_ptr<ExprBase> initializer;
     public:
-        VarDeclStmt(std::string name, std::unique_ptr<ExprBase> initializer) : DeclarationStmt(std::move(name), initializer->getLoc()), initializer(std::move(initializer)) {}
-        VarDeclStmt(std::string name, Location loc) : DeclarationStmt(std::move(name), loc) {}
+        VarDeclStmt(std::string& name, std::unique_ptr<ExprBase> initializer) : DeclarationStmt(name, initializer->getLoc()), initializer(std::move(initializer)) {}
+        VarDeclStmt(std::string& name, Location loc) : DeclarationStmt(name, loc) {}
         ~VarDeclStmt() override = default;
 
         ExprBase *getInitializer() const { return initializer ? initializer.get() : nullptr; }
@@ -104,10 +94,7 @@ namespace lox
         virtual void print(std::ostream &os) const override
         {
             os << "var " << name;
-            if (type != lox::Type::TYPE_UNKNOWN)
-            {
-                os << ": " << convertTypeToString(type);
-            }
+
             if (initializer) {
                 os << " = ";
                 initializer->print(os);
@@ -115,8 +102,8 @@ namespace lox
             os << ";";
         }
 
-        TYPEID_SYSTEM(VarDeclStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, VarDeclStmt);
+        ACCEPT_DECL();
     };
 
     class BlockStmt : public StmtBase
@@ -124,12 +111,10 @@ namespace lox
     public:
         std::vector<std::unique_ptr<StmtBase>> statements;
 
-        BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements, Location location) : StmtBase(location), statements(std::move(statements)) {
-            setType(lox::Type::TYPE_UNKNOWN);
-        }
+        BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements, Location location) : StmtBase(location), statements(std::move(statements)) {}
         BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements) : BlockStmt(std::move(statements), statements[statements.size() - 1]->getLoc().getNextColumn()) {}
         ~BlockStmt() override = default;
-        
+
         virtual void print(std::ostream &os) const override
         {
             os << "BlockStmt: " << "{" << std::endl;
@@ -141,8 +126,8 @@ namespace lox
             os << "}" << std::endl;
         }
 
-        TYPEID_SYSTEM(BlockStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, BlockStmt);
+        ACCEPT_DECL();
     };
 
     class FunctionDecl : public DeclarationStmt
@@ -153,9 +138,6 @@ namespace lox
     public:
         FunctionDecl(std::string name, std::vector<std::unique_ptr<VariableExpr>> parameters, std::unique_ptr<BlockStmt> body) : DeclarationStmt(std::move(name), body->getLoc()), parameters(std::move(parameters)), body(std::move(body)) {}
         ~FunctionDecl() override = default;
-
-        void setReturnType(lox::Type type) { this->type = type; }
-        Type getReturnType() const { return type; }
 
         std::vector<std::unique_ptr<VariableExpr>> &getParameters() { return parameters; }
         BlockStmt *getBody() const { return body.get(); }
@@ -173,8 +155,8 @@ namespace lox
             os << std::endl;
         }
 
-        TYPEID_SYSTEM(FunctionDecl);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, FunctionDecl);
+        ACCEPT_DECL();
     };
 
     class ClassDeclStmt : public DeclarationStmt
@@ -206,8 +188,8 @@ namespace lox
             os << "}" << std::endl;
         }
 
-        TYPEID_SYSTEM(ClassDeclStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, ClassDeclStmt);
+        ACCEPT_DECL();
     };
 
     class IfStmt : public StmtBase
@@ -238,8 +220,8 @@ namespace lox
             }
         }
 
-        TYPEID_SYSTEM(IfStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, IfStmt);
+        ACCEPT_DECL();
     };
 
     class ReturnStmt : public StmtBase
@@ -261,8 +243,8 @@ namespace lox
             os << ";";
         }
 
-        TYPEID_SYSTEM(ReturnStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, ReturnStmt);
+        ACCEPT_DECL();
     };
 
     class ForStmt : public StmtBase
@@ -301,8 +283,8 @@ namespace lox
             body->print(os);
         }
 
-        TYPEID_SYSTEM(ForStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, ForStmt);
+        ACCEPT_DECL();
     };
 
     class WhileStmt : public ForStmt
@@ -320,11 +302,9 @@ namespace lox
             body->print(os);
         }
 
-        TYPEID_SYSTEM(WhileStmt);
-        ACCEPT();
+        TYPEID_SYSTEM(StmtBase, WhileStmt);
+        ACCEPT_DECL();
     };
-
-    #undef ACCEPT
 } // namespace lox
 
 #endif // STMT_H

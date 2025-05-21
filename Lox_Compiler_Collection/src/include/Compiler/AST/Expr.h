@@ -1,9 +1,11 @@
 #ifndef EXPR_H
 #define EXPR_H
 
+#include "Common.h"
+#include "Compiler/AST/Type.h"
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/Scanner/Token.h"
-#include "Compiler/SemanticAnalyzer/SymbolTable.h"
+#include "Compiler/Sema/Symbol.h"
 
 #include <iostream>
 #include <vector>
@@ -11,13 +13,6 @@
 
 namespace lox
 {
-    #define ACCEPT() \
-        void accept(ASTVisitor& visitor) override
-
-    #define TYPEID_SYSTEM(className) \
-        static bool classof(const ExprBase *expr) { return expr->getKind() == Kind::className; } \
-        virtual Kind getKind() const override { return Kind::className; }
-
     class ExprBase : public ASTNode {
     protected:
         enum class Kind {
@@ -33,7 +28,9 @@ namespace lox
             AccessExpr,
             BinaryExpr,
             AssignExpr
-        };    
+        };
+
+        std::shared_ptr<lox::Type::Type> type = nullptr;
 
     public:
         ExprBase(Location location) : loc(location) {};
@@ -48,16 +45,21 @@ namespace lox
             std::cout << std::endl;
         }
 
-        virtual void setType(lox::Type type) { this->type = type; }
-        virtual lox::Type getType() const { return type; }
+        virtual std::shared_ptr<lox::Type::Type> getType() const {
+            return type;
+        }
+        void setType(std::shared_ptr<lox::Type::Type>& t) {
+            type = t;
+        }
+
+        // bool isNumericType() const;
+        // bool isPointerType() const;
 
         virtual Kind getKind() const = 0;
         virtual void accept(ASTVisitor& visitor) = 0;
 
     protected:
         Location loc;
-        lox::Type type = lox::Type::TYPE_UNKNOWN;
-
     };
 
     class ThisExpr : public ExprBase {
@@ -70,8 +72,8 @@ namespace lox
             os << "this";
         }
 
-        TYPEID_SYSTEM(ThisExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, ThisExpr);
+        ACCEPT_DECL();
     };
 
     class SuperExpr : public ExprBase {
@@ -86,8 +88,8 @@ namespace lox
             os << "super";
         }
 
-        TYPEID_SYSTEM(SuperExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, SuperExpr);
+        ACCEPT_DECL();
     };
 
     class GroupingExpr : public ExprBase {
@@ -106,14 +108,15 @@ namespace lox
             os << " )";
         }
 
-        TYPEID_SYSTEM(GroupingExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, GroupingExpr);
+        ACCEPT_DECL();
     };
 
     class CallExpr : public ExprBase {
     protected:
         std::unique_ptr<ExprBase> callee;
         std::vector<std::unique_ptr<ExprBase>> arguments;
+        std::shared_ptr<Symbol> function = nullptr;         // 引用的函数符号
     public:
         CallExpr(std::unique_ptr<ExprBase> callee, std::vector<std::unique_ptr<ExprBase>> arguments)
             : ExprBase(callee->getLoc()), callee(std::move(callee)), arguments(std::move(arguments)) {}
@@ -142,30 +145,17 @@ namespace lox
             os << ")]";
         }
 
-        TYPEID_SYSTEM(CallExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, CallExpr);
+        ACCEPT_DECL();
     };
 
     class VariableExpr : public ExprBase {
-    private: 
+    private:
         std::string name;
-    protected:
-        Symbol *symbol;
+        std::shared_ptr<Symbol> symbol = nullptr;   // 名称解析阶段填充
     public:
-        VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)), symbol(nullptr) {}
+        VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)){}
         VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
-
-        const std::string &getSymName() const { return symbol != nullptr ? symbol->name : name; }
-        Symbol *getSymbol() { return symbol; }
-        void setSymbol(Symbol *symbol) { this->symbol = symbol; this->type = symbol->type; }
-
-        virtual void setType(lox::Type type) override { 
-            if (symbol != nullptr) {
-                symbol->type = type;
-            }
-            ExprBase::setType(type);
-        }
-        virtual lox::Type getType() const override { return symbol != nullptr ? symbol->type : type; }
 
         virtual bool isValidLValue() const override { return true; }
         // depending on the return type of the variable, we don't know if the variable is callable or not.
@@ -174,16 +164,12 @@ namespace lox
 
         void print(std::ostream &os) const override {
             os << "Variable: [";
-            if (symbol != nullptr) {
-                os << *symbol;
-            } else {
-                os << name;
-            }
+            os << name;
             os << "]";
         }
 
-        TYPEID_SYSTEM(VariableExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, VariableExpr);
+        ACCEPT_DECL();
     };
 
     class LiteralExpr : public ExprBase {
@@ -199,8 +185,8 @@ namespace lox
             os << "Literal: [" << value << "]";
         }
 
-        TYPEID_SYSTEM(LiteralExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, LiteralExpr);
+        ACCEPT_DECL();
     };
 
     class NumberExpr : public LiteralExpr {
@@ -215,8 +201,8 @@ namespace lox
             os << "Number: [" << getValue() << "]";
         }
 
-        TYPEID_SYSTEM(NumberExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, NumberExpr);
+        ACCEPT_DECL();
     };
 
     class StringExpr : public LiteralExpr {
@@ -227,8 +213,8 @@ namespace lox
             os << "String: [" << getValue() << "]";
         }
 
-        TYPEID_SYSTEM(StringExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, StringExpr);
+        ACCEPT_DECL();
     };
 
     class UnaryExpr : public ExprBase {
@@ -247,8 +233,8 @@ namespace lox
             os << "]";
         }
 
-        TYPEID_SYSTEM(UnaryExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, UnaryExpr);
+        ACCEPT_DECL();
     };
 
     class AccessExpr : public ExprBase {
@@ -271,8 +257,8 @@ namespace lox
             os << "." << property << " ]";
         }
 
-        TYPEID_SYSTEM(AccessExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, AccessExpr);
+        ACCEPT_DECL();
     };
 
     class BinaryExpr : public ExprBase {
@@ -300,8 +286,8 @@ namespace lox
             os << "]";
         }
 
-        TYPEID_SYSTEM(BinaryExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, BinaryExpr);
+        ACCEPT_DECL();
     };
 
     class AssignExpr : public BinaryExpr {
@@ -317,12 +303,9 @@ namespace lox
             os << "]";
         }
 
-        TYPEID_SYSTEM(AssignExpr);
-        ACCEPT();
+        TYPEID_SYSTEM(ExprBase, AssignExpr);
+        ACCEPT_DECL();
     };
-
-    #undef TYPEID_SYSTEM
-    #undef ACCEPT
 } // namespace lox
 
 

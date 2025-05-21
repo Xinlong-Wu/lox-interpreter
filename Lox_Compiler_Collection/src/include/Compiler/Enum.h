@@ -5,39 +5,13 @@
 
 namespace lox
 {
-    enum Type {
-        TYPE_UNKNOWN,
-        TYPE_NUMBER,
-        TYPE_STRING,
-        TYPE_BOOL,
-        TYPE_NIL,
-        TYPE_OBJECT,
-        TYPE_FUNCTION,
-        TYPE_CLASS,
-        TYPE_INSTANCE
-    };
-
-    static std::string convertTypeToString(Type type) {
-        switch (type) {
-            case TYPE_UNKNOWN: return "unknown";
-            case TYPE_NUMBER: return "number";
-            case TYPE_STRING: return "string";
-            case TYPE_BOOL: return "bool";
-            case TYPE_NIL: return "nil";
-            case TYPE_OBJECT: return "object";
-            case TYPE_FUNCTION: return "function";
-            case TYPE_CLASS: return "class";
-            case TYPE_INSTANCE: return "instance";
-            default: return "unknown";
-        }
-    }
-
     enum TokenType {
         // Single-character tokens.
         TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
         TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
         TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
         TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
+        TOKEN_COLON,
         // One or two character tokens.
         TOKEN_BANG, TOKEN_BANG_EQUAL,
         TOKEN_EQUAL, TOKEN_EQUAL_EQUAL,
@@ -74,6 +48,7 @@ namespace lox
         case TOKEN_SEMICOLON: return ";";
         case TOKEN_SLASH: return "/";
         case TOKEN_STAR: return "*";
+        case TOKEN_COLON: return ":";
 
         case TOKEN_BANG: return "!";
         case TOKEN_BANG_EQUAL: return "!=";

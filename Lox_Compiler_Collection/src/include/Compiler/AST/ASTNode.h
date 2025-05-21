@@ -1,10 +1,12 @@
 #ifndef ASTNODE_H
 #define ASTNODE_H
 
+#define ACCEPT_DECL() \
+    void accept(ASTVisitor& visitor) override
+
 namespace lox
 {
     class ASTVisitor;
-
     class ASTNode {
     public:
         virtual ~ASTNode() = default;

@@ -1,18 +1,10 @@
 #include "Compiler/Parser/Parser.h"
-#include "Compiler/SemanticAnalyzer/SymbolTable.h"
-#include "Compiler/SemanticAnalyzer/SemanticAnalyzer.h"
+#include "Compiler/Sema/SymbolTable.h"
+#include "Compiler/Sema/SemanticAnalyzer.h"
 #include "Compiler/ErrorReporter.h"
 
 #include<iostream>
 #include<cstring>
-
-static lox::SymbolTable symbolTable;
-
-static void initSymbolTable()
-{
-    symbolTable.enterScope();
-    symbolTable.declare(std::make_shared<lox::FunctionSymbol>("print", std::vector<lox::Type>{lox::Type::TYPE_STRING}));
-}
 
 static char *readFile(const char *path)
 {
@@ -47,12 +39,11 @@ static char *readFile(const char *path)
     return buffer;
 }
 
-static int runFile(const char *path, bool enableSemanticAnalyzer)
+static int runFile(const char *path, bool enableSema)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
-    initSymbolTable();
-    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer(symbolTable);
+    lox::Sema sa = lox::Sema();
 
     parser.advance();
 
@@ -60,7 +51,7 @@ static int runFile(const char *path, bool enableSemanticAnalyzer)
     {
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
         if (stmt != nullptr){
-            if (enableSemanticAnalyzer) {
+            if (enableSema) {
                 // Perform semantic analysis
                 stmt->accept(sa);
             }
@@ -80,8 +71,7 @@ static int runFile(const char *path, bool enableSemanticAnalyzer)
 static void repl()
 {
     char line[1024];
-    initSymbolTable();
-    lox::SemanticAnalyzer sa = lox::SemanticAnalyzer(symbolTable);
+    lox::Sema sa = lox::Sema();
     for (;;)
     {
         printf("> ");
@@ -123,7 +113,7 @@ int main(int argc, char const *argv[])
         repl();
     }
     else if (argc >= 2) {
-        bool enableSemanticAnalyzer = false;
+        bool enableSema = false;
         // check flag --semantic-analyzer
         char const *filePath = argv[1];
         if (strcmp(argv[1], "--semantic-analyzer") == 0) {
@@ -132,9 +122,9 @@ int main(int argc, char const *argv[])
                 exit(64);
             }
             filePath = argv[2];
-            enableSemanticAnalyzer = true;
+            enableSema = true;
         }
-        return runFile(filePath, enableSemanticAnalyzer);
+        return runFile(filePath, enableSema);
     }
     else {
         printUsage();

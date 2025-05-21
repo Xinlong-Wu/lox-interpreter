@@ -22,6 +22,11 @@
 
 #define assert_not_reached(msg) do { assert(0 && msg); unreachable(); } while(0)
 
+#define TYPEID_SYSTEM(baseClass, className) \
+    static bool classof(const baseClass *ptr) { return ptr->getKind() == Kind::className; } \
+    static bool classof(const std::shared_ptr<baseClass> ptr) { return className::classof(ptr.get()); } \
+    virtual Kind getKind() const override { return Kind::className; }
+
 namespace lox
 {
 
