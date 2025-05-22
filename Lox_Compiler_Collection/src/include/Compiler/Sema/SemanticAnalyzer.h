@@ -15,8 +15,14 @@ public:
     Sema() = default;
     ~Sema() override = default;
 
+    void inilializeGlobalScope() {
+        symbolTable.declare(std::make_shared<Symbol>(std::make_shared<FunctionType>("print", std::vector<std::shared_ptr<Type>>{std::make_shared<UnresolvedType>("string")}, std::make_shared<NilType>())));
+    }
+
     void analyze(std::unique_ptr<StmtBase>& stmt) {
+        symbolTable.enterScope();
         stmt->accept(*this);
+        symbolTable.exitScope();
     }
 
     #define INSTENCE_VISIT(name) \

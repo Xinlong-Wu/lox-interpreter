@@ -2,6 +2,7 @@
 #define STMT_H
 
 #include "Common.h"
+#include "Compiler/Sema/Symbol.h"
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/AST/Expr.h"
 
@@ -69,12 +70,15 @@ namespace lox
     class DeclarationStmt : public StmtBase
     {
     protected:
-        std::string name;
+        std::shared_ptr<Symbol> symbol;
     public:
-        DeclarationStmt(std::string name, Location loc) : StmtBase(loc), name(std::move(name)) {}
+        DeclarationStmt(std::shared_ptr<Symbol> symbol, Location loc) : StmtBase(std::move(loc)), symbol(std::move(symbol)) {}
+        DeclarationStmt(std::string name, Location loc) : DeclarationStmt(std::make_shared<Symbol>(name), std::move(loc)) {}
+        DeclarationStmt(std::string name, std::shared_ptr<Type> type, Location loc) : DeclarationStmt(std::make_shared<Symbol>(name, type), std::move(loc)) {}
         ~DeclarationStmt() override = default;
 
-        const std::string &getName() const { return name; }
+        virtual const std::string &getName() const { return symbol->getName(); }
+        virtual std::shared_ptr<Type> &getType() const { return symbol->getType(); }
 
         TYPEID_SYSTEM(StmtBase, DeclarationStmt);
         ACCEPT_DECL();
@@ -83,17 +87,19 @@ namespace lox
     class VarDeclStmt : public DeclarationStmt
     {
     private:
-        std::unique_ptr<ExprBase> initializer;
+        std::unique_ptr<ExprBase> initializer = nullptr;
     public:
-        VarDeclStmt(std::string& name, std::unique_ptr<ExprBase> initializer) : DeclarationStmt(name, initializer->getLoc()), initializer(std::move(initializer)) {}
-        VarDeclStmt(std::string& name, Location loc) : DeclarationStmt(name, loc) {}
+        VarDeclStmt(const std::string& name, std::unique_ptr<ExprBase> initializer) : VarDeclStmt(std::make_shared<Symbol>(name), std::move(initializer)) {}
+        VarDeclStmt(const std::string& name, Location loc) : VarDeclStmt(std::make_shared<Symbol>(name), std::move(loc)) {}
+        VarDeclStmt(std::shared_ptr<Symbol> symbol, std::unique_ptr<ExprBase> initializer) : DeclarationStmt(std::move(symbol), initializer->getLoc()), initializer(std::move(initializer)) {}
+        VarDeclStmt(std::shared_ptr<Symbol> symbol, Location loc) : DeclarationStmt(std::move(symbol), std::move(loc)) {}
         ~VarDeclStmt() override = default;
 
         ExprBase *getInitializer() const { return initializer ? initializer.get() : nullptr; }
 
         virtual void print(std::ostream &os) const override
         {
-            os << "var " << name;
+            os << "var " << symbol->getName();
 
             if (initializer) {
                 os << " = ";
@@ -136,7 +142,7 @@ namespace lox
         std::vector<std::unique_ptr<VariableExpr>> parameters;
         std::unique_ptr<BlockStmt> body;
     public:
-        FunctionDecl(std::string name, std::vector<std::unique_ptr<VariableExpr>> parameters, std::unique_ptr<BlockStmt> body) : DeclarationStmt(std::move(name), body->getLoc()), parameters(std::move(parameters)), body(std::move(body)) {}
+        FunctionDecl(std::string name, std::vector<std::unique_ptr<VariableExpr>> parameters, std::unique_ptr<BlockStmt> body) : DeclarationStmt(std::make_shared<Symbol>(name), body->getLoc()), parameters(std::move(parameters)), body(std::move(body)) {}
         ~FunctionDecl() override = default;
 
         std::vector<std::unique_ptr<VariableExpr>> &getParameters() { return parameters; }
@@ -144,7 +150,7 @@ namespace lox
 
         virtual void print(std::ostream &os) const override
         {
-            os << "function " << name << "(";
+            os << "function " << getName() << "(";
             for (const auto &param : parameters)
             {
                 param->print(os);
@@ -176,7 +182,7 @@ namespace lox
 
         virtual void print(std::ostream &os) const override
         {
-            os << "class " << name;
+            os << "class " << getName();
             if (superclass) {
                 os << " < " << *superclass;
             }

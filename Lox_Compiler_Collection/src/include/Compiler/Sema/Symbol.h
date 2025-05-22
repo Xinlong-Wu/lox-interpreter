@@ -1,17 +1,27 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
+#include "Compiler/AST/Type.h"
+
 namespace lox
 {
     struct Symbol {
         std::string name;
-        std::shared_ptr<Type::Type> type;
+        std::shared_ptr<Type> type;
 
-        Symbol(const std::string& name, std::shared_ptr<Type::Type> type = nullptr)
+        Symbol(const std::string& name, std::shared_ptr<Type> type = nullptr)
             : name(name), type(std::move(type)){}
+        Symbol(std::shared_ptr<FunctionType> funcType)
+            : name(funcType->getName()), type(std::move(funcType)) {}
+        Symbol(std::shared_ptr<ClassType> classType)
+            : name(classType->getName()), type(std::move(classType)) {}
 
         std::string& getName() {
             return name;
+        }
+
+        std::shared_ptr<Type>& getType() {
+            return type;
         }
 
         friend std::ostream& operator<<(std::ostream& os, const Symbol& sym) {

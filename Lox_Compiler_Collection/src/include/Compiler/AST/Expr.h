@@ -30,7 +30,7 @@ namespace lox
             AssignExpr
         };
 
-        std::shared_ptr<lox::Type::Type> type = nullptr;
+        std::shared_ptr<Type> type = nullptr;
 
     public:
         ExprBase(Location location) : loc(location) {};
@@ -45,10 +45,10 @@ namespace lox
             std::cout << std::endl;
         }
 
-        virtual std::shared_ptr<lox::Type::Type> getType() const {
+        virtual std::shared_ptr<Type> getType() const {
             return type;
         }
-        void setType(std::shared_ptr<lox::Type::Type>& t) {
+        void setType(std::shared_ptr<Type>& t) {
             type = t;
         }
 

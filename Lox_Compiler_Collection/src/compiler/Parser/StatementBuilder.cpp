@@ -24,12 +24,13 @@ namespace lox
             return nullptr;
         }
         std::string name = std::string(this->getPreviousToken().getTokenString());
+        std::optional<std::string> type;
         if (this->parseOptional(lox::TokenType::TOKEN_COLON)) {
             this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a type");
             if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
                 return nullptr;
             }
-            name = std::string(this->getPreviousToken().getTokenString());
+            type = std::string(this->getPreviousToken().getTokenString());
         }
 
         std::unique_ptr<ExprBase> initializer;

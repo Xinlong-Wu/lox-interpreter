@@ -31,11 +31,11 @@ namespace lox
             return scopes.back()->declare(sym);
         }
 
-        Symbol* lookupSymbol(const std::string& name) {
+        std::shared_ptr<Symbol> lookupSymbol(const std::string& name) {
             for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
                 auto sym = (*it)->resolve(name);
                 if (sym) {
-                    return sym.get();
+                    return sym;
                 }
             }
             return nullptr;

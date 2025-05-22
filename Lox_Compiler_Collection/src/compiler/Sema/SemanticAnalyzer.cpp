@@ -21,6 +21,7 @@ namespace lox
     }
 
     DEFINE_VISIT(VarDeclStmt) {
+
         assert_not_reached("Unimplemented VarDeclStmt visit");
     }
 
