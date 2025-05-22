@@ -19,7 +19,7 @@
 // CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [b: string], )];
 // CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [c: string], )];
 
-var a = "a";
+var a;
 var b = "b";
 var c = "c";
 

@@ -8,6 +8,7 @@ namespace lox
     struct Symbol {
         std::string name;
         std::shared_ptr<Type> type;
+        bool isDefined = false;
 
         Symbol(const std::string& name, std::shared_ptr<Type> type = nullptr)
             : name(name), type(std::move(type)){}
@@ -24,6 +25,14 @@ namespace lox
             return type;
         }
 
+        void setType(std::shared_ptr<Type> t) {
+            type = t;
+        }
+
+        void setDefined() {
+            isDefined = true;
+        }
+
         friend std::ostream& operator<<(std::ostream& os, const Symbol& sym) {
             sym.print(os);
             return os;
@@ -37,7 +46,8 @@ namespace lox
             }
         }
 
-        void dump() const {
+        virtual void dump() const
+        {
             this->print(std::cout);
             std::cout << std::endl;
         }

@@ -78,7 +78,8 @@ namespace lox
         ~DeclarationStmt() override = default;
 
         virtual const std::string &getName() const { return symbol->getName(); }
-        virtual std::shared_ptr<Type> &getType() const { return symbol->getType(); }
+        virtual std::shared_ptr<Type>& getType() const { return symbol->getType(); }
+        virtual std::shared_ptr<Symbol> getSymbol() const { return symbol; }
 
         TYPEID_SYSTEM(StmtBase, DeclarationStmt);
         ACCEPT_DECL();
@@ -99,8 +100,8 @@ namespace lox
 
         virtual void print(std::ostream &os) const override
         {
-            os << "var " << symbol->getName();
-
+            os << "var ";
+            symbol->print(os);
             if (initializer) {
                 os << " = ";
                 initializer->print(os);

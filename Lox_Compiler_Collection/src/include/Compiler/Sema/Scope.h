@@ -50,21 +50,17 @@ namespace lox
         }
 
         void print(std::ostream& os, int level = 0) const {
-            std::string indent(level * 2, '\t');
+            std::string indent(level * 1, '\t');
             os << indent << "Scope: " << name << std::endl;
 
             for (const auto& [name, symbol] : symbols) {
-                os << indent;
+                os << indent << " ";
                 symbol->print(os);
                 os << std::endl;
             }
-
-            if (enclosingScope) {
-                enclosingScope->print(os, level + 1);
-            }
         }
 
-        void dump(int level = 0) const {
+        virtual void dump(int level = 0) const {
             print(std::cout, level);
             std::cout << std::endl;
         }

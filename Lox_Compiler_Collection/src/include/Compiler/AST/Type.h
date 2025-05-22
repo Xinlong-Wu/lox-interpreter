@@ -28,6 +28,8 @@ namespace lox
     public:
         virtual ~Type() = default;
 
+        virtual bool isCompatible(std::shared_ptr<Type> other) = 0;
+
         virtual Kind getKind() const = 0;
         virtual size_t hash() const {
             std::size_t seed = 0;
@@ -63,8 +65,12 @@ namespace lox
             return name;
         }
 
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            return false;
+        }
+
         virtual void print(std::ostream &os) const override {
-            os << "(unresolved)";
+            os << name <<"(unresolved)";
         }
 
         TYPEID_SYSTEM(Type, UnresolvedType)
@@ -76,6 +82,10 @@ namespace lox
     public:
         NumberType() : Type() {}
         ~NumberType() override = default;
+
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            return other->getKind() == Kind::NumberType;
+        }
 
         virtual void print(std::ostream &os) const override {
             os << "number";
@@ -89,6 +99,10 @@ namespace lox
         StringType() : Type() {}
         ~StringType() override = default;
 
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            return other->getKind() == Kind::StringType;
+        }
+
         virtual void print(std::ostream &os) const override {
             os << "string";
         }
@@ -101,6 +115,10 @@ namespace lox
         BoolType() : Type() {}
         ~BoolType() override = default;
 
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            return other->getKind() == Kind::BoolType;
+        }
+
         virtual void print(std::ostream &os) const override {
             os << "bool";
         }
@@ -112,6 +130,10 @@ namespace lox
     public:
         NilType() : Type() {}
         ~NilType() override = default;
+
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            return other->getKind() == Kind::NilType;
+        }
 
         virtual void print(std::ostream &os) const override {
             os << "nil";
@@ -133,8 +155,21 @@ namespace lox
 
         ~FunctionType() override = default;
 
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            assert_not_reached("Unimplemented FunctionType isCompatible");
+        }
+
         std::string getName() const {
             return name;
+        }
+
+        std::shared_ptr<Type>& getParameter(size_t index) {
+            assert(index < parameters.size());
+            return parameters[index];
+        }
+
+        std::shared_ptr<Type>& getReturnType() const {
+            return returnType;
         }
 
         bool operator==(const FunctionType& other) const {
@@ -187,6 +222,10 @@ namespace lox
             : Type(), name(name), superClass(std::move(superClass)){}
 
         ~ClassType() override = default;
+
+        virtual bool isCompatible(std::shared_ptr<Type> other) override {
+            assert_not_reached("Unimplemented ClassType isCompatible");
+        }
 
         std::string getName() const {
             return name;

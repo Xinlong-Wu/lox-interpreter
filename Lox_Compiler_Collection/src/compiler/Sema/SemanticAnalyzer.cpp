@@ -11,7 +11,7 @@ namespace lox
         void Sema::visit(name& expr)
 
     DEFINE_VISIT(ExpressionStmt) {
-        assert_not_reached("Unimplemented ExpressionStmt visit");
+        expr.getExpression()->accept(*this);
     }
 
     DEFINE_VISIT(DeclarationStmt) {
@@ -21,8 +21,27 @@ namespace lox
     }
 
     DEFINE_VISIT(VarDeclStmt) {
+        // create a new symbol for the variable
+        std::shared_ptr<Symbol> symbol = expr.getSymbol();
 
-        assert_not_reached("Unimplemented VarDeclStmt visit");
+        if (ExprBase* initializer = expr.getInitializer()) {
+            // set the symbol as defined
+            symbol->setDefined();
+
+            // [Type inference] if the variable has an initializer, infer its type
+            initializer->accept(*this);
+            std::shared_ptr<Type> initializerType = initializer->getType();
+            if (symbol->getType() != nullptr && !isa<UnresolvedType>(initializerType.get())) {
+                if (!symbol->getType()->isCompatible(initializerType)) {
+                    ErrorReporter::reportError(initializer, "Incompatible types in variable declaration");
+                    return;
+                }
+            }
+            else {
+                symbol->setType(initializerType);
+            }
+        }
+        symbolTable.declare(symbol);
     }
 
     DEFINE_VISIT(BlockStmt) {
@@ -74,11 +93,48 @@ namespace lox
     }
 
     DEFINE_VISIT(CallExpr) {
-        assert_not_reached("Unimplemented CallExpr visit");
+        VariableExpr* callee = expr.getCallee();
+        assert(callee != nullptr && "Callee should not be null");
+
+        // resolve the callee
+        callee->accept(*this);
+
+        // [Type inference] set the type of the call expression as the return type of the callee
+        std::shared_ptr<FunctionType> calleeType = dyn_cast<FunctionType>(callee->getType());
+        if (calleeType == nullptr) {
+            ErrorReporter::reportError(callee, "Undefined function '" + callee->getName() + "'");
+            return;
+        }
+        expr.setType(calleeType->getReturnType());
+
+        // resolve the arguments
+        for (size_t i = 0; i < expr.getArguments().size(); ++i) {
+            auto& arg = expr.getArguments()[i];
+            arg->accept(*this);
+
+            // check if the argument type is compatible with the callee type
+            std::shared_ptr<Type> argType = arg->getType();
+            if (argType != nullptr && calleeType->getParameter(i) != nullptr) {
+                if (!calleeType->getParameter(i)->isCompatible(argType)) {
+                    ErrorReporter::reportError(arg, "Incompatible types in function call");
+                    return;
+                }
+            }
+        }
+        
+
     }
 
     DEFINE_VISIT(VariableExpr) {
-        assert_not_reached("Unimplemented VariableExpr visit");
+        // check if the variable is declared
+        std::shared_ptr<Symbol> symbol = symbolTable.lookupSymbol(expr.getName());
+        if (symbol == nullptr) {
+            ErrorReporter::reportError(&expr, "Use of Undeclared Variable '" + expr.getName() + "'");
+            return;
+        }
+
+        // set the type of the variable as the symbol type
+        expr.setType(symbol->getType());
     }
 
     DEFINE_VISIT(LiteralExpr) {
@@ -90,7 +146,7 @@ namespace lox
     }
 
     DEFINE_VISIT(StringExpr) {
-        assert_not_reached("Unimplemented StringExpr visit");
+        expr.setType(std::make_shared<StringType>());
     }
 
     DEFINE_VISIT(UnaryExpr) {
@@ -106,7 +162,33 @@ namespace lox
     }
 
     DEFINE_VISIT(AssignExpr) {
-        assert_not_reached("Unimplemented AssignExpr visit");
+        // resove the left and right expressions
+        expr.getLeft()->accept(*this);
+        expr.getRight()->accept(*this);
+
+        // check if theris a type are compatible
+        std::shared_ptr<Type>& leftType = expr.getLeft()->getType();
+        std::shared_ptr<Type>& rightType = expr.getRight()->getType();
+        if (leftType != nullptr && rightType != nullptr) {
+            if (!leftType->isCompatible(rightType)) {
+                ErrorReporter::reportError(&expr, "Incompatible types in assignment");
+                return;
+            }
+        }
+        else if (leftType == nullptr && rightType != nullptr) {
+            // [Type inference] if the left type is unknown, infer left as the right type
+            expr.getLeft()->setType(rightType);
+        }
+        else if (leftType != nullptr && rightType == nullptr) {
+            // [Type inference] if the right type is unknown, infer right as the left type
+            expr.getRight()->setType(leftType);
+        }
+        else {
+            ErrorReporter::reportError(&expr, "Cannot assign an expression of unknown type");
+        }
+
+        // set the result type of the assignment as the left type
+        expr.setType(leftType);
     }
 
     #undef DEFINE_VISIT

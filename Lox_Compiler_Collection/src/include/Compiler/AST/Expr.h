@@ -45,11 +45,11 @@ namespace lox
             std::cout << std::endl;
         }
 
-        virtual std::shared_ptr<Type> getType() const {
+        virtual std::shared_ptr<Type>& getType() {
             return type;
         }
-        void setType(std::shared_ptr<Type>& t) {
-            type = t;
+        void setType(std::shared_ptr<Type> t) {
+            type = std::move(t);
         }
 
         // bool isNumericType() const;
@@ -112,20 +112,47 @@ namespace lox
         ACCEPT_DECL();
     };
 
+    class VariableExpr : public ExprBase {
+    private:
+        std::string name;
+    public:
+        VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)){}
+        VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
+
+        virtual const std::string& getName() const { return name; }
+        virtual const std::shared_ptr<Type>& getType() const { return type; }
+        virtual bool isValidLValue() const override { return true; }
+        // depending on the return type of the variable, we don't know if the variable is callable or not.
+        // So we return true here.
+        virtual bool isCallable() const override { return true; }
+
+        void print(std::ostream &os) const override {
+            os << "Variable: [";
+            os << name;
+            if (type) {
+                os << " : ";
+                type->print(os);
+            }
+            os << "]";
+        }
+
+        TYPEID_SYSTEM(ExprBase, VariableExpr);
+        ACCEPT_DECL();
+    };
+
     class CallExpr : public ExprBase {
     protected:
-        std::unique_ptr<ExprBase> callee;
+        std::unique_ptr<VariableExpr> callee;
         std::vector<std::unique_ptr<ExprBase>> arguments;
-        std::shared_ptr<Symbol> function = nullptr;         // 引用的函数符号
     public:
-        CallExpr(std::unique_ptr<ExprBase> callee, std::vector<std::unique_ptr<ExprBase>> arguments)
+        CallExpr(std::unique_ptr<VariableExpr> callee, std::vector<std::unique_ptr<ExprBase>> arguments)
             : ExprBase(callee->getLoc()), callee(std::move(callee)), arguments(std::move(arguments)) {}
 
         virtual bool isValidLValue() const override { return callee->isValidLValue(); }
         // Depending on the return type of the callee, we don't know if the call is callable or not.
         // So we return true here.
         virtual bool isCallable() const override { return true; }
-        ExprBase* getCallee() const { return callee.get(); }
+        VariableExpr* getCallee() const { return callee.get(); }
         const std::vector<std::unique_ptr<ExprBase>>& getArguments() const { return arguments; }
         ExprBase* getArgument(size_t index) const {
             if (index < arguments.size()) {
@@ -146,29 +173,6 @@ namespace lox
         }
 
         TYPEID_SYSTEM(ExprBase, CallExpr);
-        ACCEPT_DECL();
-    };
-
-    class VariableExpr : public ExprBase {
-    private:
-        std::string name;
-        std::shared_ptr<Symbol> symbol = nullptr;   // 名称解析阶段填充
-    public:
-        VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)){}
-        VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
-
-        virtual bool isValidLValue() const override { return true; }
-        // depending on the return type of the variable, we don't know if the variable is callable or not.
-        // So we return true here.
-        virtual bool isCallable() const override { return true; }
-
-        void print(std::ostream &os) const override {
-            os << "Variable: [";
-            os << name;
-            os << "]";
-        }
-
-        TYPEID_SYSTEM(ExprBase, VariableExpr);
         ACCEPT_DECL();
     };
 

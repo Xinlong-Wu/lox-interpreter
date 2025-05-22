@@ -12,16 +12,30 @@ private:
     SymbolTable symbolTable;
 
 public:
-    Sema() = default;
+    Sema() {
+        // Initialize the global scope with built-in functions
+        inilializeGlobalScope();
+    };
     ~Sema() override = default;
 
     void inilializeGlobalScope() {
-        symbolTable.declare(std::make_shared<Symbol>(std::make_shared<FunctionType>("print", std::vector<std::shared_ptr<Type>>{std::make_shared<UnresolvedType>("string")}, std::make_shared<NilType>())));
+        symbolTable.declare(std::make_shared<Symbol>(std::make_shared<FunctionType>("print", std::vector<std::shared_ptr<Type>>{std::make_shared<StringType>()}, std::make_shared<NilType>())));
     }
 
-    void analyze(std::unique_ptr<StmtBase>& stmt) {
+    void enterScope(const std::string& name = "anonymous") {
+        symbolTable.enterScope(name);
+    }
+    void exitScope() {
+        symbolTable.exitScope();
+    }
+
+    void analyze(std::vector<std::unique_ptr<StmtBase>>& statements) {
         symbolTable.enterScope();
-        stmt->accept(*this);
+
+        for (auto& stmt : statements) {
+            stmt->accept(*this);
+        }
+
         symbolTable.exitScope();
     }
 

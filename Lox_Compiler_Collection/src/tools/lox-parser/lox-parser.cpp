@@ -44,20 +44,22 @@ static int runFile(const char *path, bool enableSema)
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
     lox::Sema sa = lox::Sema();
-
     parser.advance();
 
+    sa.enterScope();
     while (parser.hasNext())
     {
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
         if (stmt != nullptr){
             if (enableSema) {
                 // Perform semantic analysis
+                // sa.analyze(stmt);
                 stmt->accept(sa);
             }
             stmt->dump();
         }
     }
+    sa.exitScope();
 
     free(source);
 

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <utility>
 #include <functional>
+#include <memory>
 
 #if __cplusplus >= 202302L
     #define unreachable() std::unreachable()
@@ -41,14 +42,46 @@ bool isa(const From* from) {
 }
 
 template <typename To, typename From>
+bool isa(const std::shared_ptr<From>& from) {
+    return To::classof(from);
+}
+
+template <typename To, typename From>
+bool isa(const std::unique_ptr<From>& from) {
+    return To::classof(from.get());
+}
+
+template <typename To, typename From>
 To* dyn_cast(From* from) {
     return isa<To>(from) ? static_cast<To*>(from) : nullptr;
+}
+
+template <typename To, typename From>
+std::shared_ptr<To> dyn_cast(const std::shared_ptr<From>& from) {
+    return isa<To>(from) ? std::static_pointer_cast<To>(from) : nullptr;
+}
+
+template <typename To, typename From>
+std::unique_ptr<To> dyn_cast(const std::unique_ptr<From>& from) {
+    return isa<To>(from.get()) ? std::unique_ptr<To>(static_cast<To*>(from.release())) : nullptr;
 }
 
 template <typename To, typename From>
 To* cast(From* from) {
     assert(isa<To>(from) && "Invalid cast");
     return static_cast<To*>(from);
+}
+
+template <typename To, typename From>
+std::shared_ptr<To> cast(const std::shared_ptr<From>& from) {
+    assert(isa<To>(from) && "Invalid cast");
+    return std::static_pointer_cast<To>(from);
+}
+
+template <typename To, typename From>
+std::unique_ptr<To> cast(std::unique_ptr<From>&& from) {
+    assert(isa<To>(from.get()) && "Invalid cast");
+    return std::unique_ptr<To>(static_cast<To*>(from.release()));
 }
 
 } // namespace lox

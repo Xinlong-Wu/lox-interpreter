@@ -40,6 +40,16 @@ namespace lox
             }
             return nullptr;
         }
+
+        void print(std::ostream &os) const {
+            for (size_t i = 0; i < scopes.size(); i++) {
+                scopes[i]->print(os, i);
+            }
+        }
+        virtual void dump() const {
+            this->print(std::cout);
+            std::cout << std::endl;
+        }
     };
 } // namespace lox
 

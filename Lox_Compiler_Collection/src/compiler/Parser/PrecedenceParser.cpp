@@ -1,12 +1,10 @@
+#include "Common.h"
 #include "Compiler/Parser/Parser.h"
 #include "Compiler/Scanner/Token.h"
 #include <unordered_map>
 
-namespace
+namespace lox
 {
-    using lox::ExprBase;
-    using lox::Parser;
-    using lox::TokenType;
     using PrefixFn = std::unique_ptr<ExprBase> (*)(Parser&);
     using InfixFn = std::unique_ptr<ExprBase> (*)(Parser&, std::unique_ptr<ExprBase>);
 
@@ -195,7 +193,7 @@ namespace
             parser.parse(lox::TokenType::TOKEN_RIGHT_PAREN);
         }
 
-        return std::make_unique<lox::CallExpr>(std::move(left), std::move(args));
+        return std::make_unique<lox::CallExpr>(cast<VariableExpr>(std::move(left)), std::move(args));
     }
 
     InfixHandler(binary) {
@@ -224,7 +222,7 @@ namespace
         }
     }
 
-    static std::unordered_map<lox::TokenType, ParseRule> rules = {
+    std::unordered_map<lox::TokenType, ParseRule> rules = {
         {lox::TokenType::TOKEN_LEFT_PAREN,    {grouping, call,   PREC_CALL}},
         {lox::TokenType::TOKEN_RIGHT_PAREN,   {NULL,     NULL,   PREC_NONE}},
         {lox::TokenType::TOKEN_LEFT_BRACE,    {NULL,     NULL,   PREC_NONE}},
