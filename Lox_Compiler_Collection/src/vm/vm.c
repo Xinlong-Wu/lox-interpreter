@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "common.h"
+#include "_common.h"
 #include "compiler/compiler.h"
 #include "disassembler/debug.h"
 #include "memory.h"

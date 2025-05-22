@@ -1,7 +1,7 @@
 #ifndef clox_lineinfo_h
 #define clox_lineinfo_h
 
-#include "common.h"
+#include "_common.h"
 
 #ifdef __cplusplus
 extern "C" {

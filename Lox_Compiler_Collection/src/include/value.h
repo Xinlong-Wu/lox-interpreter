@@ -2,7 +2,7 @@
 #define clox_value_h
 
 #include <string.h>
-#include "common.h"
+#include "_common.h"
 
 #ifdef __cplusplus
 extern "C" {

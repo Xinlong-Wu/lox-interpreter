@@ -5,7 +5,7 @@
 #include <optional>
 #include <unordered_map>
 
-#include "common.h"
+#include "_common.h"
 #include "memory.h"
 #include "disassembler/lineinfo.h"
 #include "Compiler/Scanner/Token.h"

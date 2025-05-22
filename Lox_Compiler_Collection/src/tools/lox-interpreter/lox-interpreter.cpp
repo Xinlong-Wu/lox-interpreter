@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+#include "_common.h"
 #include "chunk.h"
 #include "disassembler/debug.h"
 #include "disassembler/lineinfo.h"

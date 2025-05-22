@@ -1,5 +1,5 @@
 #include "chunk.h"
-#include "common.h"
+#include "_common.h"
 #include "disassembler/lineinfo.h"
 #include "memory.h"
 

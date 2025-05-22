@@ -1,7 +1,7 @@
 #ifndef clox_memory_h
 #define clox_memory_h
 
-#include "common.h"
+#include "_common.h"
 #include "vm/object.h"
 #include "Compiler/compiler.h"
 
