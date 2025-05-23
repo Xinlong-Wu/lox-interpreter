@@ -1,6 +1,7 @@
 {
-  // "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "image": "ubuntu:22.04",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "runArgs": ["--platform=linux/amd64"],
+  // "image": "ubuntu:22.04",
   "customizations":{
     "vscode": {
       "extensions": [
