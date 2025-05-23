@@ -22,6 +22,7 @@
         "ninja-build"
       ]
     }
-  }
+  },
   // "postCreateCommand": "bash tools/installDart.sh"
+  "postCreateCommand": "set -x && lldb --version && cmake --version && ninja --version"
 }
