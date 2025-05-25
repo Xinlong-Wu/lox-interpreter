@@ -48,7 +48,7 @@ namespace lox
         virtual std::shared_ptr<Type>& getType() {
             return type;
         }
-        void setType(std::shared_ptr<Type> t) {
+        virtual void setType(std::shared_ptr<Type> t) {
             type = std::move(t);
         }
 
@@ -115,12 +115,31 @@ namespace lox
     class VariableExpr : public ExprBase {
     private:
         std::string name;
+        Symbol* symbol = nullptr;
     public:
         VariableExpr(std::string name, Location location) : ExprBase(location), name(std::move(name)){}
         VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
 
         virtual const std::string& getName() const { return name; }
-        virtual const std::shared_ptr<Type>& getType() const { return type; }
+        virtual std::shared_ptr<Type>& getType() override {
+            if (symbol != nullptr) {
+                return symbol->getType();
+            }
+            return this->type;
+        }
+        virtual const Symbol* getSymbol() const {
+            return symbol;
+        }
+        virtual void setSymbol(Symbol* sym) {
+            assert(symbol == nullptr && "Symbol has already been set");
+            this->symbol = sym;
+        }
+        virtual void setType(std::shared_ptr<Type> t) override {
+            if (symbol) {
+                symbol->type = t;
+            }
+            this->type = std::move(t);
+        }
         virtual bool isValidLValue() const override { return true; }
         // depending on the return type of the variable, we don't know if the variable is callable or not.
         // So we return true here.
@@ -128,10 +147,15 @@ namespace lox
 
         void print(std::ostream &os) const override {
             os << "Variable: [";
-            os << name;
-            if (type) {
-                os << " : ";
-                type->print(os);
+            if (symbol) {
+                symbol->print(os);
+            }
+            else {
+                os << name;
+                if (type) {
+                    os << " : ";
+                    type->print(os);
+                }
             }
             os << "]";
         }

@@ -42,6 +42,7 @@ namespace lox
             }
         }
         symbolTable.declare(symbol);
+        expr.setSymbol(symbol);
     }
 
     DEFINE_VISIT(BlockStmt) {
@@ -101,10 +102,7 @@ namespace lox
 
         // [Type inference] set the type of the call expression as the return type of the callee
         std::shared_ptr<FunctionType> calleeType = dyn_cast<FunctionType>(callee->getType());
-        if (calleeType == nullptr) {
-            ErrorReporter::reportError(callee, "Undefined function '" + callee->getName() + "'");
-            return;
-        }
+        assert(calleeType != nullptr && "Callee type should be a function type");
         expr.setType(calleeType->getReturnType());
 
         // resolve the arguments
@@ -113,16 +111,18 @@ namespace lox
             arg->accept(*this);
 
             // check if the argument type is compatible with the callee type
-            std::shared_ptr<Type> argType = arg->getType();
-            if (argType != nullptr && calleeType->getParameter(i) != nullptr) {
-                if (!calleeType->getParameter(i)->isCompatible(argType)) {
-                    ErrorReporter::reportError(arg, "Incompatible types in function call");
-                    return;
-                }
+            std::shared_ptr<Type>& paramType = calleeType->getParameter(i);
+            assert (paramType != nullptr && !isa<UnresolvedType>(paramType.get()) && "Argument type should not be unresolved");
+            std::shared_ptr<Type>& argType = arg->getType();
+            if (argType == nullptr) {
+                // [Type inference] if the argument type is unknown, infer it as the parameter type
+                arg->setType(paramType);
+            }
+            else if (!paramType->isCompatible(argType)) {
+                ErrorReporter::reportError(arg.get(), "Incompatible types in function call");
+                return;
             }
         }
-        
-
     }
 
     DEFINE_VISIT(VariableExpr) {
@@ -134,7 +134,7 @@ namespace lox
         }
 
         // set the type of the variable as the symbol type
-        expr.setType(symbol->getType());
+        expr.setSymbol(symbol.get());
     }
 
     DEFINE_VISIT(LiteralExpr) {

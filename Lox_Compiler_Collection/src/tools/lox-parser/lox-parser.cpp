@@ -46,20 +46,23 @@ static int runFile(const char *path, bool enableSema)
     lox::Sema sa = lox::Sema();
     parser.advance();
 
-    sa.enterScope();
+    std::vector<std::unique_ptr<lox::StmtBase>> statements;
     while (parser.hasNext())
     {
         std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
         if (stmt != nullptr){
-            if (enableSema) {
-                // Perform semantic analysis
-                // sa.analyze(stmt);
-                stmt->accept(sa);
-            }
-            stmt->dump();
+            statements.push_back(std::move(stmt));
         }
     }
-    sa.exitScope();
+    
+    if (enableSema) {
+        // Perform semantic analysis
+        sa.analyze(statements);
+    }
+
+    for (auto &stmt : statements) {
+        stmt->dump();
+    }
 
     free(source);
 

@@ -79,7 +79,8 @@ namespace lox
 
         virtual const std::string &getName() const { return symbol->getName(); }
         virtual std::shared_ptr<Type>& getType() const { return symbol->getType(); }
-        virtual std::shared_ptr<Symbol> getSymbol() const { return symbol; }
+        virtual std::shared_ptr<Symbol>& getSymbol() { return symbol; }
+        virtual void setSymbol(std::shared_ptr<Symbol> symbol) { this->symbol = std::move(symbol); }
 
         TYPEID_SYSTEM(StmtBase, DeclarationStmt);
         ACCEPT_DECL();
@@ -97,6 +98,7 @@ namespace lox
         ~VarDeclStmt() override = default;
 
         ExprBase *getInitializer() const { return initializer ? initializer.get() : nullptr; }
+        void setInitializer(std::unique_ptr<ExprBase> expr) { initializer = std::move(expr); }
 
         virtual void print(std::ostream &os) const override
         {

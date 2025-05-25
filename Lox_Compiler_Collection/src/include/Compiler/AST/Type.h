@@ -168,7 +168,7 @@ namespace lox
             return parameters[index];
         }
 
-        std::shared_ptr<Type>& getReturnType() const {
+        std::shared_ptr<Type>& getReturnType() {
             return returnType;
         }
 
