@@ -37,11 +37,14 @@ namespace lox
             return seed;
         }
 
-        virtual bool operator==(Type& other) const {
-            return this->getKind() == other.getKind();
+        virtual bool operator==(const Type* other) const {
+            if (other == this) {
+                return true;
+            }
+            return this->getKind() == other->getKind();
         }
 
-        virtual bool operator!=(Type& other) const {
+        virtual bool operator!=(const Type* other) const {
             return !(*this == other);
         }
 
@@ -57,9 +60,17 @@ namespace lox
     class UnresolvedType : public Type {
     private:
         std::string name;
-    public:
+        inline static std::shared_ptr<UnresolvedType> instance = nullptr;
         UnresolvedType(std::string name) : Type(), name(name) {}
+    public:
         ~UnresolvedType() override = default;
+
+        static std::shared_ptr<UnresolvedType> getInstance() {
+            if (!instance) {
+                instance = std::shared_ptr<UnresolvedType>(new UnresolvedType("unknown"));
+            }
+            return instance;
+        }
 
         std::string getName() const {
             return name;
@@ -79,9 +90,18 @@ namespace lox
     // BuiltIn types
 
     class NumberType : public Type {
-    public:
+    private:
+        inline static std::shared_ptr<NumberType> instance = nullptr;
         NumberType() : Type() {}
+    public:
         ~NumberType() override = default;
+
+        inline static std::shared_ptr<NumberType> getInstance() {
+            if (!instance) {
+                instance = std::shared_ptr<NumberType>(new NumberType());
+            }
+            return instance;
+        }
 
         virtual bool isCompatible(std::shared_ptr<Type> other) override {
             return other->getKind() == Kind::NumberType;
@@ -95,9 +115,18 @@ namespace lox
     };
 
     class StringType : public Type {
-    public:
+    private:
+        inline static std::shared_ptr<StringType> instance = nullptr;
         StringType() : Type() {}
+    public:
         ~StringType() override = default;
+
+        static std::shared_ptr<StringType> getInstance() {
+            if (!instance) {
+                instance = std::shared_ptr<StringType>(new StringType());
+            }
+            return instance;
+        }
 
         virtual bool isCompatible(std::shared_ptr<Type> other) override {
             return other->getKind() == Kind::StringType;
@@ -111,9 +140,18 @@ namespace lox
     };
 
     class BoolType : public Type {
-    public:
+    private:
+        inline static std::shared_ptr<BoolType> instance = nullptr;
         BoolType() : Type() {}
+    public:
         ~BoolType() override = default;
+
+        static std::shared_ptr<BoolType> getInstance() {
+            if (!instance) {
+                instance = std::shared_ptr<BoolType>(new BoolType());
+            }
+            return instance;
+        }
 
         virtual bool isCompatible(std::shared_ptr<Type> other) override {
             return other->getKind() == Kind::BoolType;
@@ -127,9 +165,18 @@ namespace lox
     };
 
     class NilType : public Type {
-    public:
+    private:
+        inline static std::shared_ptr<NilType> instance = nullptr;
         NilType() : Type() {}
+    public:
         ~NilType() override = default;
+
+        static std::shared_ptr<NilType> getInstance() {
+            if (!instance) {
+                instance = std::shared_ptr<NilType>(new NilType());
+            }
+            return instance;
+        }
 
         virtual bool isCompatible(std::shared_ptr<Type> other) override {
             return other->getKind() == Kind::NilType;
@@ -145,13 +192,76 @@ namespace lox
     // UserDefined types
 
     class FunctionType : public Type {
+    public:
+        struct Signature {
+            std::vector<std::shared_ptr<Type>> parameters;
+            std::shared_ptr<Type> returnType;
+
+            Signature(std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<Type> returnType = nullptr)
+                : parameters(std::move(parameters)), returnType(std::move(returnType)) {}
+
+            bool isResolved() const {
+                for (const auto& param : parameters) {
+                    if (isa<UnresolvedType>(param.get())) {
+                        return false;
+                    }
+                }
+                return !isa<UnresolvedType>(returnType.get());
+            }
+
+            bool operator==(const Signature& other) const {
+                if (parameters.size() != other.parameters.size()) {
+                    return false;
+                }
+                for (size_t i = 0; i < parameters.size(); ++i) {
+                    if (parameters[i].get() != other.parameters[i].get()) {
+                        return false;
+                    }
+                }
+                return true;
+                // return *returnType == *other.returnType;
+            }
+            bool operator!=(const Signature& other) const {
+                return !(*this == other);
+            }
+
+            size_t hash() const {
+                std::size_t seed = 0;
+                lox::hash_combine(returnType->hash(), seed);
+                for (const auto& param : parameters) {
+                    lox::hash_combine(param->hash(), seed);
+                }
+                return seed;
+            }
+
+            void print(std::ostream &os) const {
+                if (!returnType) {
+                    os << "constructor";
+                }
+                os << "(";
+                for (size_t i = 0; i < parameters.size(); ++i) {
+                    parameters[i]->print(os);
+                    if (i < parameters.size() - 1) {
+                        os << ", ";
+                    }
+                }
+                os << ")";
+                if (returnType) {
+                    os << " -> ";
+                    returnType->print(os);
+                }
+            }
+        };
+
     private:
         std::string name;
-        std::vector<std::shared_ptr<Type>> parameters;
-        std::shared_ptr<Type> returnType;
+        std::vector<std::shared_ptr<Signature>> overloads;
     public:
+        FunctionType(std::string name) : Type(), name(std::move(name)) {}
         FunctionType(std::string name, std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<Type> returnType = nullptr)
-            : Type(), name(std::move(name)), parameters(std::move(parameters)), returnType(std::move(returnType)) {}
+            : FunctionType(std::move(name)) {
+                overloads.emplace_back(std::make_shared<Signature>(std::move(parameters), std::move(returnType)));
+            }
 
         ~FunctionType() override = default;
 
@@ -163,50 +273,57 @@ namespace lox
             return name;
         }
 
-        std::shared_ptr<Type>& getParameter(size_t index) {
-            assert(index < parameters.size());
-            return parameters[index];
+        bool hasOverload(const Signature& signature) const {
+            auto overload = std::find_if(overloads.begin(), overloads.end(),
+                [&signature](const std::shared_ptr<Signature>& overload) {
+                    return *overload == signature;
+                });
+            return overload != overloads.end();
         }
 
-        std::shared_ptr<Type>& getReturnType() {
-            return returnType;
+        void addOverload(const Signature& signature) {
+            overloads.push_back(std::make_shared<Signature>(signature));
+        }
+        void addOverload(const std::vector<std::shared_ptr<Type>>& parameters, std::shared_ptr<Type> returnType = nullptr) {
+            overloads.emplace_back(std::make_shared<Signature>(parameters, returnType));
         }
 
-        bool operator==(const FunctionType& other) const {
-            if (name != other.name) {
+        const std::shared_ptr<Type> getReturnType() const {
+            if (!overloads.empty()) {
+                return overloads[0]->returnType;
+            }
+            return nullptr;
+        }
+
+        bool operator==(const FunctionType* other) const {
+            if (other == this) {
+                return true;
+            }
+
+            if (name != other->name) {
                 return false;
             }
-            if (parameters.size() != other.parameters.size()) {
-                return false;
-            }
-            for (size_t i = 0; i < parameters.size(); ++i) {
-                if (*parameters[i] != *other.parameters[i]) {
-                    return false;
-                }
-            }
-            return *returnType == *other.returnType;
+
+            return std::equal(overloads.begin(), overloads.end(), other->overloads.begin(),
+                other->overloads.end(),
+                [](const std::shared_ptr<Signature>& a, const std::shared_ptr<Signature>& b) {
+                    return *a == *b;
+                });
         }
 
         virtual size_t hash() const override {
             std::size_t seed = Type::hash();
             lox::hash_combine(name, seed);
-            for (const auto& param : parameters) {
-                lox::hash_combine(param->hash(), seed);
+            for (const auto& overload : overloads) {
+                lox::hash_combine(overload->hash(), seed);
             }
-            lox::hash_combine(returnType->hash(), seed);
             return seed;
         }
 
         void print(std::ostream &os) const override {
-            os << "(";
-            for (size_t i = 0; i < parameters.size(); ++i) {
-                parameters[i]->print(os);
-                if (i < parameters.size() - 1) {
-                    os << ", ";
-                }
-            }
-            os << ") -> ";
-            returnType->print(os);
+            os << " -> ";
+            getReturnType()->print(os);
+            os << " overloads: ";
         }
 
         TYPEID_SYSTEM(Type, FunctionType);

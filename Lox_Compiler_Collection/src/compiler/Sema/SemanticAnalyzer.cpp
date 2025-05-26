@@ -101,13 +101,19 @@ namespace lox
             parameterTypes.push_back(param->getType());
         }
 
-        // create a new function symbol
-        std::shared_ptr<Symbol> funcSymbol = std::make_shared<Symbol>(expr.getName(),
-            std::make_shared<FunctionType>(expr.getName(), std::move(parameterTypes)));
+        // check if the function is already defined
+        std::shared_ptr<Symbol> funcSymbol = symbolTable.lookupLocalSymbol(expr.getName());
+        bool isOverloaded = true;
+        if (funcSymbol == nullptr) {
+            // if the function is not defined, create a new function symbol
+            funcSymbol = std::make_shared<Symbol>(expr.getName(),
+                                                std::make_shared<FunctionType>(expr.getName()));
+            isOverloaded = false;
+        }
+
         // declare the function symbol in the symbol table
-        if (!symbolTable.declare(funcSymbol)) {
-            ErrorReporter::reportError(&expr, "Function '" + expr.getName() + "' is already defined");
-            return;
+        if (!isOverloaded) {
+            symbolTable.declare(funcSymbol);
         }
         // mark the function symbol as defined
         funcSymbol->markAsDefined();
@@ -116,8 +122,28 @@ namespace lox
         symbolTable.enterFunctionScope(expr.getName());
         // visit the function body
         expr.getBody()->accept(*this);
+
+        // get return type of the function
+        std::shared_ptr<Type> returnType = symbolTable.getCurrentScope()->getCurrentReturnType();
+
         // exit the function scope
         symbolTable.exitScope();
+
+        // add overload to the existing function symbol
+        std::shared_ptr<FunctionType> funcType = dyn_cast<FunctionType>(funcSymbol->getType());
+        FunctionType::Signature signature(parameterTypes, returnType);
+        assert(funcType != nullptr && "Function type should not be null");
+        // check if the function has the same number of parameters
+        if (funcType->hasOverload(signature)) {
+            ErrorReporter::reportError(&expr, "Function '" + expr.getName() + "' is already defined with the same signature");
+            return;
+        }
+        else {
+            // add the overload to the function type
+            funcType->addOverload(signature);
+        }
+        // set the function type as the type of the function declaration
+        // expr.setType(funcType);
     }
 
     DEFINE_VISIT(IfStmt) {
@@ -130,7 +156,7 @@ namespace lox
         // check if the type of the condition is compatible with boolean
         std::shared_ptr<Type> conditionType = expr.getCondition()->getType();
         assert(conditionType != nullptr && "Condition type should not be null");
-        if (!conditionType->isCompatible(std::make_shared<BoolType>())) {
+        if (!conditionType->isCompatible(BoolType::getInstance())) {
             ErrorReporter::reportError(&expr, "Condition of 'if' statement must be a boolean expression");
             return;
         }
@@ -142,7 +168,7 @@ namespace lox
         }
 
         // set the type of the if statement as nil
-        // expr.setType(std::make_shared<NilType>());
+        // expr.setType(NilType::getInstance());
     }
 
     DEFINE_VISIT(WhileStmt) {
@@ -182,7 +208,7 @@ namespace lox
         std::shared_ptr<Type> innerType = expr.getExpression()->getType();
         if (innerType == nullptr) {
             // [Type inference] if the inner expression type is unknown, infer it as an unresolved type
-            innerType = std::make_shared<UnresolvedType>("unknown");
+            innerType = UnresolvedType::getInstance();
             expr.getExpression()->setType(innerType);
         }
         else {
@@ -213,25 +239,33 @@ namespace lox
             ErrorReporter::reportError(&expr, "Callee type should be a function type or class type");
             return;
         }
-        expr.setType(calleeType);
 
         // resolve the arguments
+        std::vector<std::shared_ptr<Type>> argumentTypes;
         for (size_t i = 0; i < expr.getArguments().size(); ++i) {
             auto& arg = expr.getArguments()[i];
             arg->accept(*this);
 
             // check if the argument type is compatible with the callee type
-            std::shared_ptr<Type>& paramType = calleeType->getParameter(i);
-            assert (paramType != nullptr && !isa<UnresolvedType>(paramType.get()) && "Argument type should not be unresolved");
             std::shared_ptr<Type> argType = arg->getType();
             if (argType == nullptr) {
-                // [Type inference] if the argument type is unknown, infer it as the parameter type
-                arg->setType(paramType);
+                // [Type inference] if the argument type is unknown, infer it as an unresolved type
+                argumentTypes.push_back(UnresolvedType::getInstance());
             }
-            else if (!paramType->isCompatible(argType)) {
-                ErrorReporter::reportError(arg.get(), "Incompatible types in function call");
-                return;
+            else {
+                // [Type inference] otherwise, add the argument type to the list of argument types
+                argumentTypes.push_back(argType);
             }
+        }
+        std::shared_ptr<Type> calleeReturnType = calleeType->getReturnType();
+        FunctionType::Signature calleeSignature(argumentTypes, calleeReturnType);
+        if (calleeType->hasOverload(calleeSignature)) {
+            // if the callee has an overload with the same signature, set the call expression type as the return type of the overload
+            expr.setCalleeSignature(calleeSignature);
+        }
+        else {
+            ErrorReporter::reportError(&expr, "No matching overload for function call");
+            return;
         }
     }
 
@@ -260,23 +294,23 @@ namespace lox
         const std::string& value = expr.getValue();
         if (value.empty()) {
             // [Type inference] if the literal is empty, infer it as an unresolved type
-            expr.setType(std::make_shared<UnresolvedType>("unknown"));
+            expr.setType(UnresolvedType::getInstance());
         }
         else if (value == "true" || value == "false") {
             // [Type inference] if the literal is a boolean, set the type as BoolType
-            expr.setType(std::make_shared<BoolType>());
+            expr.setType(BoolType::getInstance());
         }
         else if (value == "nil") {
             // [Type inference] if the literal is nil, set the type as NilType
-            expr.setType(std::make_shared<NilType>());
+            expr.setType(NilType::getInstance());
         }
         else if (std::all_of(value.begin(), value.end(), ::isdigit)) {
             // [Type inference] if the literal is a number, set the type as NumberType
-            expr.setType(std::make_shared<NumberType>());
+            expr.setType(NumberType::getInstance());
         }
         else if (value.front() == '"' && value.back() == '"') {
             // [Type inference] if the literal is a string, set the type as StringType
-            expr.setType(std::make_shared<StringType>());
+            expr.setType(StringType::getInstance());
         }
         else {
             ErrorReporter::reportError(&expr, "Unknown literal type: '" + value + "'");
@@ -288,7 +322,7 @@ namespace lox
     }
 
     DEFINE_VISIT(StringExpr) {
-        expr.setType(std::make_shared<StringType>());
+        expr.setType(StringType::getInstance());
     }
 
     DEFINE_VISIT(UnaryExpr) {
@@ -299,7 +333,7 @@ namespace lox
         std::shared_ptr<Type> rightType = expr.getRight()->getType();
         if (rightType == nullptr) {
             // [Type inference] if the right type is unknown, infer it as an unresolved type
-            rightType = std::make_shared<UnresolvedType>("unknown");
+            rightType = UnresolvedType::getInstance();
             expr.getRight()->setType(rightType);
         }
         else if (!isa<NumberType, BoolType, NilType, StringType>(rightType.get())) {
@@ -309,7 +343,7 @@ namespace lox
         }
 
         // set the result type of the unary expression as the right type
-        expr.setType(std::make_shared<BoolType>());
+        expr.setType(BoolType::getInstance());
     }
 
     DEFINE_VISIT(BinaryExpr) {

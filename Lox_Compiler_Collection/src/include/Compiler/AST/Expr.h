@@ -169,6 +169,9 @@ namespace lox
     protected:
         std::unique_ptr<VariableExpr> callee;
         std::vector<std::unique_ptr<ExprBase>> arguments;
+
+        // after resolving the call function, we store the resolved function type here.
+        std::shared_ptr<FunctionType::Signature> resolvedCalleeSignature = nullptr;
     public:
         CallExpr(std::unique_ptr<VariableExpr> callee, std::vector<std::unique_ptr<ExprBase>> arguments)
             : ExprBase(callee->getLoc()), callee(std::move(callee)), arguments(std::move(arguments)) {}
@@ -178,7 +181,28 @@ namespace lox
         // So we return true here.
         virtual bool isCallable() const override { return true; }
         VariableExpr* getCallee() const { return callee.get(); }
+        virtual const std::shared_ptr<Type>& getType() const override {
+            assert_not_reached("CallExpr::getType() should not be called before resolving the callee signature");
+        }
         const std::vector<std::unique_ptr<ExprBase>>& getArguments() const { return arguments; }
+
+        std::shared_ptr<Type> getReturnType() const {
+            if (resolvedCalleeSignature) {
+                return resolvedCalleeSignature->returnType;
+            }
+            return nullptr; // or throw an error if not resolved
+        }
+
+        void setCalleeSignature(FunctionType::Signature signature) {
+            resolvedCalleeSignature = std::make_shared<FunctionType::Signature>(std::move(signature));
+            if (resolvedCalleeSignature) {
+                this->type = resolvedCalleeSignature->returnType;
+            }
+        }
+        std::shared_ptr<FunctionType::Signature> getCalleeSignature() const {
+            return resolvedCalleeSignature;
+        }
+
         ExprBase* getArgument(size_t index) const {
             if (index < arguments.size()) {
                 return arguments[index].get();
@@ -187,9 +211,14 @@ namespace lox
         }
 
         void print(std::ostream &os) const override {
-            os << "Call: [";
-            callee->print(os);
-            os << "(";
+            os << "Call: [Variable: [" << callee->getName();
+
+            if (resolvedCalleeSignature) {
+                os << ": ";
+                resolvedCalleeSignature->print(os);
+            }
+
+            os << "](";
             for (const auto& arg : arguments) {
                 arg->print(os);
                 os << ", ";

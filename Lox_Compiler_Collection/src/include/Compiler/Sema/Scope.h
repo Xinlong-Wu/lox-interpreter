@@ -22,6 +22,7 @@ namespace lox
         bool inFunctionScope = false; // 是否在函数作用域内
         bool inClassScope = false;    // 是否在类作用域内
         std::shared_ptr<Symbol> currentClassSymbol = nullptr; // 当前类符号
+        std::shared_ptr<Type> currentReturnType = nullptr; // 当前函数返回类型
     public:
         Scope(std::shared_ptr<Scope> parent, const std::string& name, bool inClassScope = false, bool inFunctionScope = false)
             : enclosingScope(parent), name(name) {
@@ -53,14 +54,19 @@ namespace lox
             return currentClassSymbol;
         }
 
+        virtual void setCurrentReturnType(std::shared_ptr<Type> type) {
+            assert(isInFunctionScope() && "Current scope is not a function scope");
+            currentReturnType = std::move(type);
+        }
+        virtual std::shared_ptr<Type> getCurrentReturnType() const {
+            assert(isInFunctionScope() && "Current scope is not a function scope");
+            return currentReturnType;
+        }
+
         virtual bool declare(std::shared_ptr<Symbol>& symbol) {
-            if (symbols.find(symbol->getName()) != symbols.end()) {
-                return false; // Symbol already declared in this scope
-            }
-            if (isa<FunctionScope>(enclosingScope) && enclosingScope->resolve(symbol->getName()) != nullptr) {
-                // 符号在函数作用域中已经作为参数存在
-                ErrorReporter::reportError("Unable to redeclare argument '" + symbol->getName() + "' in function scope");
-                return false;
+            if (resolveLocal(symbol->getName())) {
+                ErrorReporter::reportError("Symbol '" + symbol->getName() + "' is already declared in scope '" + this->getName() + "'");
+                return false; // 如果符号已存在，返回false
             }
             symbols[symbol->getName()] = symbol;
             return true;

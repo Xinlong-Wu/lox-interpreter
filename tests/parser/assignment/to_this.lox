@@ -4,7 +4,7 @@
 // CHECK-PARSER-LABEL:     Assign: [this = String: ["value"]];
 
 // CHECK-SEMANTIC-LABEL:     Error: Incompatible types in assignment at
-// CHECK-SEMANTIC:           Call: [Variable: [Foo: Foo]()];
+// CHECK-SEMANTIC:           Call: [Variable: [Foo: constructor()]()];
 
 class Foo {
   fun Foo() {

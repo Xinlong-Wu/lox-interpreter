@@ -49,6 +49,10 @@ namespace lox
             return nullptr;
         }
 
+        std::shared_ptr<Symbol> lookupLocalSymbol(const std::string& name) {
+            return scopes.back()->resolveLocal(name);
+        }
+
         void print(std::ostream &os) const {
             for (size_t i = 0; i < scopes.size(); i++) {
                 scopes[i]->print(os, i);
