@@ -11,9 +11,9 @@
 // CHECK-SEMANTIC-LABEL:    var a: string = String: ["outer"];
 // CHECK-SEMANTIC-NEXT:     BlockStmt: {
 // CHECK-SEMANTIC-NEXT:       var a: string = String: ["inner"];
-// CHECK-SEMANTIC-NEXT:       Call: [Variable: [print (string): nil](Variable: [a: string], )];
+// CHECK-SEMANTIC-NEXT:       Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
 // CHECK-SEMANTIC-LABEL:    }
-// CHECK-SEMANTIC:         Call: [Variable: [print (string): nil](Variable: [a: string], )];
+// CHECK-SEMANTIC:         Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
 
 
 var a = "outer";

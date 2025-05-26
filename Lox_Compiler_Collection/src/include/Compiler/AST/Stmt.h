@@ -226,6 +226,7 @@ namespace lox
         ExprBase *getCondition() const { return condition.get(); }
         BlockStmt *getThenBranch() const { return thenBlock.get(); }
         BlockStmt *getElseBranch() const { return elseBlock.get(); }
+        bool hasElseBranch() const { return elseBlock != nullptr; }
 
         virtual void print(std::ostream &os) const override
         {

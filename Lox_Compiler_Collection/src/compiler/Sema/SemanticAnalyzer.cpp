@@ -121,7 +121,28 @@ namespace lox
     }
 
     DEFINE_VISIT(IfStmt) {
-        assert_not_reached("Unimplemented IfStmt visit");
+        // resolve the condition expression
+        if (expr.getCondition() == nullptr) {
+            ErrorReporter::reportError(&expr, "'if' statement must have a condition");
+            return;
+        }
+        expr.getCondition()->accept(*this);
+        // check if the type of the condition is compatible with boolean
+        std::shared_ptr<Type> conditionType = expr.getCondition()->getType();
+        assert(conditionType != nullptr && "Condition type should not be null");
+        if (!conditionType->isCompatible(std::make_shared<BoolType>())) {
+            ErrorReporter::reportError(&expr, "Condition of 'if' statement must be a boolean expression");
+            return;
+        }
+
+        // resolve the then and else branches
+        expr.getThenBranch()->accept(*this);
+        if (expr.hasElseBranch()) {
+            expr.getElseBranch()->accept(*this);
+        }
+
+        // set the type of the if statement as nil
+        // expr.setType(std::make_shared<NilType>());
     }
 
     DEFINE_VISIT(WhileStmt) {
@@ -136,10 +157,7 @@ namespace lox
     }
 
     DEFINE_VISIT(ReturnStmt) {
-        // if (expr.getValue()) {
-        //     expr.getValue()->accept(*this);
-        // }
-        std::cout << "Visiting ReturnStmt" << std::endl;
+        assert_not_reached("Unimplemented ReturnStmt visit");
     }
 
 
@@ -239,7 +257,30 @@ namespace lox
     }
 
     DEFINE_VISIT(LiteralExpr) {
-        assert_not_reached("Unimplemented LiteralExpr visit");
+        const std::string& value = expr.getValue();
+        if (value.empty()) {
+            // [Type inference] if the literal is empty, infer it as an unresolved type
+            expr.setType(std::make_shared<UnresolvedType>("unknown"));
+        }
+        else if (value == "true" || value == "false") {
+            // [Type inference] if the literal is a boolean, set the type as BoolType
+            expr.setType(std::make_shared<BoolType>());
+        }
+        else if (value == "nil") {
+            // [Type inference] if the literal is nil, set the type as NilType
+            expr.setType(std::make_shared<NilType>());
+        }
+        else if (std::all_of(value.begin(), value.end(), ::isdigit)) {
+            // [Type inference] if the literal is a number, set the type as NumberType
+            expr.setType(std::make_shared<NumberType>());
+        }
+        else if (value.front() == '"' && value.back() == '"') {
+            // [Type inference] if the literal is a string, set the type as StringType
+            expr.setType(std::make_shared<StringType>());
+        }
+        else {
+            ErrorReporter::reportError(&expr, "Unknown literal type: '" + value + "'");
+        }
     }
 
     DEFINE_VISIT(NumberExpr) {

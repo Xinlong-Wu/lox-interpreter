@@ -3,10 +3,10 @@
 
 // CHECK-PARSER-LABEL:     BlockStmt: {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER-LABEL:     if (Literal: [true]) 
+// CHECK-PARSER-LABEL:     if (Literal: [true])
 // CHECK-PARSER-NEXT:      BlockStmt: {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER-LABEL:     if (Literal: [false]) 
+// CHECK-PARSER-LABEL:     if (Literal: [false])
 // CHECK-PARSER-NEXT:      BlockStmt: {
 // CHECK-PARSER-NEXT:      }
 // CHECK-PARSER-NEXT:      else BlockStmt: {
@@ -23,7 +23,7 @@
 // CHECK-SEMANTIC-NEXT:      }
 // CHECK-SEMANTIC-NEXT:      else BlockStmt: {
 // CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC-LABEL:     Call: [Variable: [print (string): nil](String: ["ok"], )];
+// CHECK-SEMANTIC-LABEL:     Call: [Variable: [print: (string) -> nil](String: ["ok"], )];
 
 {} // By itself.
 
