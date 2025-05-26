@@ -180,10 +180,22 @@ namespace lox
         // resolve the callee
         callee->accept(*this);
 
+        std::shared_ptr<FunctionType> calleeType = nullptr;
         // [Type inference] set the type of the call expression as the return type of the callee
-        std::shared_ptr<FunctionType> calleeType = dyn_cast<FunctionType>(callee->getType());
-        assert(calleeType != nullptr && "Callee type should be a function type");
-        expr.setType(calleeType->getReturnType());
+        if (isa<FunctionType>(callee->getType())) {
+            // if the callee is a function, set the call expression type as the return type of the function
+            calleeType = dyn_cast<FunctionType>(callee->getType());
+        }
+        else if (isa<ClassType>(callee->getType())) {
+            // if the callee is a class, set the call expression type as the class type
+            std::shared_ptr<ClassType> classType = dyn_cast<ClassType>(callee->getType());
+            calleeType = classType->getConstructor();
+        }
+        else {
+            ErrorReporter::reportError(&expr, "Callee type should be a function type or class type");
+            return;
+        }
+        expr.setType(calleeType);
 
         // resolve the arguments
         for (size_t i = 0; i < expr.getArguments().size(); ++i) {
@@ -193,7 +205,7 @@ namespace lox
             // check if the argument type is compatible with the callee type
             std::shared_ptr<Type>& paramType = calleeType->getParameter(i);
             assert (paramType != nullptr && !isa<UnresolvedType>(paramType.get()) && "Argument type should not be unresolved");
-            std::shared_ptr<Type>& argType = arg->getType();
+            std::shared_ptr<Type> argType = arg->getType();
             if (argType == nullptr) {
                 // [Type inference] if the argument type is unknown, infer it as the parameter type
                 arg->setType(paramType);
@@ -243,7 +255,7 @@ namespace lox
         expr.getRight()->accept(*this);
 
         // check if the right type is compatible with the unary operator
-        std::shared_ptr<Type>& rightType = expr.getRight()->getType();
+        std::shared_ptr<Type> rightType = expr.getRight()->getType();
         if (rightType == nullptr) {
             // [Type inference] if the right type is unknown, infer it as an unresolved type
             rightType = std::make_shared<UnresolvedType>("unknown");
@@ -265,8 +277,8 @@ namespace lox
         expr.getRight()->accept(*this);
 
         // check if the left and right types are compatible
-        std::shared_ptr<Type>& leftType = expr.getLeft()->getType();
-        std::shared_ptr<Type>& rightType = expr.getRight()->getType();
+        std::shared_ptr<Type> leftType = expr.getLeft()->getType();
+        std::shared_ptr<Type> rightType = expr.getRight()->getType();
         if (leftType != nullptr && rightType != nullptr) {
             if (!leftType->isCompatible(rightType)) {
                 ErrorReporter::reportError(&expr, "Incompatible types in binary expression");
@@ -299,8 +311,8 @@ namespace lox
         expr.getRight()->accept(*this);
 
         // check if theris a type are compatible
-        std::shared_ptr<Type>& leftType = expr.getLeft()->getType();
-        std::shared_ptr<Type>& rightType = expr.getRight()->getType();
+        std::shared_ptr<Type> leftType = expr.getLeft()->getType();
+        std::shared_ptr<Type> rightType = expr.getRight()->getType();
         if (leftType != nullptr && rightType != nullptr) {
             if (!leftType->isCompatible(rightType)) {
                 ErrorReporter::reportError(&expr, "Incompatible types in assignment");
@@ -317,12 +329,17 @@ namespace lox
         }
         else {
             ErrorReporter::reportError(&expr, "Cannot assign an expression of unknown type");
+            return;
         }
 
         // set the result type of the assignment as the left type
         expr.setType(leftType);
 
         if (VariableExpr* var = dyn_cast<VariableExpr>(expr.getLeft())) {
+            if (var->getSymbol() == nullptr) {
+                ErrorReporter::reportError(&expr, "Variable '" + var->getName() + "' is not declared");
+                return;
+            }
             var->getSymbol()->markAsDefined();
         }
     }

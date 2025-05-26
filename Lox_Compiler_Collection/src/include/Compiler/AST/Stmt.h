@@ -79,7 +79,7 @@ namespace lox
         ~DeclarationStmt() override = default;
 
         virtual const std::string &getName() const { return symbol->getName(); }
-        virtual std::shared_ptr<Type>& getType() const { return symbol->getType(); }
+        virtual const std::shared_ptr<Type>& getType() const { return symbol->getType(); }
         virtual std::shared_ptr<Symbol>& getSymbol() { return symbol; }
         virtual void setSymbol(std::shared_ptr<Symbol> symbol) { this->symbol = std::move(symbol); }
 

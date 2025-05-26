@@ -3,8 +3,8 @@
 
 // CHECK-PARSER-LABEL:     Assign: [this = String: ["value"]];
 
-// CHECK-SEMANTIC-LABEL:     Error: unable to assign a string to a object
-// CHECK-SEMANTIC:           Call: [Variable: [class Foo]()];
+// CHECK-SEMANTIC-LABEL:     Error: Incompatible types in assignment at
+// CHECK-SEMANTIC:           Call: [Variable: [Foo: Foo]()];
 
 class Foo {
   fun Foo() {

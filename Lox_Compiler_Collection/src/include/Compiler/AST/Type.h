@@ -216,10 +216,15 @@ namespace lox
     private:
         std::string name;
         std::shared_ptr<ClassType> superClass;
-        // std::unordered_map<std::string, std::shared_ptr<Type>> methods;
+        std::unordered_map<std::string, std::shared_ptr<FunctionType>> methods;
     public:
         ClassType(const std::string& name, std::shared_ptr<ClassType> superClass = nullptr)
-            : Type(), name(name), superClass(std::move(superClass)){}
+            : Type(), name(name), superClass(std::move(superClass)){
+            if (!hasConstructor()) {
+                // Automatically add a constructor if it doesn't exist
+                methods[name] = std::make_shared<FunctionType>(name, std::vector<std::shared_ptr<Type>>());
+            }
+        }
 
         ~ClassType() override = default;
 
@@ -227,6 +232,18 @@ namespace lox
             return isa<ClassType>(other) &&
                    (*this == *dyn_cast<ClassType>(other));
 
+        }
+
+        bool hasConstructor() const {
+            return methods.find("Foo") != methods.end();
+        }
+
+        const std::shared_ptr<FunctionType> getConstructor() {
+            auto it = methods.find("Foo");
+            if (it != methods.end()) {
+                return it->second;
+            }
+            return nullptr;
         }
 
         std::string getName() const {

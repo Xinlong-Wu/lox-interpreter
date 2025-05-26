@@ -6,12 +6,14 @@
 
 namespace lox
 {
-    struct Symbol {
+    class Symbol {
+    protected:
         std::string name;
         std::shared_ptr<Type> type;
         bool isDefined = false;
         bool isUsed = false;
 
+    public:
         Symbol(const std::string& name, std::shared_ptr<Type> type = nullptr)
             : name(name), type(std::move(type)){}
         Symbol(std::shared_ptr<FunctionType> funcType)
@@ -19,16 +21,20 @@ namespace lox
         Symbol(std::shared_ptr<ClassType> classType)
             : name(classType->getName()), type(std::move(classType)) {}
 
-        std::string& getName() {
+        const std::string& getName() const {
             return name;
         }
 
-        std::shared_ptr<Type>& getType() {
+        bool hasType() const {
+            return type != nullptr;
+        }
+
+        const std::shared_ptr<Type>& getType() const {
             return type;
         }
 
         void setType(std::shared_ptr<Type> t) {
-            type = t;
+            type = std::move(t);
         }
 
         void markAsDefined() {
@@ -77,9 +83,9 @@ namespace lox
     struct SymbolHash {
         std::size_t operator()(const Symbol& sym) const {
             std::size_t seed = 0;
-            lox::hash_combine(sym.name, seed);
-            if (sym.type) {
-                lox::hash_combine(sym.type->hash(), seed);
+            lox::hash_combine(sym.getName(), seed);
+            if (sym.hasType()) {
+                lox::hash_combine(sym.getType()->hash(), seed);
             }
             return seed;
         }

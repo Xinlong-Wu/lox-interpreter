@@ -45,7 +45,7 @@ namespace lox
             std::cout << std::endl;
         }
 
-        virtual std::shared_ptr<Type>& getType() {
+        virtual const std::shared_ptr<Type>& getType() const {
             return type;
         }
         virtual void setType(std::shared_ptr<Type> t) {
@@ -122,7 +122,7 @@ namespace lox
         VariableExpr(lox::Token token) : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
 
         virtual const std::string& getName() const { return name; }
-        virtual std::shared_ptr<Type>& getType() override {
+        virtual const std::shared_ptr<Type>& getType() const override {
             if (symbol != nullptr) {
                 return symbol->getType();
             }
@@ -137,7 +137,7 @@ namespace lox
         }
         virtual void setType(std::shared_ptr<Type> t) override {
             if (symbol) {
-                symbol->type = t;
+                symbol->setType(t);
             }
             this->type = std::move(t);
         }
