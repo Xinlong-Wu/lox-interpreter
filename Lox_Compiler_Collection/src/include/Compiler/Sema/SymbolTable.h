@@ -14,6 +14,14 @@ namespace lox
         }
         ~SymbolTable() = default;
 
+        void enterClassScope(const std::string& name) {
+            scopes.push_back(std::make_shared<ClassScope>(scopes.back(), name));
+        }
+
+        void enterFunctionScope(const std::string& name) {
+            scopes.push_back(std::make_shared<FunctionScope>(scopes.back(), name));
+        }
+
         void enterScope(const std::string& name = "anonymous") {
             scopes.push_back(std::make_shared<Scope>(scopes.back(), name));
         }

@@ -1,11 +1,12 @@
 #ifndef ERROR_REPORTER_H
 #define ERROR_REPORTER_H
 
-#include "Compiler/Location.h"
-#include "Compiler/AST/Stmt.h"
+#include <iostream>
 
 namespace lox
 {
+    class ExprBase;
+    class StmtBase;
     class ErrorReporter
     {
     private:
@@ -21,6 +22,8 @@ namespace lox
         static void reportWarning(const StmtBase* stmt, const std::string &message, std::ostream &os = std::cerr);
         static void reportError(const ExprBase* expr, const std::string &message, std::ostream &os = std::cerr);
         static void reportWarning(const ExprBase* expr, const std::string &message, std::ostream &os = std::cerr);
+        static void reportError(const std::string &message, std::ostream &os = std::cerr);
+        static void reportWarning(const std::string &message, std::ostream &os = std::cerr);
     };
 } // namespace lox
 

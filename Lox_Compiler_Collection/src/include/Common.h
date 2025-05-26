@@ -36,19 +36,37 @@ inline void hash_combine(const T& val, std::size_t& seed) {
     seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
-template <typename To, typename From>
+template <typename To, typename... Rest, typename From>
 bool isa(const From* from) {
-    return To::classof(from);
+    if (!from) return false;
+
+    if constexpr (sizeof...(Rest) == 0) {
+        return To::classof(from);
+    } else {
+        return To::classof(from) || isa<Rest...>(from);
+    }
 }
 
-template <typename To, typename From>
+template <typename To, typename... Rest, typename From>
 bool isa(const std::shared_ptr<From>& from) {
-    return To::classof(from);
+    if (!from) return false;
+
+    if constexpr (sizeof...(Rest) == 0) {
+        return To::classof(from);
+    } else {
+        return To::classof(from) || isa<Rest...>(from);
+    }
 }
 
-template <typename To, typename From>
+template <typename To, typename... Rest, typename From>
 bool isa(const std::unique_ptr<From>& from) {
-    return To::classof(from.get());
+    if (!from) return false;
+
+    if constexpr (sizeof...(Rest) == 0) {
+        return To::classof(from);
+    } else {
+        return To::classof(from) || isa<Rest...>(from);
+    }
 }
 
 template <typename To, typename From>
@@ -62,8 +80,13 @@ std::shared_ptr<To> dyn_cast(const std::shared_ptr<From>& from) {
 }
 
 template <typename To, typename From>
-std::unique_ptr<To> dyn_cast(const std::unique_ptr<From>& from) {
-    return isa<To>(from.get()) ? std::unique_ptr<To>(static_cast<To*>(from.release())) : nullptr;
+std::unique_ptr<To> dyn_cast(std::unique_ptr<From>& from) {
+    if (!isa<To>(from.get())) {
+        return nullptr;
+    }
+    // 转移所有权
+    To* raw_ptr = static_cast<To*>(from.release());
+    return std::unique_ptr<To>(raw_ptr);
 }
 
 template <typename To, typename From>

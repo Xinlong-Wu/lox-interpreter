@@ -2,6 +2,7 @@
 #define SYMBOL_H
 
 #include "Compiler/AST/Type.h"
+#include "Compiler/ErrorReporter.h"
 
 namespace lox
 {
@@ -9,6 +10,7 @@ namespace lox
         std::string name;
         std::shared_ptr<Type> type;
         bool isDefined = false;
+        bool isUsed = false;
 
         Symbol(const std::string& name, std::shared_ptr<Type> type = nullptr)
             : name(name), type(std::move(type)){}
@@ -29,8 +31,26 @@ namespace lox
             type = t;
         }
 
-        void setDefined() {
+        void markAsDefined() {
             isDefined = true;
+        }
+
+        bool isDefinedSymbol() const {
+            return isDefined;
+        }
+
+        void markAsUsed() {
+            if (!isDefined) {
+                // // If the symbol is not defined, we should not mark it as used.
+                // // This can happen if the symbol is used before it is defined.
+                ErrorReporter::reportError("Symbol '" + name + "' is used before it is defined.");
+                return;
+            }
+            isUsed = true;
+        }
+
+        bool isUsedSymbol() const {
+            return isUsed;
         }
 
         friend std::ostream& operator<<(std::ostream& os, const Symbol& sym) {

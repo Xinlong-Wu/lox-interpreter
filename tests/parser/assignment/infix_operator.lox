@@ -5,9 +5,9 @@
 // CHECK-PARSER-NEXT:      var b = String: ["b"];
 // CHECK-PARSER-NEXT:      Error: Invalid left Value at `Binary: [Variable: [a] + Variable: [b]]`, before: `"value"`
 
-// CHECK-SA-LABEL:          var a: string = String: ["a"];
+// CHECK-SA-LABEL:          Error: Invalid left Value at `Binary: [Variable: [a] + Variable: [b]]`, before: `"value"`
+// CHECK-SA-NEXT:           var a: string = String: ["a"];
 // CHECK-SA-NEXT:           var b: string = String: ["b"];
-// CHECK-SA-NEXT:           Error: Invalid left Value at `Binary: [Variable: [a] + Variable: [b]]`, before: `"value"`
 // CHECK-SA-NEXT:           Binary: [Variable: [a: string] + Variable: [b: string]]
 
 var a = "a";

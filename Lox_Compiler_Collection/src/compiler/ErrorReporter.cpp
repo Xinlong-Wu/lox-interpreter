@@ -1,5 +1,7 @@
 #include "Compiler/ErrorReporter.h"
 
+#include "Compiler/AST/Expr.h"
+#include "Compiler/AST/Stmt.h"
 namespace lox
 {
     int ErrorReporter::errorCount = 0;
@@ -51,6 +53,17 @@ namespace lox
         os << "Warning: " << message << " at " << expr->getLoc() << std::endl << "\t ";
         expr->print(os);
         os << std::endl;
+        warningCount++;
+    }
+
+    void ErrorReporter::reportError(const std::string &message, std::ostream &os)
+    {
+        os << "Error: " << message << std::endl;
+        errorCount++;
+    }
+    void ErrorReporter::reportWarning(const std::string &message, std::ostream &os)
+    {
+        os << "Warning: " << message << std::endl;
         warningCount++;
     }
 } // namespace lox

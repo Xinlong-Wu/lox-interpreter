@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Compiler/Sema/Symbol.h"
+#include "Compiler/Sema/Scope.h"
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/AST/Expr.h"
 
@@ -124,6 +125,8 @@ namespace lox
         BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements) : BlockStmt(std::move(statements), statements[statements.size() - 1]->getLoc().getNextColumn()) {}
         ~BlockStmt() override = default;
 
+        std::vector<std::unique_ptr<StmtBase>> &getStatements() { return statements; }
+
         virtual void print(std::ostream &os) const override
         {
             os << "BlockStmt: " << "{" << std::endl;
@@ -173,14 +176,22 @@ namespace lox
     private:
         std::optional<std::string> superclass;
         std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields;
+
+        // for semantic analysis, we need to keep track of the class scope
+        std::shared_ptr<Scope> classScope;
     public:
         ClassDeclStmt(std::string name, std::optional<std::string> superclass, std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields, Location loc) : DeclarationStmt(std::move(name), loc), superclass(std::move(superclass)), fields(std::move(fields)) {}
         ClassDeclStmt(std::string name, std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields, Location loc) : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields), loc) {}
         ~ClassDeclStmt() override = default;
 
         bool hasSuperclass() const { return superclass.has_value(); }
-        const std::string &getSuperclass() const { return *superclass; }
+        const std::string &getSuperclassName() const { return *superclass; }
         std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> &getFields() { return fields; }
+        std::shared_ptr<Scope> &getClassScope() { return classScope; }
+        void setClassScope(std::shared_ptr<Scope> scope) {
+            assert(classScope == nullptr && "Class scope has already been set");
+            classScope = std::move(scope);
+        }
 
 
         virtual void print(std::ostream &os) const override

@@ -218,13 +218,15 @@ namespace lox
         std::shared_ptr<ClassType> superClass;
         // std::unordered_map<std::string, std::shared_ptr<Type>> methods;
     public:
-        ClassType(std::string& name, std::shared_ptr<ClassType> superClass = nullptr)
+        ClassType(const std::string& name, std::shared_ptr<ClassType> superClass = nullptr)
             : Type(), name(name), superClass(std::move(superClass)){}
 
         ~ClassType() override = default;
 
         virtual bool isCompatible(std::shared_ptr<Type> other) override {
-            assert_not_reached("Unimplemented ClassType isCompatible");
+            return isa<ClassType>(other) &&
+                   (*this == *dyn_cast<ClassType>(other));
+
         }
 
         std::string getName() const {

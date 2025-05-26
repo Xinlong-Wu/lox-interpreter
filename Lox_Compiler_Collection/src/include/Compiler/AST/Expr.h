@@ -66,6 +66,7 @@ namespace lox
     public:
         ThisExpr(lox::Token token) : ExprBase(token.getLoction()) {}
 
+
         virtual bool isValidLValue() const override { return true; }
         virtual bool isCallable() const override { return true; }
         void print(std::ostream &os) const override {
@@ -127,7 +128,7 @@ namespace lox
             }
             return this->type;
         }
-        virtual const Symbol* getSymbol() const {
+        virtual Symbol* getSymbol() const {
             return symbol;
         }
         virtual void setSymbol(Symbol* sym) {

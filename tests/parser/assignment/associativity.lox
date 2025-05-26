@@ -10,14 +10,14 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [b], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [c], )];
 
-// CHECK-SA-LABEL:         var a: string = String: ["a"];
+// CHECK-SA-LABEL:         var a: string;
 // CHECK-SA-NEXT:          var b: string = String: ["b"];
 // CHECK-SA-NEXT:          var c: string = String: ["c"];
 // CHECK-SA-NEXT:          Assign: [Variable: [a: string] = Assign: [Variable: [b: string] = Variable: [c: string]]];
-// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](String: ["result"], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [a: string], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [b: string], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print (string): nil](Variable: [c: string], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](String: ["result"], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [b: string], )];
+// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [c: string], )];
 
 var a;
 var b = "b";
