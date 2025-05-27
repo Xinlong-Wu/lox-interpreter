@@ -1,8 +1,13 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:     Call: [Variable: [print](Unary: [! Literal: [true]], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Unary: [! Literal: [false]], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Unary: [! Unary: [! Literal: [true]]], )];
+
+// CHECK-SEMANTIC-LABEL:    Call: [Variable: [print: (bool) -> nil](Unary: [! Literal: [true]], )];
+// CHECK-SEMANTIC-NEXT:     Call: [Variable: [print: (bool) -> nil](Unary: [! Literal: [false]], )];
+// CHECK-SEMANTIC-NEXT:     Call: [Variable: [print: (bool) -> nil](Unary: [! Unary: [! Literal: [true]]], )];
 
 print (!true);    // expect: false
 print (!false);   // expect: true

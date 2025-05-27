@@ -19,7 +19,11 @@ public:
     ~Sema() override = default;
 
     void inilializeGlobalScope() {
-        symbolTable.declare(std::make_shared<Symbol>(std::make_shared<FunctionType>("print", std::vector<std::shared_ptr<Type>>{StringType::getInstance()}, NilType::getInstance())));
+        symbolTable.declare(std::make_shared<Symbol>(std::shared_ptr<FunctionType>(new FunctionType("print", {
+            std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature({StringType::getInstance()}, NilType::getInstance())),
+            std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature({NumberType::getInstance()}, NilType::getInstance())),
+            std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature({BoolType::getInstance()}, NilType::getInstance()))
+        }))));
     }
 
     void enterScope(const std::string& name = "anonymous") {

@@ -258,6 +258,10 @@ namespace lox
         std::vector<std::shared_ptr<Signature>> overloads;
     public:
         FunctionType(std::string name) : Type(), name(std::move(name)) {}
+        FunctionType(std::string name, std::vector<std::shared_ptr<Signature>> overloads)
+            : FunctionType(std::move(name)) {
+                this->overloads = std::move(overloads);
+            }
         FunctionType(std::string name, std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<Type> returnType = nullptr)
             : FunctionType(std::move(name)) {
                 overloads.emplace_back(std::make_shared<Signature>(std::move(parameters), std::move(returnType)));
