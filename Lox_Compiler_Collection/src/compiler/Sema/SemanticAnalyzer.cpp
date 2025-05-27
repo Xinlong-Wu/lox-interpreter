@@ -274,7 +274,11 @@ DEFINE_VISIT(CallExpr) {
     // expression type as the return type of the overload
     expr.setCalleeSignature(calleeSignature);
   } else {
-    ErrorReporter::reportError(&expr, "No matching overload for function call");
+    std::ostringstream oss;
+    calleeSignature.print(oss);
+    ErrorReporter::reportError(&expr, "No matching overload for function '" +
+                                          callee->getName() + "" +
+                                          oss.str() + "'");
     return;
   }
 }
@@ -325,7 +329,8 @@ DEFINE_VISIT(LiteralExpr) {
 }
 
 DEFINE_VISIT(NumberExpr) {
-  assert_not_reached("Unimplemented NumberExpr visit");
+  // [Type inference] set the type of the number expression as NumberType
+  expr.setType(NumberType::getInstance());
 }
 
 DEFINE_VISIT(StringExpr) { expr.setType(StringType::getInstance()); }

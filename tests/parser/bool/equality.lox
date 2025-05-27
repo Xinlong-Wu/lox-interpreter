@@ -1,5 +1,5 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
-// RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
+// RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:     Call: [Variable: [print](Binary: [Literal: [true] == Literal: [true]], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] == Literal: [false]], )];
@@ -20,7 +20,26 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != String: ["false"]], )];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != String: [""]], )];
 
-// CHECK-SEMANTIC-LABEL:  Call: [Variable: [print](Binary: [Literal: [true] == Literal: [true]], )];
+// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
+// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [true] == Number: [1]]
+// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
+// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
+// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [false] == Number: [0]]
+// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
+// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
+// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [true] == String: ["true"]]
+// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
+// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
+// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [false] == String: ["false"]]
+// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
+// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
+// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [false] == String: [""]]
+// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
+
+// CHECK-SEMANTIC-LABEL:   Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [true] == Literal: [true]], )];
+// CHECK-SEMANTIC-NEXT:    Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [true] == Literal: [false]], )];
+// CHECK-SEMANTIC-NEXT:    Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [false] == Literal: [true]], )];
+// CHECK-SEMANTIC-NEXT:    Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [false] == Literal: [false]], )];
 
 print (true == true);    // expect: true
 print (true == false);   // expect: false
