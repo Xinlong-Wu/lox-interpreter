@@ -1,4 +1,4 @@
-// RUN: not %parser %s 2>&1| FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: not %parser %s --semantic-analyzer 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
-// CHECK-PARSER:       Error: A class can't inherit from itself. at `Foo`, before: `{`
+// CHECK-SEMANTIC:       Superclass 'Foo' is not defined at
 class Foo < Foo {}

@@ -74,9 +74,9 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
     this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect superclass name");
     if (this->getPreviousToken() == lox::TokenType::TOKEN_IDENTIFIER) {
       superclass = std::string(this->getPreviousToken().getTokenString());
-      if (name == *superclass) {
-        this->parseError("A class can't inherit from itself.");
-      }
+      // if (name == *superclass) {
+      //   this->parseError("A class can't inherit from itself.");
+      // }
     }
   }
   std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> methods;

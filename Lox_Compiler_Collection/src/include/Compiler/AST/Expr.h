@@ -44,7 +44,7 @@ public:
     std::cout << std::endl;
   }
 
-  virtual const std::shared_ptr<Type> &getType() const { return type; }
+  virtual const std::shared_ptr<Type> getType() const { return type; }
   virtual void setType(std::shared_ptr<Type> t) { type = std::move(t); }
 
   // bool isNumericType() const;
@@ -120,7 +120,7 @@ public:
       : VariableExpr(std::string(token.getTokenString()), token.getLoction()) {}
 
   virtual const std::string &getName() const { return name; }
-  virtual const std::shared_ptr<Type> &getType() const override {
+  virtual const std::shared_ptr<Type> getType() const override {
     if (symbol != nullptr) {
       return symbol->getType();
     }
@@ -182,15 +182,14 @@ public:
   // callable or not. So we return true here.
   virtual bool isCallable() const override { return true; }
   VariableExpr *getCallee() const { return callee.get(); }
-  virtual const std::shared_ptr<Type> &getType() const override {
-    assert_not_reached("CallExpr::getType() should not be called before "
-                       "resolving the callee signature");
+  virtual const std::shared_ptr<Type> getType() const override {
+    return getReturnType();
   }
   const std::vector<std::unique_ptr<ExprBase>> &getArguments() const {
     return arguments;
   }
 
-  std::shared_ptr<Type> getReturnType() const {
+  const std::shared_ptr<Type> getReturnType() const {
     if (resolvedCalleeSignature) {
       return resolvedCalleeSignature->returnType;
     }
