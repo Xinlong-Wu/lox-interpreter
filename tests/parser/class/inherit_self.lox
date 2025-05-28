@@ -1,4 +1,4 @@
-// RUN: not %parser %s --semantic-analyzer 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
+// RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-SEMANTIC:       Superclass 'Foo' is not defined at
 class Foo < Foo {}
