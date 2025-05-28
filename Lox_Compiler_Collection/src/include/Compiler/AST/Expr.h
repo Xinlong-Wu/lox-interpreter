@@ -160,80 +160,6 @@ public:
   ACCEPT_DECL();
 };
 
-class CallExpr : public ExprBase {
-protected:
-  std::unique_ptr<VariableExpr> callee;
-  std::vector<std::unique_ptr<ExprBase>> arguments;
-
-  // after resolving the call function, we store the resolved function type
-  // here.
-  std::shared_ptr<FunctionType::Signature> resolvedCalleeSignature = nullptr;
-
-public:
-  CallExpr(std::unique_ptr<VariableExpr> callee,
-           std::vector<std::unique_ptr<ExprBase>> arguments)
-      : ExprBase(callee->getLoc()), callee(std::move(callee)),
-        arguments(std::move(arguments)) {}
-
-  virtual bool isValidLValue() const override {
-    return callee->isValidLValue();
-  }
-  // Depending on the return type of the callee, we don't know if the call is
-  // callable or not. So we return true here.
-  virtual bool isCallable() const override { return true; }
-  VariableExpr *getCallee() const { return callee.get(); }
-  virtual const std::shared_ptr<Type> getType() const override {
-    return getReturnType();
-  }
-  const std::vector<std::unique_ptr<ExprBase>> &getArguments() const {
-    return arguments;
-  }
-
-  const std::shared_ptr<Type> getReturnType() const {
-    if (resolvedCalleeSignature) {
-      return resolvedCalleeSignature->returnType;
-    }
-    return nullptr; // or throw an error if not resolved
-  }
-
-  void setCalleeSignature(FunctionType::Signature signature) {
-    resolvedCalleeSignature =
-        std::make_shared<FunctionType::Signature>(std::move(signature));
-    if (resolvedCalleeSignature) {
-      this->type = resolvedCalleeSignature->returnType;
-    }
-  }
-  std::shared_ptr<FunctionType::Signature> getCalleeSignature() const {
-    return resolvedCalleeSignature;
-  }
-
-  ExprBase *getArgument(size_t index) const {
-    if (index < arguments.size()) {
-      return arguments[index].get();
-    }
-    return nullptr;
-  }
-
-  void print(std::ostream &os) const override {
-    os << "Call: [Variable: [" << callee->getName();
-
-    if (resolvedCalleeSignature) {
-      os << ": ";
-      resolvedCalleeSignature->print(os);
-    }
-
-    os << "](";
-    for (const auto &arg : arguments) {
-      arg->print(os);
-      os << ", ";
-    }
-    os << ")]";
-  }
-
-  TYPEID_SYSTEM(ExprBase, CallExpr);
-  ACCEPT_DECL();
-};
-
 class LiteralExpr : public ExprBase {
 protected:
   std::string value;
@@ -304,16 +230,23 @@ public:
 
 class AccessExpr : public ExprBase {
 protected:
-  std::unique_ptr<ExprBase> left;
+  std::unique_ptr<ExprBase> base;
   std::string property;
 
 public:
-  AccessExpr(std::unique_ptr<ExprBase> left, Token symName)
-      : ExprBase(symName.getLoction()), left(std::move(left)),
+  AccessExpr(std::unique_ptr<ExprBase> base, Token symName)
+      : ExprBase(symName.getLoction()), base(std::move(base)),
         property(symName.getTokenString()) {}
 
-  const ExprBase *getLeft() const { return left.get(); }
+  ExprBase *getBase() const { return base.get(); }
   const std::string &getProperty() const { return property; }
+  virtual const std::shared_ptr<Type> getType() const override {
+    std::shared_ptr<Type> baseType = base->getType();
+    if (auto classType = dyn_cast<ClassType>(baseType)) {
+      return classType->getPropertyType(property);
+    }
+    return nullptr;
+  }
   // depending on the return type of the property, we don't know if the property
   // is callable or not. So we return true here.
   virtual bool isValidLValue() const override { return true; }
@@ -321,11 +254,91 @@ public:
 
   void print(std::ostream &os) const override {
     os << "Access: [ ";
-    left->print(os);
+    base->print(os);
     os << "." << property << " ]";
   }
 
   TYPEID_SYSTEM(ExprBase, AccessExpr);
+  ACCEPT_DECL();
+};
+
+class CallExpr : public ExprBase {
+protected:
+  std::unique_ptr<ExprBase> callee;
+  std::vector<std::unique_ptr<ExprBase>> arguments;
+
+  // after resolving the call function, we store the resolved function type
+  // here.
+  std::shared_ptr<FunctionType::Signature> resolvedCalleeSignature = nullptr;
+
+public:
+  CallExpr(std::unique_ptr<ExprBase> callee,
+           std::vector<std::unique_ptr<ExprBase>> arguments)
+      : ExprBase(callee->getLoc()), callee(std::move(callee)),
+        arguments(std::move(arguments)) {}
+
+  virtual bool isValidLValue() const override {
+    return callee->isValidLValue();
+  }
+  // Depending on the return type of the callee, we don't know if the call is
+  // callable or not. So we return true here.
+  virtual bool isCallable() const override { return true; }
+  ExprBase *getCallee() const { return callee.get(); }
+  virtual const std::shared_ptr<Type> getType() const override {
+    return type;
+  }
+  const std::vector<std::unique_ptr<ExprBase>> &getArguments() const {
+    return arguments;
+  }
+
+  void setCalleeSignature(FunctionType::Signature signature) {
+    resolvedCalleeSignature =
+        std::make_shared<FunctionType::Signature>(std::move(signature));
+    if (resolvedCalleeSignature) {
+      this->type = resolvedCalleeSignature->returnType;
+    }
+  }
+  std::shared_ptr<FunctionType::Signature> getCalleeSignature() const {
+    return resolvedCalleeSignature;
+  }
+
+  ExprBase *getArgument(size_t index) const {
+    if (index < arguments.size()) {
+      return arguments[index].get();
+    }
+    return nullptr;
+  }
+
+  void print(std::ostream &os) const override {
+    std::string calleeName;
+    os << "Call: [";
+    if (auto varExpr = dynamic_cast<VariableExpr *>(callee.get())) {
+      os << "Variable: [";
+      calleeName = varExpr->getName();
+    } else if (auto accessExpr = dynamic_cast<AccessExpr *>(callee.get())) {
+      os << "Access: [";
+      std::ostringstream oss;
+      accessExpr->getBase()->print(oss);
+      calleeName = oss.str() + "." + accessExpr->getProperty();
+    } else {
+      calleeName = "unknown";
+    }
+    os << calleeName;
+
+    if (resolvedCalleeSignature) {
+      os << ": ";
+      resolvedCalleeSignature->print(os);
+    }
+
+    os << "](";
+    for (const auto &arg : arguments) {
+      arg->print(os);
+      os << ", ";
+    }
+    os << ")]";
+  }
+
+  TYPEID_SYSTEM(ExprBase, CallExpr);
   ACCEPT_DECL();
 };
 

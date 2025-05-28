@@ -1,4 +1,30 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
+
+// CHECK-PARSER-LABEL:     class Foo {
+// CHECK-PARSER-NEXT:         function inFoo()
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["in foo"], )];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER-LABEL:     class Bar < Foo {
+// CHECK-PARSER-NEXT:         function inBar()
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["in bar"], )];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER-LABEL:     class Baz < Bar {
+// CHECK-PARSER-NEXT:         function inBaz()
+// CHECK-PARSER-NEXT:         BlockStmt: {
+// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["in baz"], )];
+// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER:           var baz = Call: [Variable: [Baz]()];
+// CHECK-PARSER-NEXT:      Call: [Access: [Variable: [baz].inFoo]()];
+// CHECK-PARSER-NEXT:      Call: [Access: [Variable: [baz].inBar]()];
+// CHECK-PARSER-NEXT:      Call: [Access: [Variable: [baz].inBaz]()];
+
+// CHECK-SEMANTIC-LABEL:   var baz: Baz = Call: [Variable: [Baz: () -> Baz]()];
+// CHECK-SEMANTIC-NEXT:    Call: [Access: [Variable: [baz: Baz].inFoo: () -> nil]()];
+// CHECK-SEMANTIC-NEXT:    Call: [Access: [Variable: [baz: Baz].inBar: () -> nil]()];
+// CHECK-SEMANTIC-NEXT:    Call: [Access: [Variable: [baz: Baz].inBaz: () -> nil]()];
 
 class Foo {
   fun inFoo() {
@@ -20,9 +46,6 @@ class Baz < Bar {
 
 var baz = Baz();
 
-// CHECK-PARSER:       in foo
-// CHECK-PARSER:       in bar
-// CHECK-PARSER:       in baz
 baz.inFoo(); // expect: in foo
 baz.inBar(); // expect: in bar
 baz.inBaz(); // expect: in baz

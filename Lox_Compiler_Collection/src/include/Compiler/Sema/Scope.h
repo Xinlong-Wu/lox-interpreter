@@ -16,7 +16,7 @@ protected:
   bool inFunctionScope = false;                // 是否在函数作用域内
   bool inClassScope = false;                   // 是否在类作用域内
   std::shared_ptr<Symbol> currentClassSymbol = nullptr; // 当前类符号
-  std::shared_ptr<Type> currentReturnType = nullptr; // 当前函数返回类型
+  std::shared_ptr<Type> currentReturnType = NilType::getInstance(); // 当前函数返回类型
 public:
   Scope(std::shared_ptr<Scope> parent, const std::string &name,
         bool inClassScope = false, bool inFunctionScope = false)

@@ -23,6 +23,7 @@ protected:
     // UserDefined,
     ClassType,
     FunctionType,
+    ConstructorType
   };
 
 public:
@@ -228,9 +229,6 @@ public:
     }
 
     void print(std::ostream &os) const {
-      if (!returnType) {
-        os << "constructor";
-      }
       os << "(";
       for (size_t i = 0; i < parameters.size(); ++i) {
         parameters[i]->print(os);
@@ -281,6 +279,10 @@ public:
     return overload != overloads.end();
   }
 
+  std::vector<std::shared_ptr<Signature>> getOverloads() const {
+    return overloads;
+  }
+
   void addOverload(const Signature &signature) {
     overloads.push_back(std::make_shared<Signature>(signature));
   }
@@ -322,30 +324,39 @@ public:
   }
 
   void print(std::ostream &os) const override {
-    os << " -> ";
-    getReturnType()->print(os);
-    os << " overloads: ";
+    os << overloads.size() << " overloads \n";
+    for (const auto &overload : overloads) {
+      overload->print(os);
+      os << "\n";
+    }
+    // os << " -> ";
+    // getReturnType()->print(os);
   }
 
   TYPEID_SYSTEM(Type, FunctionType);
+};
+
+class ConstructorType : public FunctionType {
+public:
+  ConstructorType(std::string name,
+                  std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<Type> returnType)
+      : FunctionType(std::move(name), std::move(parameters), std::move(returnType)) {}
+
+  ~ConstructorType() override = default;
+
+  TYPEID_SYSTEM(Type, ConstructorType);
 };
 
 class ClassType : public Type {
 private:
   std::string name;
   std::shared_ptr<ClassType> superClass;
-  std::unordered_map<std::string, std::shared_ptr<FunctionType>> methods;
+  std::unordered_map<std::string, std::shared_ptr<Type>> properties;
 
 public:
   ClassType(const std::string &name,
             std::shared_ptr<ClassType> superClass = nullptr)
-      : Type(), name(name), superClass(std::move(superClass)) {
-    if (!hasConstructor()) {
-      // Automatically add a constructor if it doesn't exist
-      methods[name] = std::make_shared<FunctionType>(
-          name, std::vector<std::shared_ptr<Type>>());
-    }
-  }
+      : Type(), name(name), superClass(std::move(superClass)) {}
 
   ~ClassType() override = default;
 
@@ -353,14 +364,40 @@ public:
     return isa<ClassType>(other) && (*this == *dyn_cast<ClassType>(other));
   }
 
-  bool hasConstructor() const { return methods.find("Foo") != methods.end(); }
+  bool hasConstructor() const { return properties.find(name) != properties.end(); }
 
-  const std::shared_ptr<FunctionType> getConstructor() {
-    auto it = methods.find("Foo");
-    if (it != methods.end()) {
-      return it->second;
+  const std::shared_ptr<ConstructorType> getConstructor() {
+    auto it = properties.find(name);
+    if (it != properties.end()) {
+      return cast<ConstructorType>(it->second);
     }
     return nullptr;
+  }
+
+  const std::shared_ptr<Type> getPropertyType(const std::string &property) const {
+    auto it = properties.find(property);
+    if (it != properties.end()) {
+      return it->second;
+    }
+    if (superClass) {
+      return superClass->getPropertyType(property);
+    }
+    // ErrorReporter::reportError(
+    //     "Property '" + property + "' not found in class '" + name + "'");
+    assert_not_reached(
+        "Property not found in class, should have been caught earlier");
+  }
+
+  bool addProperty(const std::string &property,
+                     std::shared_ptr<Type> type) {
+    if (properties.find(property) != properties.end()) {
+      // ErrorReporter::reportError("Property '" + property +
+      //                            "' already exists in class '" + name + "'");
+      assert_not_reached("Property already exists in class, should have been caught earlier");
+      return false;
+    }
+    properties[property] = std::move(type);
+    return true;
   }
 
   std::string getName() const { return name; }

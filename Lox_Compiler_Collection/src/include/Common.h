@@ -37,36 +37,29 @@ inline void hash_combine(const T& val, std::size_t& seed) {
 }
 
 template <typename To, typename... Rest, typename From>
-bool isa(const From* from) {
+bool isa_raw(const From* from) {
     if (!from) return false;
 
     if constexpr (sizeof...(Rest) == 0) {
         return To::classof(from);
     } else {
-        return To::classof(from) || isa<Rest...>(from);
+        return To::classof(from) || isa_raw<Rest...>(from);
     }
+}
+
+template <typename To, typename... Rest, typename From>
+bool isa(const From* from) {
+    return isa_raw<To, Rest...>(from);
 }
 
 template <typename To, typename... Rest, typename From>
 bool isa(const std::shared_ptr<From>& from) {
-    if (!from) return false;
-
-    if constexpr (sizeof...(Rest) == 0) {
-        return To::classof(from);
-    } else {
-        return To::classof(from) || isa<Rest...>(from);
-    }
+    return isa_raw<To, Rest...>(from.get());
 }
 
 template <typename To, typename... Rest, typename From>
 bool isa(const std::unique_ptr<From>& from) {
-    if (!from) return false;
-
-    if constexpr (sizeof...(Rest) == 0) {
-        return To::classof(from);
-    } else {
-        return To::classof(from) || isa<Rest...>(from);
-    }
+    return isa_raw<To, Rest...>(from.get());
 }
 
 template <typename To, typename From>

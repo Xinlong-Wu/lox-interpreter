@@ -196,7 +196,10 @@ InfixHandler(call) {
     parser.parse(lox::TokenType::TOKEN_RIGHT_PAREN);
   }
 
-  return std::make_unique<lox::CallExpr>(cast<VariableExpr>(std::move(left)),
+  assert ((isa<VariableExpr, AccessExpr>(left)) &&
+         "Call expression must have a variable or access expression as the callee");
+  // If the callee is not a variable, we cannot create a CallExpr.
+  return std::make_unique<lox::CallExpr>(std::move(left),
                                          std::move(args));
 }
 

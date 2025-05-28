@@ -67,6 +67,7 @@ DEFINE_VISIT(ClassDeclStmt) {
                                             "' is not defined");
       return;
     }
+    superClassType = cast<ClassType>(superClass->getType());
   }
 
   // create a new class type
@@ -88,13 +89,30 @@ DEFINE_VISIT(ClassDeclStmt) {
   // visit each field in the class
   for (const auto &field : expr.getFields()) {
     field.second->accept(*this);
+    classType->addProperty(field.first,
+                           field.second->getType());
   }
   expr.setClassScope(symbolTable.getCurrentScope());
   // exit the class scope
   symbolTable.exitScope();
+
+  if (!classType->hasConstructor()) {
+    // if the class does not have a constructor, create a default constructor
+    std::vector<std::shared_ptr<Type>> parameters;
+    std::shared_ptr<ConstructorType> defaultConstructor =
+        std::make_shared<ConstructorType>(classSymbol->getName(),
+                                          parameters, classType);
+    classType->addProperty(classSymbol->getName(), defaultConstructor);
+  }
 }
 
 DEFINE_VISIT(FunctionDecl) {
+  std::shared_ptr<Scope> currentScope = symbolTable.getCurrentScope();
+
+  bool isConstructor = currentScope->isInClassScope() &&
+                       expr.getName() == currentScope->getCurrentClassSymbol()
+                                                    ->getName();
+
   // create a new function type
   std::vector<std::shared_ptr<Type>> parameterTypes;
 
@@ -107,12 +125,23 @@ DEFINE_VISIT(FunctionDecl) {
   // check if the function is already defined
   std::shared_ptr<Symbol> funcSymbol =
       symbolTable.lookupLocalSymbol(expr.getName());
+  std::shared_ptr<FunctionType> funcType = nullptr;
   bool isOverloaded = true;
   if (funcSymbol == nullptr) {
     // if the function is not defined, create a new function symbol
+    if (isConstructor) {
+      funcType = std::make_shared<ConstructorType>(
+          expr.getName(), parameterTypes, currentScope->getCurrentClassSymbol()->getType());
+    }
+    else {
+      funcType = std::make_shared<FunctionType>(expr.getName());
+    }
     funcSymbol = std::make_shared<Symbol>(
-        expr.getName(), std::make_shared<FunctionType>(expr.getName()));
+        expr.getName(), funcType);
     isOverloaded = false;
+  }
+  else {
+    funcType = cast<FunctionType>(funcSymbol->getType());
   }
 
   // declare the function symbol in the symbol table
@@ -131,12 +160,17 @@ DEFINE_VISIT(FunctionDecl) {
   std::shared_ptr<Type> returnType =
       symbolTable.getCurrentScope()->getCurrentReturnType();
 
+  if (isConstructor) {
+    // if the function is a constructor, set the return type as the class type
+    assert(currentScope->getCurrentClassSymbol() != nullptr &&
+           "Current class symbol should not be null");
+    returnType = currentScope->getCurrentClassSymbol()->getType();
+  }
+
   // exit the function scope
   symbolTable.exitScope();
 
   // add overload to the existing function symbol
-  std::shared_ptr<FunctionType> funcType =
-      dyn_cast<FunctionType>(funcSymbol->getType());
   FunctionType::Signature signature(parameterTypes, returnType);
   assert(funcType != nullptr && "Function type should not be null");
   // check if the function has the same number of parameters
@@ -149,8 +183,7 @@ DEFINE_VISIT(FunctionDecl) {
     // add the overload to the function type
     funcType->addOverload(signature);
   }
-  // set the function type as the type of the function declaration
-  // expr.setType(funcType);
+  expr.setSymbol(funcSymbol);
 }
 
 DEFINE_VISIT(IfStmt) {
@@ -225,8 +258,10 @@ DEFINE_VISIT(GroupingExpr) {
 }
 
 DEFINE_VISIT(CallExpr) {
-  VariableExpr *callee = expr.getCallee();
+  ExprBase *callee = expr.getCallee();
   assert(callee != nullptr && "Callee should not be null");
+  assert((isa<VariableExpr, AccessExpr>(callee)) &&
+         "Callee should be a variable, access expression");
 
   // resolve the callee
   callee->accept(*this);
@@ -234,6 +269,8 @@ DEFINE_VISIT(CallExpr) {
   std::shared_ptr<FunctionType> calleeType = nullptr;
   // [Type inference] set the type of the call expression as the return type of
   // the callee
+  assert(callee->getType() != nullptr &&
+         "Callee type should not be null");
   if (isa<FunctionType>(callee->getType())) {
     // if the callee is a function, set the call expression type as the return
     // type of the function
@@ -242,6 +279,8 @@ DEFINE_VISIT(CallExpr) {
     // if the callee is a class, set the call expression type as the class type
     std::shared_ptr<ClassType> classType =
         dyn_cast<ClassType>(callee->getType());
+    assert(classType->hasConstructor() &&
+           "Class type should have a constructor");
     calleeType = classType->getConstructor();
   } else {
     ErrorReporter::reportError(
@@ -275,11 +314,27 @@ DEFINE_VISIT(CallExpr) {
     expr.setCalleeSignature(calleeSignature);
   } else {
     std::ostringstream oss;
+    oss << "No matching overload for function '";
+    if (isa<VariableExpr>(callee)) {
+      oss << dyn_cast<VariableExpr>(callee)->getName();
+    } else if (isa<AccessExpr>(callee)) {
+      oss << dyn_cast<AccessExpr>(callee)->getProperty();
+    } else {
+      assert_not_reached("Callee should be a variable or access expression");
+    }
     calleeSignature.print(oss);
-    ErrorReporter::reportError(&expr, "No matching overload for function '" +
-                                          callee->getName() + "" +
-                                          oss.str() + "'");
+    oss << "'";
+    ErrorReporter::reportError(&expr, oss.str());
     return;
+  }
+
+  if (isa<ConstructorType>(calleeType)) {
+    assert (isa<ClassType>(callee->getType()) &&
+           "Constructor type should be a class type");
+    expr.setType(callee->getType());
+  } else {
+    // otherwise, set the call expression type as the return type of the callee
+    expr.setType(calleeReturnType);
   }
 }
 
@@ -391,7 +446,20 @@ DEFINE_VISIT(BinaryExpr) {
 }
 
 DEFINE_VISIT(AccessExpr) {
-  assert_not_reached("Unimplemented AccessExpr visit");
+    ExprBase *base = expr.getBase();
+    base->accept(*this);
+
+    const std::shared_ptr<Type> baseType = base->getType();
+    assert(baseType != nullptr && "Base type should not be null in AccessExpr");
+    if (auto classType = dyn_cast<ClassType>(baseType)) {
+      const std::shared_ptr<Type> propertyType =
+          classType->getPropertyType(expr.getProperty());
+      expr.setType(propertyType);
+    } else {
+      ErrorReporter::reportError(&expr,
+                                 "Base expression must be a class or function type");
+      return;
+    }
 }
 
 DEFINE_VISIT(AssignExpr) {
