@@ -1,4 +1,5 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:     class A {
 // CHECK-PARSER-NEXT:      }

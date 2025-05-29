@@ -285,6 +285,10 @@ public:
   ReturnStmt(Location loc) : StmtBase(loc) {}
   ~ReturnStmt() override = default;
 
+  ExprBase *getValue() {
+    return value.get();
+  }
+
   virtual void print(std::ostream &os) const override {
     os << "return ";
     if (value) {

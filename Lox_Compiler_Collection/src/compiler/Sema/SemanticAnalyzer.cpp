@@ -166,6 +166,10 @@ DEFINE_VISIT(FunctionDecl) {
            "Current class symbol should not be null");
     returnType = currentScope->getCurrentClassSymbol()->getType();
   }
+  else if (returnType == nullptr) {
+    // if the function does not have a return type, set it as nil
+    symbolTable.getCurrentScope()->setCurrentReturnType(NilType::getInstance());
+  }
 
   // exit the function scope
   symbolTable.exitScope();
@@ -222,7 +226,31 @@ DEFINE_VISIT(WhileStmt) {
 DEFINE_VISIT(ForStmt) { assert_not_reached("Unimplemented ForStmt visit"); }
 
 DEFINE_VISIT(ReturnStmt) {
-  assert_not_reached("Unimplemented ReturnStmt visit");
+  // check if the return statement is inside a function scope
+  std::shared_ptr<Scope> currentScope = symbolTable.getCurrentScope();
+  if (!currentScope->isInFunctionScope()) {
+    ErrorReporter::reportError(&expr, "'return' can only be used inside a function");
+    return;
+  }
+
+  // resolve the return value expression
+  ExprBase *returnValue = expr.getValue();
+  returnValue->accept(*this);
+  std::shared_ptr<Type> returnType = returnValue->getType();
+  assert(returnType != nullptr && "Return type should not be null");
+  std::shared_ptr<Type> funcReturnType = currentScope->getCurrentReturnType();
+  if (funcReturnType == nullptr) {
+    currentScope->setCurrentReturnType(returnType);
+  }
+  else if (!funcReturnType->isCompatible(returnType)) {
+    // check if the return type is compatible with the function return type
+    std::ostringstream oss;
+    oss << "Return type '" << returnType
+        << "' is not compatible with function return type '"
+        << funcReturnType << "'";
+    ErrorReporter::reportError(&expr, oss.str());
+    return;
+  }
 }
 
 // Expression visitors

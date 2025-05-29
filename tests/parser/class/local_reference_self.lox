@@ -1,4 +1,5 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:         BlockStmt: {
 // CHECK-PARSER-NEXT:      class Foo {
@@ -7,6 +8,16 @@
 // CHECK-PARSER-NEXT:          return Variable: [Foo];
 // CHECK-PARSER-NEXT:        }
 // CHECK-PARSER:           }
+
+// CHECK-SEMANTIC:       BlockStmt: {
+// CHECK-SEMANTIC-NEXT:    class Foo {
+// CHECK-SEMANTIC-NEXT:      function returnSelf()
+// CHECK-SEMANTIC-NEXT:      BlockStmt: {
+// CHECK-SEMANTIC-NEXT:        return Variable: [Foo];
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC:        }
+// CHECK-SEMANTIC:       }
+// CHECK-SEMANTIC:        Call: [Variable: [print](Call: [Access: [Call: [Variable: [Foo]()].returnSelf]()], )];
 
 {
   class Foo {
