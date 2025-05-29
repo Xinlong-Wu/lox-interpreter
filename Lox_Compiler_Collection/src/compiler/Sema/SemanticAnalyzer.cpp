@@ -101,7 +101,7 @@ DEFINE_VISIT(ClassDeclStmt) {
     std::vector<std::shared_ptr<Type>> parameters;
     std::shared_ptr<ConstructorType> defaultConstructor =
         std::make_shared<ConstructorType>(classSymbol->getName(),
-                                          parameters, classType);
+                                          parameters, classType->getInstanceType());
     classType->addProperty(classSymbol->getName(), defaultConstructor);
   }
 }
@@ -131,7 +131,7 @@ DEFINE_VISIT(FunctionDecl) {
     // if the function is not defined, create a new function symbol
     if (isConstructor) {
       funcType = std::make_shared<ConstructorType>(
-          expr.getName(), parameterTypes, currentScope->getCurrentClassSymbol()->getType());
+          expr.getName(), parameterTypes, cast<ClassType>(currentScope->getCurrentClassSymbol()->getType())->getInstanceType());
     }
     else {
       funcType = std::make_shared<FunctionType>(expr.getName());
@@ -153,22 +153,25 @@ DEFINE_VISIT(FunctionDecl) {
 
   // enter a new function scope
   symbolTable.enterFunctionScope(expr.getName());
+  std::shared_ptr<Scope> functionScope = symbolTable.getCurrentScope();
   // visit the function body
-  expr.getBody()->accept(*this);
+  for (auto &statement : expr.getBody()->getStatements()) {
+    statement->accept(*this);
+  }
 
   // get return type of the function
   std::shared_ptr<Type> returnType =
-      symbolTable.getCurrentScope()->getCurrentReturnType();
+      functionScope->getCurrentReturnType();
 
   if (isConstructor) {
     // if the function is a constructor, set the return type as the class type
     assert(currentScope->getCurrentClassSymbol() != nullptr &&
            "Current class symbol should not be null");
-    returnType = currentScope->getCurrentClassSymbol()->getType();
+    returnType = cast<ClassType>(currentScope->getCurrentClassSymbol()->getType())->getInstanceType();
   }
   else if (returnType == nullptr) {
     // if the function does not have a return type, set it as nil
-    symbolTable.getCurrentScope()->setCurrentReturnType(NilType::getInstance());
+    functionScope->setCurrentReturnType(NilType::getInstance());
   }
 
   // exit the function scope
@@ -328,7 +331,15 @@ DEFINE_VISIT(CallExpr) {
       // [Type inference] if the argument type is unknown, infer it as an
       // unresolved type
       argumentTypes.push_back(UnresolvedType::getInstance());
-    } else {
+    } 
+    // special case for 'print' function
+    else if (isa<ClassType>(argType) && calleeType->getName() == "print") {
+      // [Type inference] if the argument is a class type and the callee is
+      // 'print', we can treat it as a string type
+      argumentTypes.push_back(StringType::getInstance());
+    }
+
+    else {
       // [Type inference] otherwise, add the argument type to the list of
       // argument types
       argumentTypes.push_back(argType);

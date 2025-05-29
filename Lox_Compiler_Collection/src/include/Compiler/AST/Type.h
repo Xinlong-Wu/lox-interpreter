@@ -23,7 +23,8 @@ protected:
     // UserDefined,
     ClassType,
     FunctionType,
-    ConstructorType
+    ConstructorType,
+    InstanceType
   };
 
 public:
@@ -32,27 +33,14 @@ public:
   virtual bool isCompatible(std::shared_ptr<Type> other) = 0;
 
   virtual Kind getKind() const = 0;
-  virtual size_t hash() const {
-    std::size_t seed = 0;
-    lox::hash_combine(static_cast<std::underlying_type_t<Kind>>(getKind()),
-                      seed);
-    return seed;
-  }
+  virtual size_t hash() const;
 
-  virtual bool operator==(const Type *other) const {
-    if (other == this) {
-      return true;
-    }
-    return this->getKind() == other->getKind();
-  }
+  virtual bool operator==(const Type *other) const;
 
   virtual bool operator!=(const Type *other) const { return !(*this == other); }
 
   virtual void print(std::ostream &os) const = 0;
-  virtual void dump() const {
-    this->print(std::cout);
-    std::cout << std::endl;
-  }
+  virtual void dump() const;
 };
 
 // Unresolved types
@@ -64,23 +52,10 @@ private:
 
 public:
   ~UnresolvedType() override = default;
-
-  static std::shared_ptr<UnresolvedType> getInstance() {
-    if (!instance) {
-      instance = std::shared_ptr<UnresolvedType>(new UnresolvedType("unknown"));
-    }
-    return instance;
-  }
-
+  static std::shared_ptr<UnresolvedType> getInstance();
   std::string getName() const { return name; }
-
-  virtual bool isCompatible(std::shared_ptr<Type> other) override {
-    return false;
-  }
-
-  virtual void print(std::ostream &os) const override {
-    os << name << "(unresolved)";
-  }
+  virtual bool isCompatible(std::shared_ptr<Type> other) override;
+  virtual void print(std::ostream &os) const override;
 
   TYPEID_SYSTEM(Type, UnresolvedType)
 };
@@ -95,17 +70,8 @@ private:
 public:
   ~NumberType() override = default;
 
-  inline static std::shared_ptr<NumberType> getInstance() {
-    if (!instance) {
-      instance = std::shared_ptr<NumberType>(new NumberType());
-    }
-    return instance;
-  }
-
-  virtual bool isCompatible(std::shared_ptr<Type> other) override {
-    return other->getKind() == Kind::NumberType;
-  }
-
+  static std::shared_ptr<NumberType> getInstance();
+  virtual bool isCompatible(std::shared_ptr<Type> other) override;
   virtual void print(std::ostream &os) const override { os << "number"; }
 
   TYPEID_SYSTEM(Type, NumberType)
@@ -119,17 +85,8 @@ private:
 public:
   ~StringType() override = default;
 
-  static std::shared_ptr<StringType> getInstance() {
-    if (!instance) {
-      instance = std::shared_ptr<StringType>(new StringType());
-    }
-    return instance;
-  }
-
-  virtual bool isCompatible(std::shared_ptr<Type> other) override {
-    return other->getKind() == Kind::StringType;
-  }
-
+  static std::shared_ptr<StringType> getInstance();
+  virtual bool isCompatible(std::shared_ptr<Type> other) override;
   virtual void print(std::ostream &os) const override { os << "string"; }
 
   TYPEID_SYSTEM(Type, StringType)
@@ -143,17 +100,8 @@ private:
 public:
   ~BoolType() override = default;
 
-  static std::shared_ptr<BoolType> getInstance() {
-    if (!instance) {
-      instance = std::shared_ptr<BoolType>(new BoolType());
-    }
-    return instance;
-  }
-
-  virtual bool isCompatible(std::shared_ptr<Type> other) override {
-    return other->getKind() == Kind::BoolType;
-  }
-
+  static std::shared_ptr<BoolType> getInstance();
+  virtual bool isCompatible(std::shared_ptr<Type> other) override;
   virtual void print(std::ostream &os) const override { os << "bool"; }
 
   TYPEID_SYSTEM(Type, BoolType)
@@ -167,17 +115,8 @@ private:
 public:
   ~NilType() override = default;
 
-  static std::shared_ptr<NilType> getInstance() {
-    if (!instance) {
-      instance = std::shared_ptr<NilType>(new NilType());
-    }
-    return instance;
-  }
-
-  virtual bool isCompatible(std::shared_ptr<Type> other) override {
-    return other->getKind() == Kind::NilType;
-  }
-
+  static std::shared_ptr<NilType> getInstance();
+  virtual bool isCompatible(std::shared_ptr<Type> other) override;
   virtual void print(std::ostream &os) const override { os << "nil"; }
 
   TYPEID_SYSTEM(Type, NilType)
@@ -196,52 +135,11 @@ public:
         : parameters(std::move(parameters)), returnType(std::move(returnType)) {
     }
 
-    bool isResolved() const {
-      for (const auto &param : parameters) {
-        if (isa<UnresolvedType>(param.get())) {
-          return false;
-        }
-      }
-      return !isa<UnresolvedType>(returnType.get());
-    }
-
-    bool operator==(const Signature &other) const {
-      if (parameters.size() != other.parameters.size()) {
-        return false;
-      }
-      for (size_t i = 0; i < parameters.size(); ++i) {
-        if (parameters[i].get() != other.parameters[i].get()) {
-          return false;
-        }
-      }
-      return true;
-      // return *returnType == *other.returnType;
-    }
+    bool isResolved() const;
+    bool operator==(const Signature &other) const;
     bool operator!=(const Signature &other) const { return !(*this == other); }
-
-    size_t hash() const {
-      std::size_t seed = 0;
-      lox::hash_combine(returnType->hash(), seed);
-      for (const auto &param : parameters) {
-        lox::hash_combine(param->hash(), seed);
-      }
-      return seed;
-    }
-
-    void print(std::ostream &os) const {
-      os << "(";
-      for (size_t i = 0; i < parameters.size(); ++i) {
-        parameters[i]->print(os);
-        if (i < parameters.size() - 1) {
-          os << ", ";
-        }
-      }
-      os << ")";
-      if (returnType) {
-        os << " -> ";
-        returnType->print(os);
-      }
-    }
+    size_t hash() const;
+    void print(std::ostream &os) const;
   };
 
 private:
@@ -267,80 +165,28 @@ public:
   virtual bool isCompatible(std::shared_ptr<Type> other) override {
     assert_not_reached("Unimplemented FunctionType isCompatible");
   }
-
   std::string getName() const { return name; }
-
-  bool hasOverload(const Signature &signature) const {
-    auto overload =
-        std::find_if(overloads.begin(), overloads.end(),
-                     [&signature](const std::shared_ptr<Signature> &overload) {
-                       return *overload == signature;
-                     });
-    return overload != overloads.end();
-  }
-
+  bool hasOverload(const Signature &signature) const;
   std::vector<std::shared_ptr<Signature>> getOverloads() const {
     return overloads;
   }
-
-  void addOverload(const Signature &signature) {
-    overloads.push_back(std::make_shared<Signature>(signature));
-  }
+  void addOverload(const Signature &signature);
   void addOverload(const std::vector<std::shared_ptr<Type>> &parameters,
-                   std::shared_ptr<Type> returnType = nullptr) {
-    overloads.emplace_back(std::make_shared<Signature>(parameters, returnType));
-  }
-
-  const std::shared_ptr<Type> getReturnType() const {
-    if (!overloads.empty()) {
-      return overloads[0]->returnType;
-    }
-    return nullptr;
-  }
-
-  bool operator==(const FunctionType *other) const {
-    if (other == this) {
-      return true;
-    }
-
-    if (name != other->name) {
-      return false;
-    }
-
-    return std::equal(
-        overloads.begin(), overloads.end(), other->overloads.begin(),
-        other->overloads.end(),
-        [](const std::shared_ptr<Signature> &a,
-           const std::shared_ptr<Signature> &b) { return *a == *b; });
-  }
-
-  virtual size_t hash() const override {
-    std::size_t seed = Type::hash();
-    lox::hash_combine(name, seed);
-    for (const auto &overload : overloads) {
-      lox::hash_combine(overload->hash(), seed);
-    }
-    return seed;
-  }
-
-  void print(std::ostream &os) const override {
-    os << overloads.size() << " overloads \n";
-    for (const auto &overload : overloads) {
-      overload->print(os);
-      os << "\n";
-    }
-    // os << " -> ";
-    // getReturnType()->print(os);
-  }
+                   std::shared_ptr<Type> returnType = nullptr);
+  const std::shared_ptr<Type> getReturnType() const;
+  bool operator==(const FunctionType *other) const;
+  virtual size_t hash() const override;
+  void print(std::ostream &os) const override;
 
   TYPEID_SYSTEM(Type, FunctionType);
 };
 
+class InstanceType;
 class ConstructorType : public FunctionType {
 public:
   ConstructorType(std::string name,
-                  std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<Type> returnType)
-      : FunctionType(std::move(name), std::move(parameters), std::move(returnType)) {}
+                  std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<InstanceType> returnType)
+      : FunctionType(std::move(name), std::move(parameters), std::move(std::static_pointer_cast<Type>(returnType))) {}
 
   ~ConstructorType() override = default;
 
@@ -350,72 +196,46 @@ public:
 class ClassType : public Type {
 private:
   std::string name;
-  std::shared_ptr<ClassType> superClass;
+  std::shared_ptr<ClassType> superClass = nullptr;
   std::unordered_map<std::string, std::shared_ptr<Type>> properties;
+  std::shared_ptr<InstanceType> instanceType = nullptr;
 
 public:
   ClassType(const std::string &name,
             std::shared_ptr<ClassType> superClass = nullptr)
       : Type(), name(name), superClass(std::move(superClass)) {}
+  ClassType(const ClassType &other)
+      : Type(), name(other.name), superClass(other.superClass),
+        properties(other.properties) {}
 
   ~ClassType() override = default;
 
-  virtual bool isCompatible(std::shared_ptr<Type> other) override {
-    return isa<ClassType>(other) && (*this == *dyn_cast<ClassType>(other));
-  }
-
+  virtual ClassType *getSuperClass() const { return superClass.get(); }
+  std::shared_ptr<InstanceType> getInstanceType();
+  virtual bool isCompatible(std::shared_ptr<Type> other) override;
   bool hasConstructor() const { return properties.find(name) != properties.end(); }
-
-  const std::shared_ptr<ConstructorType> getConstructor() {
-    auto it = properties.find(name);
-    if (it != properties.end()) {
-      return cast<ConstructorType>(it->second);
-    }
-    return nullptr;
-  }
-
-  const std::shared_ptr<Type> getPropertyType(const std::string &property) const {
-    auto it = properties.find(property);
-    if (it != properties.end()) {
-      return it->second;
-    }
-    if (superClass) {
-      return superClass->getPropertyType(property);
-    }
-    // ErrorReporter::reportError(
-    //     "Property '" + property + "' not found in class '" + name + "'");
-    assert_not_reached(
-        "Property not found in class, should have been caught earlier");
-  }
-
+  const std::shared_ptr<ConstructorType> getConstructor();
+  virtual const std::shared_ptr<Type> getPropertyType(const std::string &property) const;
   bool addProperty(const std::string &property,
-                     std::shared_ptr<Type> type) {
-    if (properties.find(property) != properties.end()) {
-      // ErrorReporter::reportError("Property '" + property +
-      //                            "' already exists in class '" + name + "'");
-      assert_not_reached("Property already exists in class, should have been caught earlier");
-      return false;
-    }
-    properties[property] = std::move(type);
-    return true;
-  }
-
+                     std::shared_ptr<Type> type);
   std::string getName() const { return name; }
-
   bool operator==(const ClassType &other) const { return name == other.name; }
-
-  virtual size_t hash() const override {
-    std::size_t seed = Type::hash();
-    lox::hash_combine(name, seed);
-    if (superClass) {
-      lox::hash_combine(superClass->hash(), seed);
-    }
-    return seed;
-  }
-
+  virtual size_t hash() const override;
   void print(std::ostream &os) const override { os << name; }
 
   TYPEID_SYSTEM(Type, ClassType);
+};
+
+class InstanceType : public ClassType {
+private:
+  const ClassType *klass;
+public:
+  InstanceType(ClassType *klass)
+      : ClassType(*klass), klass(klass) {}
+  ~InstanceType() override = default;
+  bool isInstanceOf(const std::shared_ptr<ClassType> &other) const;
+
+  TYPEID_SYSTEM(Type, InstanceType);
 };
 
 } // namespace lox

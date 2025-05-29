@@ -9,6 +9,7 @@ add_library(LoxParser STATIC
 
     # AST
     AST/ASTVisitor.cpp
+    AST/Type.cpp
 
     # SemanticAnalyzer
     Sema/SemanticAnalyzer.cpp
