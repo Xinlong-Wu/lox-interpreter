@@ -221,7 +221,7 @@ public:
   std::string getName() const { return name; }
   bool operator==(const ClassType &other) const { return name == other.name; }
   virtual size_t hash() const override;
-  void print(std::ostream &os) const override { os << name; }
+  void print(std::ostream &os) const override { os << "class " << name; }
 
   TYPEID_SYSTEM(Type, ClassType);
 };
@@ -234,6 +234,9 @@ public:
       : ClassType(*klass), klass(klass) {}
   ~InstanceType() override = default;
   bool isInstanceOf(const std::shared_ptr<ClassType> &other) const;
+  void print(std::ostream &os) const override {
+    os << "instance of " << klass->getName();
+  }
 
   TYPEID_SYSTEM(Type, InstanceType);
 };

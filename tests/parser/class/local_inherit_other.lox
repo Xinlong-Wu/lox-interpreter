@@ -11,6 +11,16 @@
 // CHECK-PARSER-NEXT:        }
 // CHECK-PARSER:           Call: [Variable: [print](Call: [Variable: [f]()], )];
 
+// CHECK-SEMANTIC-LABEL:   class A {
+// CHECK-SEMANTIC-NEXT:    }
+// CHECK-SEMANTIC-LABEL:   function f()
+// CHECK-SEMANTIC-NEXT:    BlockStmt: {
+// CHECK-SEMANTIC-NEXT:      class B < A {
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC:           return Variable: [B: class B];
+// CHECK-SEMANTIC-NEXT:    }
+// CHECK-SEMANTIC:         Call: [Variable: [print: (string) -> nil](Call: [Variable: [f: () -> class B]()], )];
+
 class A {}
 
 fun f() {

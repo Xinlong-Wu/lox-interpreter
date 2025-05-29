@@ -13,11 +13,11 @@
 // CHECK-SEMANTIC-NEXT:    class Foo {
 // CHECK-SEMANTIC-NEXT:      function returnSelf()
 // CHECK-SEMANTIC-NEXT:      BlockStmt: {
-// CHECK-SEMANTIC-NEXT:        return Variable: [Foo];
+// CHECK-SEMANTIC-NEXT:        return Variable: [Foo: class Foo];
 // CHECK-SEMANTIC-NEXT:      }
 // CHECK-SEMANTIC:        }
 // CHECK-SEMANTIC:       }
-// CHECK-SEMANTIC:        Call: [Variable: [print](Call: [Access: [Call: [Variable: [Foo]()].returnSelf]()], )];
+// CHECK-SEMANTIC:       Call: [Variable: [print: (string) -> nil](Call: [Access: [Call: [Variable: [Foo: () -> instance of Foo]()].returnSelf: () -> class Foo]()], )];
 
 {
   class Foo {
