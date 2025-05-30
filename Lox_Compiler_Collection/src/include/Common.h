@@ -28,8 +28,24 @@
     static bool classof(const std::shared_ptr<baseClass> ptr) { return className::classof(ptr.get()); } \
     virtual Kind getKind() const override { return Kind::className; }
 
+#define TYPEID_SYSTEM_N(baseClass, thisClass, ...)                                   \
+    static bool classof(const baseClass* ptr) {                                      \
+        return isOneOf(ptr->getKind(), Kind::thisClass, __VA_ARGS__);                \
+    }                                                                                \
+    static bool classof(const std::shared_ptr<baseClass>& ptr) {                     \
+        return classof(ptr.get());                                                   \
+    }                                                                                \
+    virtual Kind getKind() const override {                                          \
+        return Kind::thisClass;                                                      \
+    }
+
 namespace lox
 {
+
+template <typename Enum, typename... Enums>
+bool isOneOf(Enum value, Enum first, Enums... rest) {
+    return ((value == first) || ... || (value == rest));
+}
 
 template <typename T>
 inline void hash_combine(const T& val, std::size_t& seed) {

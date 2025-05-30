@@ -28,13 +28,28 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [g]()];
 
 
-// CHECK-SEMANTIC:            var f;
-// CHECK-SEMANTIC-NEXT:       var g;
-// CHECK-SEMANTIC-NEXT:       BlockStmt: {
-// CHECK-SEMANTIC-NEXT:         var local = String: ["local"];
-// CHECK-SEMANTIC-NEXT:         function f_()
-// CHECK-SEMANTIC-NEXT:         BlockStmt: {
-// CHECK-SEMANTIC-NEXT:           Call: [Variable: [print](Variable: [local], )];
+// CHECK-SEMANTIC:			var f: Function f_ with 1 overloads;
+// CHECK-SEMANTIC:			var g: Function g_ with 1 overloads;
+// CHECK-SEMANTIC:			BlockStmt: {
+// CHECK-SEMANTIC-NEXT:			var local: string = String: ["local"];
+// CHECK-SEMANTIC-NEXT:    		function f_()
+// CHECK-SEMANTIC-NEXT:			BlockStmt: {
+// CHECK-SEMANTIC-NEXT:				Call: [Variable: [print: (string) -> nil](Variable: [local: string], )];
+// CHECK-SEMANTIC-NEXT:				Assign: [Variable: [local: string] = String: ["after f"]];
+// CHECK-SEMANTIC-NEXT:				Call: [Variable: [print: (string) -> nil](Variable: [local: string], )];
+// CHECK-SEMANTIC-NEXT:			}
+// CHECK-SEMANTIC:				Assign: [Variable: [f: Function f_ with 1 overloads] = Variable: [f_: Function f_ with 1 overloads]];
+// CHECK-SEMANTIC-NEXT:			function g_()
+// CHECK-SEMANTIC-NEXT:			BlockStmt: {
+// CHECK-SEMANTIC-NEXT:				Call: [Variable: [print: (string) -> nil](Variable: [local: string], )];
+// CHECK-SEMANTIC-NEXT:				Assign: [Variable: [local: string] = String: ["after g"]];
+// CHECK-SEMANTIC-NEXT:				Call: [Variable: [print: (string) -> nil](Variable: [local: string], )];
+// CHECK-SEMANTIC-NEXT:			}
+// CHECK-SEMANTIC:				Assign: [Variable: [g: Function g_ with 1 overloads] = Variable: [g_: Function g_ with 1 overloads]];
+// CHECK-SEMANTIC-NEXT:		}
+// CHECK-SEMANTIC:			Call: [Variable: [f: ()]()];
+// CHECK-SEMANTIC-NEXT:		Call: [Variable: [g: ()]()];
+
 
 var f;
 var g;

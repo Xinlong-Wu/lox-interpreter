@@ -181,14 +181,16 @@ DEFINE_VISIT(FunctionDecl) {
   FunctionType::Signature signature(parameterTypes, returnType);
   assert(funcType != nullptr && "Function type should not be null");
   // check if the function has the same number of parameters
-  if (funcType->hasOverload(signature)) {
-    ErrorReporter::reportError(
-        &expr, "Function '" + expr.getName() +
-                   "' is already defined with the same signature");
-    return;
-  } else {
-    // add the overload to the function type
-    funcType->addOverload(signature);
+  if (isOverloaded) {
+    if (funcType->hasOverload(signature)) {
+      ErrorReporter::reportError(
+          &expr, "Function '" + expr.getName() +
+                    "' is already defined with the same signature");
+      return;
+    } else {
+      // add the overload to the function type
+      funcType->addOverload(signature);
+    }
   }
   expr.setSymbol(funcSymbol);
 }
@@ -306,7 +308,7 @@ DEFINE_VISIT(CallExpr) {
     // if the callee is a function, set the call expression type as the return
     // type of the function
     calleeType = dyn_cast<FunctionType>(callee->getType());
-  } else if (isa<ClassType>(callee->getType())) {
+  } else if (isa<ClassType>(callee->getType()) && !isa<InstanceType>(callee->getType())) {
     // if the callee is a class, set the call expression type as the class type
     std::shared_ptr<ClassType> classType =
         dyn_cast<ClassType>(callee->getType());
@@ -331,7 +333,7 @@ DEFINE_VISIT(CallExpr) {
       // [Type inference] if the argument type is unknown, infer it as an
       // unresolved type
       argumentTypes.push_back(UnresolvedType::getInstance());
-    } 
+    }
     // special case for 'print' function
     else if (isa<ClassType>(argType) && calleeType->getName() == "print") {
       // [Type inference] if the argument is a class type and the callee is
@@ -367,14 +369,7 @@ DEFINE_VISIT(CallExpr) {
     return;
   }
 
-  if (isa<ConstructorType>(calleeType)) {
-    assert (isa<ClassType>(callee->getType()) &&
-           "Constructor type should be a class type");
-    expr.setType(callee->getType());
-  } else {
-    // otherwise, set the call expression type as the return type of the callee
-    expr.setType(calleeReturnType);
-  }
+  expr.setType(calleeReturnType);
 }
 
 DEFINE_VISIT(VariableExpr) {

@@ -8,7 +8,7 @@
 
 // CHECK-SEMANTIC-LABEL:   Callee type should be a function type or class type at
 // CHECK-SEMANTIC-NEXT:    Call: [Variable: [foo]()]
-// CHECK-SEMANTIC-LABEL:   var foo = Call: [Variable: [Foo: constructor()]()];
+// CHECK-SEMANTIC-LABEL:   var foo: instance of Foo = Call: [Variable: [Foo: () -> instance of Foo]()];
 // CHECK-SEMANTIC-NEXT:    Call: [Variable: [foo]()];
 
 class Foo {}

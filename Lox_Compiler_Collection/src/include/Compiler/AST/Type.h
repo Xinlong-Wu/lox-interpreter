@@ -223,6 +223,7 @@ public:
   virtual size_t hash() const override;
   void print(std::ostream &os) const override { os << "class " << name; }
 
+  // TYPEID_SYSTEM_N(Type, ClassType, Kind::InstanceType);
   TYPEID_SYSTEM(Type, ClassType);
 };
 

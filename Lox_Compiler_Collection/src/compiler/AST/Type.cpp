@@ -187,12 +187,12 @@ size_t FunctionType::hash() const {
 }
 
 void FunctionType::print(ostream &os) const {
-    os << "FunctionType: " << name << "\n";
-    os << overloads.size() << " overloads:\n";
-    for (const auto &overload : overloads) {
-        overload->print(os);
-        os << "\n";
-    }
+    os << "Function " << name << " with ";
+    os << overloads.size() << " overloads";
+    // for (const auto &overload : overloads) {
+    //     overload->print(os);
+    //     os << "\n";
+    // }
 }
 
 bool ClassType::isCompatible(shared_ptr<Type> other) {
