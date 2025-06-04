@@ -6,6 +6,7 @@
 
 namespace lox {
 class FunctionScope;
+class ClassScope;
 class Scope {
 protected:
   enum class Kind { GlobalScope, ClassScope, FunctionScope, BlockScope };
@@ -13,49 +14,51 @@ protected:
   std::string name;
   std::unordered_map<std::string, std::shared_ptr<Symbol>> symbols;
   const std::shared_ptr<Scope> enclosingScope; // 外层作用域
-  bool inFunctionScope = false;                // 是否在函数作用域内
-  bool inClassScope = false;                   // 是否在类作用域内
-  std::shared_ptr<Symbol> currentClassSymbol = nullptr; // 当前类符号
-  std::shared_ptr<Type> currentReturnType = nullptr; // 当前函数返回类型
 public:
   Scope(std::shared_ptr<Scope> parent, const std::string &name,
-        bool inClassScope = false, bool inFunctionScope = false)
-      : enclosingScope(parent), name(name) {
-    assert(!inFunctionScope ||
-           enclosingScope != nullptr &&
-               "Function scope must have an enclosing scope");
-    assert(!inClassScope || enclosingScope != nullptr &&
-                                "Class scope must have an enclosing scope");
-    if (enclosingScope) {
-      this->inFunctionScope =
-          enclosingScope->inFunctionScope || inFunctionScope;
-      this->inClassScope = enclosingScope->inClassScope || inClassScope;
-    } else {
-      // 如果没有外层作用域，则直接设置
-      this->inClassScope = inClassScope;
-      this->inFunctionScope = inFunctionScope;
-    }
-    if (this->inClassScope) {
-      // 如果在类作用域内，设置当前类符号
-      currentClassSymbol =
-          enclosingScope ? enclosingScope->currentClassSymbol : nullptr;
-    }
-  }
+        bool isClassScope = false, bool isFunctionScope = false)
+      : enclosingScope(parent), name(name) {}
   virtual ~Scope() = default;
 
-  virtual bool isInFunctionScope() const { return inFunctionScope; }
-  virtual bool isInClassScope() const { return inClassScope; }
-  virtual std::shared_ptr<Symbol> getCurrentClassSymbol() const {
-    return currentClassSymbol;
+  virtual bool inFunctionScope() const { 
+    const Scope *current = this;
+    while (current != nullptr) {
+      if (isa<FunctionScope>(current)) {
+        return true; // 如果当前作用域是函数作用域，返回true
+      }
+      current = current->enclosingScope.get(); // 向外层作用域移动
+    }
+    return false; // 如果没有找到函数作用域，返回false
+  }
+  virtual bool inClassScope() const {
+    const Scope *current = this;
+    while (current != nullptr) {
+      if (isa<ClassScope>(current)) {
+        return true; // 如果当前作用域是类作用域，返回true
+      }
+      current = current->enclosingScope.get(); // 向外层作用域移动
+    }
+    return false; // 如果没有找到类作用域，返回false
   }
 
-  virtual void setCurrentReturnType(std::shared_ptr<Type> type) {
-    assert(isInFunctionScope() && "Current scope is not a function scope");
-    currentReturnType = std::move(type);
+  virtual std::shared_ptr<Symbol> getCurrentClassSymbol() const {
+    if (enclosingScope == nullptr) {
+      return nullptr;
+    }
+    return enclosingScope->getCurrentClassSymbol();
   }
-  virtual std::shared_ptr<Type> getCurrentReturnType() const {
-    assert(isInFunctionScope() && "Current scope is not a function scope");
-    return currentReturnType;
+
+  virtual bool setCurrentReturnType(std::shared_ptr<Type> type) {
+    if (enclosingScope == nullptr) {
+      return false; // 如果没有外层作用域，无法设置返回类型
+    }
+    return enclosingScope->setCurrentReturnType(std::move(type));
+  }
+  virtual const std::vector<std::shared_ptr<Type>>* getCurrentReturnTypes() const {
+    if (enclosingScope == nullptr) {
+      return nullptr;
+    }
+    return enclosingScope->getCurrentReturnTypes();
   }
 
   virtual bool declare(std::shared_ptr<Symbol> &symbol) {
@@ -140,6 +143,8 @@ public:
 };
 
 class ClassScope : public Scope {
+private:
+std::shared_ptr<Symbol> currentClassSymbol = nullptr; // 当前类符号
 public:
   ClassScope(std::shared_ptr<Scope> &parent, const std::string &name)
       : Scope(parent, name, true, false) {
@@ -153,13 +158,27 @@ public:
     }
   }
 
+  virtual std::shared_ptr<Symbol> getCurrentClassSymbol() const override {
+    return currentClassSymbol;
+  }
+
   TYPEID_SYSTEM(Scope, ClassScope)
 };
 
 class FunctionScope : public Scope {
+private:
+  std::shared_ptr<std::vector<std::shared_ptr<Type>>> allReturnTypes = std::make_shared<std::vector<std::shared_ptr<Type>>>(); // 所有返回类型
 public:
   FunctionScope(const std::shared_ptr<Scope> &parent, const std::string &name)
       : Scope(parent, name, false, true) {}
+
+  virtual bool setCurrentReturnType(std::shared_ptr<Type> type) override {
+    allReturnTypes->push_back(std::move(type));
+    return true;
+  }
+  virtual const std::vector<std::shared_ptr<Type>>* getCurrentReturnTypes() const override {
+    return allReturnTypes.get();
+  }
 
   TYPEID_SYSTEM(Scope, FunctionScope)
 };

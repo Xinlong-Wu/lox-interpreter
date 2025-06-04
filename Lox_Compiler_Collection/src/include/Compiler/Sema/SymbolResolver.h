@@ -1,22 +1,15 @@
-#ifndef SEMANTICANALYZER_H
-#define SEMANTICANALYZER_H
+
+#ifndef SYMBOLRESOLVER_H
+#define SYMBOLRESOLVER_H
 
 #include "Compiler/AST/ASTVisitor.h"
-#include "Compiler/ErrorReporter.h"
-#include "Compiler/Sema/SymbolResolver.h"
+#include "Compiler/Sema/SymbolTable.h"
 
 namespace lox {
 
-class Sema : public ASTVisitor {
+class SymbolResolver : public ASTVisitor {
 private:
   SymbolTable symbolTable;
-
-public:
-  Sema() {
-    // Initialize the global scope with built-in functions
-    inilializeGlobalScope();
-  };
-  ~Sema() override = default;
 
   void inilializeGlobalScope() {
     symbolTable.declare(std::make_shared<
@@ -29,30 +22,21 @@ public:
          std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature(
              {BoolType::getInstance()}, NilType::getInstance()))}))));
   }
-
-  void enterScope(const std::string &name = "anonymous") {
-    symbolTable.enterScope(name);
+public:
+  SymbolResolver() {
+    // Initialize the global scope with built-in functions
+    inilializeGlobalScope();
   }
-  void exitScope() { symbolTable.exitScope(); }
+  ~SymbolResolver() override = default;
 
-  void analyze(std::vector<std::unique_ptr<StmtBase>> &statements) {
+  void resolve(std::vector<std::unique_ptr<StmtBase>> &statements) {
+    symbolTable.enterScope();
 
-    // step 1: Symbol resolution
-    SymbolResolver resolver;
-    resolver.resolve(statements);
-    
-    // setp 2: Type inference
+    for (auto &stmt : statements) {
+      stmt->accept(*this);
+    }
 
-    // step 3: Type checking
-
-
-    // symbolTable.enterScope();
-
-    // for (auto &stmt : statements) {
-    //   stmt->accept(*this);
-    // }
-
-    // symbolTable.exitScope();
+    symbolTable.exitScope();
   }
 
   INSTENCE_VISIT(ThisExpr);
@@ -82,4 +66,4 @@ public:
 
 } // namespace lox
 
-#endif // SEMANTICANALYZER_H
+#endif // SYMBOLRESOLVER_H

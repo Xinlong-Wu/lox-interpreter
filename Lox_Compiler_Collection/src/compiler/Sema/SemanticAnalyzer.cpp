@@ -5,18 +5,17 @@
 
 #include <utility>
 
-namespace lox {
-#define DEFINE_VISIT(name) void Sema::visit(name &expr)
+using namespace lox;
 
-DEFINE_VISIT(ExpressionStmt) { expr.getExpression()->accept(*this); }
+DEFINE_VISIT(Sema, ExpressionStmt) { expr.getExpression()->accept(*this); }
 
-DEFINE_VISIT(DeclarationStmt) {
+DEFINE_VISIT(Sema, DeclarationStmt) {
   // Handle the declaration statement
   // For example, check if the variable is already declared
   std::cout << "Visiting DeclarationStmt" << std::endl;
 }
 
-DEFINE_VISIT(VarDeclStmt) {
+DEFINE_VISIT(Sema, VarDeclStmt) {
   // create a new symbol for the variable
   std::shared_ptr<Symbol> symbol = expr.getSymbol();
 
@@ -42,7 +41,7 @@ DEFINE_VISIT(VarDeclStmt) {
   expr.setSymbol(symbol);
 }
 
-DEFINE_VISIT(BlockStmt) {
+DEFINE_VISIT(Sema, BlockStmt) {
   // Enter a new scope for the block
   symbolTable.enterScope();
 
@@ -55,7 +54,7 @@ DEFINE_VISIT(BlockStmt) {
   symbolTable.exitScope();
 }
 
-DEFINE_VISIT(ClassDeclStmt) {
+DEFINE_VISIT(Sema, ClassDeclStmt) {
   // find superclass type if it exists
   std::shared_ptr<ClassType> superClassType = nullptr;
   if (expr.hasSuperclass()) {
@@ -106,10 +105,10 @@ DEFINE_VISIT(ClassDeclStmt) {
   }
 }
 
-DEFINE_VISIT(FunctionDecl) {
+DEFINE_VISIT(Sema, FunctionDecl) {
   std::shared_ptr<Scope> currentScope = symbolTable.getCurrentScope();
 
-  bool isConstructor = currentScope->isInClassScope() &&
+  bool isConstructor = currentScope->inClassScope() &&
                        expr.getName() == currentScope->getCurrentClassSymbol()
                                                     ->getName();
 
@@ -161,8 +160,8 @@ DEFINE_VISIT(FunctionDecl) {
   }
 
   // get return type of the function
-  std::shared_ptr<Type> returnType =
-      functionScope->getCurrentReturnType();
+  std::shared_ptr<Type> returnType = nullptr;
+  //     functionScope->getCurrentReturnType();
 
   if (isConstructor) {
     // if the function is a constructor, set the return type as the class type
@@ -195,7 +194,7 @@ DEFINE_VISIT(FunctionDecl) {
   expr.setSymbol(funcSymbol);
 }
 
-DEFINE_VISIT(IfStmt) {
+DEFINE_VISIT(Sema, IfStmt) {
   // resolve the condition expression
   if (expr.getCondition() == nullptr) {
     ErrorReporter::reportError(&expr, "'if' statement must have a condition");
@@ -221,19 +220,19 @@ DEFINE_VISIT(IfStmt) {
   // expr.setType(NilType::getInstance());
 }
 
-DEFINE_VISIT(WhileStmt) {
+DEFINE_VISIT(Sema, WhileStmt) {
   // expr.getCondition()->accept(*this);
   // expr.getBody()->accept(*this);
 
   assert_not_reached("Unimplemented WhileStmt visit");
 }
 
-DEFINE_VISIT(ForStmt) { assert_not_reached("Unimplemented ForStmt visit"); }
+DEFINE_VISIT(Sema, ForStmt) { assert_not_reached("Unimplemented ForStmt visit"); }
 
-DEFINE_VISIT(ReturnStmt) {
+DEFINE_VISIT(Sema, ReturnStmt) {
   // check if the return statement is inside a function scope
   std::shared_ptr<Scope> currentScope = symbolTable.getCurrentScope();
-  if (!currentScope->isInFunctionScope()) {
+  if (!currentScope->inFunctionScope()) {
     ErrorReporter::reportError(&expr, "'return' can only be used inside a function");
     return;
   }
@@ -243,7 +242,8 @@ DEFINE_VISIT(ReturnStmt) {
   returnValue->accept(*this);
   std::shared_ptr<Type> returnType = returnValue->getType();
   assert(returnType != nullptr && "Return type should not be null");
-  std::shared_ptr<Type> funcReturnType = currentScope->getCurrentReturnType();
+  // std::shared_ptr<Type> funcReturnType = currentScope->getCurrentReturnType();
+  std::shared_ptr<Type> funcReturnType = nullptr;
   if (funcReturnType == nullptr) {
     currentScope->setCurrentReturnType(returnType);
   }
@@ -259,9 +259,9 @@ DEFINE_VISIT(ReturnStmt) {
 }
 
 // Expression visitors
-DEFINE_VISIT(ThisExpr) {
+DEFINE_VISIT(Sema, ThisExpr) {
   std::shared_ptr<Scope> currentScope = symbolTable.getCurrentScope();
-  if (!currentScope->isInClassScope() || !currentScope->isInFunctionScope()) {
+  if (!currentScope->inClassScope() || !currentScope->inFunctionScope()) {
     ErrorReporter::reportError(
         &expr, "'this' can only be used inside a class function");
     return;
@@ -271,9 +271,9 @@ DEFINE_VISIT(ThisExpr) {
   expr.setType(currentScope->getCurrentClassSymbol()->getType());
 }
 
-DEFINE_VISIT(SuperExpr) { assert_not_reached("Unimplemented SuperExpr visit"); }
+DEFINE_VISIT(Sema, SuperExpr) { assert_not_reached("Unimplemented SuperExpr visit"); }
 
-DEFINE_VISIT(GroupingExpr) {
+DEFINE_VISIT(Sema, GroupingExpr) {
   expr.getExpression()->accept(*this);
   // [Type inference] set the type of the grouping expression as the type of the
   // inner expression
@@ -290,7 +290,7 @@ DEFINE_VISIT(GroupingExpr) {
   }
 }
 
-DEFINE_VISIT(CallExpr) {
+DEFINE_VISIT(Sema, CallExpr) {
   ExprBase *callee = expr.getCallee();
   assert(callee != nullptr && "Callee should not be null");
   assert((isa<VariableExpr, AccessExpr>(callee)) &&
@@ -372,7 +372,7 @@ DEFINE_VISIT(CallExpr) {
   expr.setType(calleeReturnType);
 }
 
-DEFINE_VISIT(VariableExpr) {
+DEFINE_VISIT(Sema, VariableExpr) {
   // check if the variable is declared
   std::shared_ptr<Symbol> symbol = symbolTable.lookupSymbol(expr.getName());
   if (symbol == nullptr) {
@@ -395,7 +395,7 @@ DEFINE_VISIT(VariableExpr) {
   }
 }
 
-DEFINE_VISIT(LiteralExpr) {
+DEFINE_VISIT(Sema, LiteralExpr) {
   const std::string &value = expr.getValue();
   if (value.empty()) {
     // [Type inference] if the literal is empty, infer it as an unresolved type
@@ -417,14 +417,14 @@ DEFINE_VISIT(LiteralExpr) {
   }
 }
 
-DEFINE_VISIT(NumberExpr) {
+DEFINE_VISIT(Sema, NumberExpr) {
   // [Type inference] set the type of the number expression as NumberType
   expr.setType(NumberType::getInstance());
 }
 
-DEFINE_VISIT(StringExpr) { expr.setType(StringType::getInstance()); }
+DEFINE_VISIT(Sema, StringExpr) { expr.setType(StringType::getInstance()); }
 
-DEFINE_VISIT(UnaryExpr) {
+DEFINE_VISIT(Sema, UnaryExpr) {
   // resolve the right expression
   expr.getRight()->accept(*this);
 
@@ -448,7 +448,7 @@ DEFINE_VISIT(UnaryExpr) {
   expr.setType(BoolType::getInstance());
 }
 
-DEFINE_VISIT(BinaryExpr) {
+DEFINE_VISIT(Sema, BinaryExpr) {
   // resolve the left and right expressions
   expr.getLeft()->accept(*this);
   expr.getRight()->accept(*this);
@@ -479,7 +479,7 @@ DEFINE_VISIT(BinaryExpr) {
   expr.setType(leftType);
 }
 
-DEFINE_VISIT(AccessExpr) {
+DEFINE_VISIT(Sema, AccessExpr) {
     ExprBase *base = expr.getBase();
     base->accept(*this);
 
@@ -497,7 +497,7 @@ DEFINE_VISIT(AccessExpr) {
     }
 }
 
-DEFINE_VISIT(AssignExpr) {
+DEFINE_VISIT(Sema, AssignExpr) {
   // resove the left and right expressions
   expr.getLeft()->accept(*this);
   expr.getRight()->accept(*this);
@@ -536,7 +536,3 @@ DEFINE_VISIT(AssignExpr) {
     var->getSymbol()->markAsDefined();
   }
 }
-
-#undef DEFINE_VISIT
-
-} // namespace lox

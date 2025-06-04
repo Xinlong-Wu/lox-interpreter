@@ -130,8 +130,10 @@ public:
 };
 
 class BlockStmt : public StmtBase {
-public:
+protected:
+  std::shared_ptr<Scope> scope;
   std::vector<std::unique_ptr<StmtBase>> statements;
+public:
 
   BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements,
             Location location)
@@ -142,6 +144,11 @@ public:
   }
   ~BlockStmt() override = default;
 
+  void setScope(std::shared_ptr<Scope> scope) {
+    assert(this->scope == nullptr && "Scope has already been set");
+    this->scope = std::move(scope);
+  }
+  std::shared_ptr<Scope> &getScope() { return scope; }
   std::vector<std::unique_ptr<StmtBase>> &getStatements() { return statements; }
 
   virtual void print(std::ostream &os) const override {
@@ -243,6 +250,7 @@ public:
 
 class IfStmt : public StmtBase {
 private:
+  std::shared_ptr<Scope> scope = nullptr;
   std::unique_ptr<ExprBase> condition;
   std::unique_ptr<BlockStmt> thenBlock;
   std::unique_ptr<BlockStmt> elseBlock;
@@ -258,6 +266,10 @@ public:
   ExprBase *getCondition() const { return condition.get(); }
   BlockStmt *getThenBranch() const { return thenBlock.get(); }
   BlockStmt *getElseBranch() const { return elseBlock.get(); }
+  void setScope(std::shared_ptr<Scope> scope) {
+    assert(this->scope == nullptr && "Scope has already been set");
+    this->scope = std::move(scope);
+  }
   bool hasElseBranch() const { return elseBlock != nullptr; }
 
   virtual void print(std::ostream &os) const override {
@@ -316,6 +328,11 @@ public:
         condition(std::move(condition)), increment(std::move(increment)),
         body(std::move(body)) {}
   ~ForStmt() override = default;
+
+  StmtBase *getInitializer() const { return initializer.get(); }
+  ExprBase *getCondition() const { return condition.get(); }
+  ExprBase *getIncrement() const { return increment.get(); }
+  BlockStmt *getBody() const { return body.get(); }
 
   virtual void print(std::ostream &os) const override {
     os << "for (" << std::endl;

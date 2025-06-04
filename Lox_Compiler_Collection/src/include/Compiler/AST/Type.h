@@ -47,7 +47,7 @@ public:
 class UnresolvedType : public Type {
 private:
   std::string name;
-  inline static std::shared_ptr<UnresolvedType> instance = nullptr;
+  inline static int64_t id = 0;
   UnresolvedType(std::string name) : Type(), name(name) {}
 
 public:

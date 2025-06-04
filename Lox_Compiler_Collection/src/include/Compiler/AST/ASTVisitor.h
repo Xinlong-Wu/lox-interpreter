@@ -5,6 +5,8 @@
 
 namespace lox {
 #define VISIT(name) virtual void visit(name &expr) = 0
+#define INSTENCE_VISIT(name) void visit(name &expr) override
+#define DEFINE_VISIT(klass, name) void lox::klass::visit(name &expr)
 
 class ASTVisitor {
 public:

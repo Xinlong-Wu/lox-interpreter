@@ -39,7 +39,7 @@ static char *readFile(const char *path)
     return buffer;
 }
 
-static int runFile(const char *path, bool enableSema)
+static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
@@ -58,6 +58,11 @@ static int runFile(const char *path, bool enableSema)
     if (enableSema) {
         // Perform semantic analysis
         sa.analyze(statements);
+    }
+    else if (enableSymbolResolver) {
+        // Perform symbol resolution
+        lox::SymbolResolver resolver;
+        resolver.resolve(statements);
     }
 
     for (auto &stmt : statements) {
@@ -119,6 +124,7 @@ int main(int argc, char const *argv[])
     }
     else if (argc >= 2) {
         bool enableSema = false;
+        bool enableSymbolResolver = false;
         // check flag --semantic-analyzer
         char const *filePath = argv[1];
         if (strcmp(argv[1], "--semantic-analyzer") == 0) {
@@ -129,7 +135,15 @@ int main(int argc, char const *argv[])
             filePath = argv[2];
             enableSema = true;
         }
-        return runFile(filePath, enableSema);
+        else if (strcmp(argv[1], "--symbol-resolver") == 0) {
+            if (argc != 3) {
+                printUsage();
+                exit(64);
+            }
+            filePath = argv[2];
+            enableSymbolResolver = true;
+        }
+        return runFile(filePath, enableSema, enableSymbolResolver);
     }
     else {
         printUsage();

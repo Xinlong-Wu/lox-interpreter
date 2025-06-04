@@ -27,19 +27,15 @@ void Type::dump() const {
 }
 
 shared_ptr<UnresolvedType> UnresolvedType::getInstance() {
-    if (!instance) {
-        instance = shared_ptr<UnresolvedType>(new UnresolvedType("unknown"));
-    }
-    return instance;
+    return std::shared_ptr<UnresolvedType>(new UnresolvedType("unresolved_T" + std::to_string(id++)));
 }
 
 bool UnresolvedType::isCompatible(shared_ptr<Type> other) {
-    // Unresolved types are not compatible with any other type
-    return false;
+    return this == other.get();
 }
 
 void UnresolvedType::print(ostream &os) const {
-    os << name << "(unresolved)";
+    os << name;
 }
 
 shared_ptr<NumberType> NumberType::getInstance() {
