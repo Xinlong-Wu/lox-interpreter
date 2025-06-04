@@ -1,4 +1,5 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 
 // CHECK-PARSER:         var a = String: ["global"];
@@ -7,13 +8,23 @@
 // CHECK-PARSER-NEXT:      BlockStmt: {
 // CHECK-PARSER-NEXT:        Assign: [Variable: [a] = String: ["assigned"]];
 // CHECK-PARSER-NEXT:      }
-
 // CHECK-PARSER:           var a = String: ["inner"];
 // CHECK-PARSER-NEXT:      Call: [Variable: [assign]()];
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [a], )];
 // CHECK-PARSER-NEXT:    }
-
 // CHECK-PARSER:           Call: [Variable: [print](Variable: [a], )];
+
+// CHECK-SEMANTIC:			var a: string = String: ["global"];
+// CHECK-SEMANTIC-NEXT:		BlockStmt: {
+// CHECK-SEMANTIC-NEXT:			function assign()
+// CHECK-SEMANTIC-NEXT:			BlockStmt: {
+// CHECK-SEMANTIC-NEXT:				Assign: [Variable: [a: string] = String: ["assigned"]];
+// CHECK-SEMANTIC-NEXT:			}
+// CHECK-SEMANTIC:				var a: string = String: ["inner"];
+// CHECK-SEMANTIC-NEXT:			Call: [Variable: [assign: () -> nil]()];
+// CHECK-SEMANTIC-NEXT:			Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
+// CHECK-SEMANTIC-NEXT:		}
+// CHECK-SEMANTIC:			Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
 
 var a = "global";
 

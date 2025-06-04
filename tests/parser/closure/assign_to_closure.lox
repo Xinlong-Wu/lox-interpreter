@@ -47,8 +47,8 @@
 // CHECK-SEMANTIC-NEXT:			}
 // CHECK-SEMANTIC:				Assign: [Variable: [g: Function g_ with 1 overloads] = Variable: [g_: Function g_ with 1 overloads]];
 // CHECK-SEMANTIC-NEXT:		}
-// CHECK-SEMANTIC:			Call: [Variable: [f: ()]()];
-// CHECK-SEMANTIC-NEXT:		Call: [Variable: [g: ()]()];
+// CHECK-SEMANTIC:			  Call: [Variable: [f: () -> nil]()];
+// CHECK-SEMANTIC-NEXT:		Call: [Variable: [g: () -> nil]()];
 
 
 var f;

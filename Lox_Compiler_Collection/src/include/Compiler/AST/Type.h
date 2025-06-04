@@ -184,6 +184,8 @@ public:
 class InstanceType;
 class ConstructorType : public FunctionType {
 public:
+  ConstructorType(std::string name)
+      : FunctionType(std::move(name)) {}
   ConstructorType(std::string name,
                   std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<InstanceType> returnType)
       : FunctionType(std::move(name), std::move(parameters), std::move(std::static_pointer_cast<Type>(returnType))) {}
@@ -223,8 +225,8 @@ public:
   virtual size_t hash() const override;
   void print(std::ostream &os) const override { os << "class " << name; }
 
-  // TYPEID_SYSTEM_N(Type, ClassType, Kind::InstanceType);
-  TYPEID_SYSTEM(Type, ClassType);
+  TYPEID_SYSTEM_N(Type, ClassType, Kind::InstanceType);
+  // TYPEID_SYSTEM(Type, ClassType);
 };
 
 class InstanceType : public ClassType {

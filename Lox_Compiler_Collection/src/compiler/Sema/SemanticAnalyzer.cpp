@@ -130,8 +130,9 @@ DEFINE_VISIT(FunctionDecl) {
   if (funcSymbol == nullptr) {
     // if the function is not defined, create a new function symbol
     if (isConstructor) {
-      funcType = std::make_shared<ConstructorType>(
-          expr.getName(), parameterTypes, cast<ClassType>(currentScope->getCurrentClassSymbol()->getType())->getInstanceType());
+      // funcType = std::make_shared<ConstructorType>(
+      //     expr.getName(), parameterTypes, cast<ClassType>(currentScope->getCurrentClassSymbol()->getType())->getInstanceType());
+      funcType = std::make_shared<ConstructorType>(expr.getName());
     }
     else {
       funcType = std::make_shared<FunctionType>(expr.getName());
@@ -171,27 +172,26 @@ DEFINE_VISIT(FunctionDecl) {
   }
   else if (returnType == nullptr) {
     // if the function does not have a return type, set it as nil
-    functionScope->setCurrentReturnType(NilType::getInstance());
+    returnType = NilType::getInstance();
+    functionScope->setCurrentReturnType(returnType);
   }
 
   // exit the function scope
   symbolTable.exitScope();
 
   // add overload to the existing function symbol
+  assert(returnType != nullptr && "Return type should not be null");
   FunctionType::Signature signature(parameterTypes, returnType);
   assert(funcType != nullptr && "Function type should not be null");
   // check if the function has the same number of parameters
-  if (isOverloaded) {
-    if (funcType->hasOverload(signature)) {
-      ErrorReporter::reportError(
-          &expr, "Function '" + expr.getName() +
-                    "' is already defined with the same signature");
-      return;
-    } else {
-      // add the overload to the function type
-      funcType->addOverload(signature);
-    }
+  if (funcType->hasOverload(signature)) {
+    ErrorReporter::reportError(
+        &expr, "Function '" + expr.getName() +
+                  "' is already defined with the same signature");
+    return;
   }
+  // add the overload to the function type
+  funcType->addOverload(signature);
   expr.setSymbol(funcSymbol);
 }
 
@@ -489,7 +489,8 @@ DEFINE_VISIT(AccessExpr) {
       const std::shared_ptr<Type> propertyType =
           classType->getPropertyType(expr.getProperty());
       expr.setType(propertyType);
-    } else {
+    }
+    else {
       ErrorReporter::reportError(&expr,
                                  "Base expression must be a class or function type");
       return;

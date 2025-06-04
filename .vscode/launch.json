@@ -26,6 +26,16 @@
             ]
         },
         {
+            "name": "lox-parser (lldb)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/lox-parser",
+            "args": [ "--semantic-analyzer","${fileDirname}/${fileBasenameNoExtension}.lox" ],
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+            "terminal": "integrated"
+        },
+        {
             "name": "lox-parser",
             "type": "cppdbg",
             "request": "launch",

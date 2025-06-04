@@ -6,7 +6,7 @@
 // CHECK-PARSER-NEXT:      BlockStmt: {
 // CHECK-PARSER-NEXT:        return Variable: [Foo];
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER:         Call: [Variable: [print](Call: [Access: [ Call: [Variable: [Foo]()].returnSelf ]()], )];
+// CHECK-PARSER:         Call: [Variable: [print](Call: [Access: [Call: [Variable: [Foo]()].returnSelf]()], )];
 
 // CHECK-SEMANTIC:       class Foo {
 // CHECK-SEMANTIC-NEXT:    function returnSelf()

@@ -15,8 +15,6 @@
 // CHECK-SEMANTIC-NEXT:      BlockStmt: {
 // CHECK-SEMANTIC-NEXT:        return Variable: [Foo: class Foo];
 // CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC:        }
-// CHECK-SEMANTIC:       }
 // CHECK-SEMANTIC:       Call: [Variable: [print: (string) -> nil](Call: [Access: [Call: [Variable: [Foo: () -> instance of Foo]()].returnSelf: () -> class Foo]()], )];
 
 {
