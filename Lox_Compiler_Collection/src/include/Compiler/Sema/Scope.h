@@ -108,6 +108,15 @@ public:
     }
   }
 
+  virtual size_t hash() const {
+    size_t seed = 0;
+    lox::hash_combine(name, seed);
+    for (const auto &[name, symbol] : symbols) {
+      lox::hash_combine(symbol->hash(), seed);
+    }
+    return seed;
+  }
+
   const std::string &getName() const { return name; }
 
   void print(std::ostream &os, int level = 0) const {

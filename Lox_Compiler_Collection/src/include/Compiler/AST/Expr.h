@@ -124,18 +124,15 @@ public:
     if (symbol != nullptr) {
       return symbol->getType();
     }
-    return this->type;
+    return nullptr;
   }
   virtual Symbol *getSymbol() const { return symbol; }
   virtual void setSymbol(Symbol *sym) {
-    assert(symbol == nullptr && "Symbol has already been set");
+    assert(this->symbol == nullptr && "Symbol has already been set");
     this->symbol = sym;
   }
   virtual void setType(std::shared_ptr<Type> t) override {
-    if (symbol) {
-      symbol->setType(t);
-    }
-    this->type = std::move(t);
+    assert_not_reached("VariableExpr::setType should not be called");
   }
   virtual bool isValidLValue() const override { return true; }
   // depending on the return type of the variable, we don't know if the variable
@@ -240,13 +237,13 @@ public:
 
   ExprBase *getBase() const { return base.get(); }
   const std::string &getProperty() const { return property; }
-  virtual const std::shared_ptr<Type> getType() const override {
-    std::shared_ptr<Type> baseType = base->getType();
-    if (auto classType = dyn_cast<ClassType>(baseType)) {
-      return classType->getPropertyType(property);
-    }
-    return nullptr;
-  }
+  // virtual const std::shared_ptr<Type> getType() const override {
+  //   std::shared_ptr<Type> baseType = base->getType();
+  //   if (auto classType = dyn_cast<ClassType>(baseType)) {
+  //     return classType->getProperty(property)->getType();
+  //   }
+  //   return nullptr;
+  // }
   // depending on the return type of the property, we don't know if the property
   // is callable or not. So we return true here.
   virtual bool isValidLValue() const override { return true; }

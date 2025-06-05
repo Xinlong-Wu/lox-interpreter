@@ -65,7 +65,17 @@ DEFINE_VISIT(SymbolResolver, CallExpr) {
         arg->accept(*this);
     }
     
-    expr.setType(UnresolvedType::getInstance()); // Default to UnresolvedType
+    if (auto functionType = dyn_cast<FunctionType>(calleeType)) {
+        // If the callee is a function type, set the call expression type as the return type of the function
+        expr.setType(functionType->getReturnType());
+    } else if (auto classType = dyn_cast<ClassType>(calleeType)) {
+        // If the callee is a class type, check if it has a constructor
+        assert (classType->hasConstructor()&& "Class type should have a constructor");
+        expr.setType(classType->getInstanceType());
+    }
+    else {
+        expr.setType(UnresolvedType::getInstance()); // Default to UnresolvedType
+    }
 }
 
 DEFINE_VISIT(SymbolResolver, VariableExpr) {
@@ -174,7 +184,13 @@ DEFINE_VISIT(SymbolResolver, AccessExpr) {
     // Check if the base type is a class type
     if (auto classType = dyn_cast<ClassType>(baseType)) {
         // Get the property type from the class type
-        shared_ptr<Type> propertyType = classType->getPropertyType(expr.getProperty());
+        shared_ptr<Symbol> propertySymbol = classType->getProperty(expr.getProperty());
+        if (propertySymbol == nullptr) {
+            ErrorReporter::reportError(&expr, "Property '" + expr.getProperty() + "' is not defined in class '" + classType->getName() + "'");
+            return;
+        }
+        
+        shared_ptr<Type> propertyType = classType->getProperty(expr.getProperty())->getType();
         if (propertyType == nullptr) {
             ErrorReporter::reportError(&expr, "Property '" + expr.getProperty() + "' is not defined in class '" + classType->getName() + "'");
             return;
@@ -193,11 +209,40 @@ DEFINE_VISIT(SymbolResolver, AccessExpr) {
 
 DEFINE_VISIT(SymbolResolver, AssignExpr) {
     // Visit the left and right expressions
-    expr.getLeft()->accept(*this);
     expr.getRight()->accept(*this);
+    // expr.getLeft()->accept(*this);
+
+    ExprBase *leftExpr = expr.getLeft();
+    shared_ptr<Type> leftType = nullptr;
+    if (isa<VariableExpr>(leftExpr)) {
+        // If the left expression is a variable, resolve it
+        VariableExpr *varExpr = cast<VariableExpr>(leftExpr);
+        shared_ptr<Symbol> symbol = symbolTable.lookupSymbol(varExpr->getName());
+        if (symbol == nullptr) {
+            ErrorReporter::reportError(&expr, "Use of Undeclared Variable '" + varExpr->getName() + "'");
+            return;
+        }
+        symbol->markAsDefined();
+        varExpr->setSymbol(symbol.get());
+        leftType = symbol->getType();
+    } else if (isa<AccessExpr>(leftExpr)) {
+        // If the left expression is an access expression, resolve it
+        leftExpr->accept(*this);
+        leftType = leftExpr->getType();
+    } else if (isa<GroupingExpr>(leftExpr)) {
+        // If the left expression is a grouping expression, resolve it
+        GroupingExpr *groupExpr = cast<GroupingExpr>(leftExpr);
+        groupExpr->getExpression()->accept(*this);
+        leftType = groupExpr->getExpression()->getType();
+    } else if (isa<ThisExpr, SuperExpr>(leftExpr)) {
+        ErrorReporter::reportError(&expr, "Cannot assign to 'this' or 'super'");
+        return;
+    } else {
+        assert_not_reached("Unsupported left expression type in assignment");
+    }
 
     // Set the result type of the assignment expression as the left type
-    expr.setType(UnresolvedType::getInstance());
+    expr.setType(leftType);
 }
 
 DEFINE_VISIT(SymbolResolver, ExpressionStmt) {
@@ -273,7 +318,9 @@ DEFINE_VISIT(SymbolResolver, ClassDeclStmt) {
 
     // Create a new class symbol
     shared_ptr<Symbol> classSymbol = make_shared<Symbol>(expr.getName());
-    classSymbol->setType(make_shared<ClassType>(expr.getName(), superClassType));
+    shared_ptr<ClassType> classType = make_shared<ClassType>(expr.getName(), superClassType);
+    classSymbol->setType(classType);
+    classSymbol->markAsDefined();
     
     // Declare the class in the symbol table
     if (!symbolTable.declare(classSymbol)) {
@@ -284,62 +331,107 @@ DEFINE_VISIT(SymbolResolver, ClassDeclStmt) {
     // Enter a new scope for the class
     symbolTable.enterClassScope(expr.getName());
 
+    // Set the class properties
+    classType->setProperties(symbolTable.getCurrentScope());
+
     // Declare the class fields and methods
     for (const auto &field : expr.getFields()) {
         field.second->accept(*this);
     }
-    
-    // Set the class scope
-    expr.setClassScope(symbolTable.getCurrentScope());
+
+    for (const auto &method : expr.getMethods()) {
+        method.second->accept(*this);
+    }
+
+    if (!classType->hasConstructor()) {
+        // If the class does not have a constructor, create a default constructor
+        shared_ptr<ConstructorType> constructorType = make_shared<ConstructorType>(classSymbol->getName(),
+                                                                                  classType->getInstanceType());
+        shared_ptr<Symbol> constructorSymbol = make_shared<Symbol>(classSymbol->getName(), constructorType);
+        symbolTable.declare(constructorSymbol);
+    }
 
     // Exit the class scope
     symbolTable.exitScope();
+
+    expr.setSymbol(classSymbol);
 }
 
 DEFINE_VISIT(SymbolResolver, FunctionDecl) {
     shared_ptr<FunctionType> funcType = nullptr;
 
+    std::string functionName = expr.getName();
+    bool isConstructor = false;
+    shared_ptr<Symbol> currentClassSymbol = symbolTable.getCurrentScope()->getCurrentClassSymbol();
+    if (currentClassSymbol) {
+        // If we are in a class scope, the function name is the class name
+        if (functionName == currentClassSymbol->getName()) {
+            isConstructor = true;
+        }
+    }
+
     // Create or retrieve the function symbol
-    shared_ptr<Symbol> symbol = symbolTable.lookupSymbol(expr.getName());
+    shared_ptr<Symbol> symbol = symbolTable.lookupSymbol(functionName);
+
+    if (isConstructor) {
+        shared_ptr<ClassType> classType = cast<ClassType>(symbol->getType());
+        // If the symbol is a class, we can treat it as a constructor
+        symbol = classType->getConstructor();
+    }
+
     if (symbol == nullptr) {
         // If the function is not defined, create a new symbol
-        symbol = make_shared<Symbol>(expr.getName());
+        symbol = make_shared<Symbol>(functionName);
         // declare it in the symbol table
         symbolTable.declare(symbol);
 
         // Create a new function type for the symbol
-        funcType = make_shared<FunctionType>(expr.getName());
+        if (isConstructor) {
+            // If it's a constructor, create a ConstructorType
+            funcType = make_shared<ConstructorType>(functionName,
+                                                    cast<ClassType>(currentClassSymbol->getType())->getInstanceType());
+        } else {
+            // Otherwise, create a regular FunctionType
+            funcType = make_shared<FunctionType>(functionName);
+        }
         symbol->setType(funcType);
     } else if (isa<FunctionType>(symbol->getType())) {
         // If the function is already defined, retrieve its type
         funcType = cast<FunctionType>(symbol->getType());
     }
+    else if (isa<UnresolvedType>(symbol->getType())) {
+        // If the symbol is unresolved, we can still declare it as a function
+        funcType = make_shared<FunctionType>(functionName);
+        symbol->setType(funcType);
+    }
     else {
         // If the symbol is not a function, report an error
-        ErrorReporter::reportError(&expr, "Symbol '" + expr.getName() + "' is not a function");
+        ErrorReporter::reportError(&expr, "Symbol '" + functionName + "' is not a function");
         return;
     }
 
     // Set the symbol for the function declaration
     expr.setSymbol(symbol);
+    symbol->markAsDefined();
     
     // Enter a new scope for the function
-    symbolTable.enterFunctionScope(expr.getName());
+    symbolTable.enterFunctionScope(functionName);
     
     // Declare the function parameters in the current scope
     std::vector<shared_ptr<Type>> parameterTypes;
     for (const auto &param : expr.getParameters()) {
-        param->accept(*this);
+        // param->accept(*this);
         // Create a new symbol for the parameter
-        shared_ptr<Symbol> paramSymbol = make_shared<Symbol>(param->getName(), param->getType());
-        
+        shared_ptr<Symbol> paramSymbol = make_shared<Symbol>(param->getName(), UnresolvedType::getInstance());
+        paramSymbol->markAsDefined();
+
         // Declare the parameter in the current scope
         if (!symbolTable.declare(paramSymbol)) {
             ErrorReporter::reportError(&expr, "Parameter '" + param->getName() + "' is already defined");
             return;
         }
         // Add the parameter to the function type
-        parameterTypes.push_back(param->getType());
+        parameterTypes.push_back(paramSymbol->getType());
     }
     
     // Visit the function body
@@ -350,7 +442,12 @@ DEFINE_VISIT(SymbolResolver, FunctionDecl) {
     // Set the function's scope
     expr.getBody()->setScope(symbolTable.getCurrentScope());
 
-    FunctionType::Signature signature(parameterTypes, UnresolvedType::getInstance());
+    shared_ptr<Type> returnType = UnresolvedType::getInstance();
+    if (isConstructor) {
+        // If it's a constructor, the return type is the class instance type
+        returnType = cast<ClassType>(currentClassSymbol->getType())->getInstanceType();
+    }
+    FunctionType::Signature signature(parameterTypes, returnType);
     // Add the signature to the function type
     funcType->addOverload(signature);
     

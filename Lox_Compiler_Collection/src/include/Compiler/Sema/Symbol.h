@@ -16,9 +16,21 @@ public:
   Symbol(const std::string &name, std::shared_ptr<Type> type = nullptr)
       : name(name), type(std::move(type)) {}
   Symbol(std::shared_ptr<FunctionType> funcType)
-      : name(funcType->getName()), type(std::move(funcType)) {}
+      : name(funcType->getName()), type(std::move(funcType)) {
+    if (type == nullptr) {
+      ErrorReporter::reportError("Function type cannot be null for symbol '" +
+                                  name + "'.");
+    }
+    isDefined = true; // Functions are defined when created
+  }
   Symbol(std::shared_ptr<ClassType> classType)
-      : name(classType->getName()), type(std::move(classType)) {}
+      : name(classType->getName()), type(std::move(classType)) {
+    if (type == nullptr) {
+      ErrorReporter::reportError("Class type cannot be null for symbol '" +
+                                  name + "'.");
+    }
+    isDefined = true; // Classes are defined when created
+  }
 
   const std::string &getName() const { return name; }
 
@@ -44,6 +56,15 @@ public:
   }
 
   bool isUsedSymbol() const { return isUsed; }
+
+  virtual size_t hash() const {
+    std::size_t seed = 0;
+    lox::hash_combine(name, seed);
+    if (type) {
+      lox::hash_combine(type->hash(), seed);
+    }
+    return seed;
+  }
 
   friend std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
     sym.print(os);

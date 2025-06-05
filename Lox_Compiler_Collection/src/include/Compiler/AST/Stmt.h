@@ -200,36 +200,43 @@ public:
 class ClassDeclStmt : public DeclarationStmt {
 private:
   std::optional<std::string> superclass;
-  std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields;
+  std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
+  std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
 
   // for semantic analysis, we need to keep track of the class scope
-  std::shared_ptr<Scope> classScope;
+  // std::shared_ptr<Scope> classScope;
 
 public:
   ClassDeclStmt(
       std::string name, std::optional<std::string> superclass,
-      std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields,
+      std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
+      std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods,
       Location loc)
       : DeclarationStmt(std::move(name), loc),
-        superclass(std::move(superclass)), fields(std::move(fields)) {}
+        superclass(std::move(superclass)), fields(std::move(fields)), methods(std::move(methods)) {}
   ClassDeclStmt(
       std::string name,
-      std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> fields,
+      std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
+      std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods,
       Location loc)
-      : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields), loc) {}
+      : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields), std::move(methods) , loc) {}
   ~ClassDeclStmt() override = default;
 
   bool hasSuperclass() const { return superclass.has_value(); }
   const std::string &getSuperclassName() const { return *superclass; }
-  std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> &
+  const std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> &
   getFields() {
     return fields;
   }
-  std::shared_ptr<Scope> &getClassScope() { return classScope; }
-  void setClassScope(std::shared_ptr<Scope> scope) {
-    assert(classScope == nullptr && "Class scope has already been set");
-    classScope = std::move(scope);
+  const std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> &
+  getMethods() {
+    return methods;
   }
+  // std::shared_ptr<Scope> &getClassScope() { return classScope; }
+  // void setClassScope(std::shared_ptr<Scope> scope) {
+  //   assert(classScope == nullptr && "Class scope has already been set");
+  //   classScope = std::move(scope);
+  // }
 
   virtual void print(std::ostream &os) const override {
     os << "class " << getName();
@@ -239,6 +246,11 @@ public:
     os << " {" << std::endl;
     for (const auto &field : fields) {
       field.second->print(os);
+      os << std::endl;
+    }
+
+    for (const auto &method : methods) {
+      method.second->print(os);
       os << std::endl;
     }
     os << "}" << std::endl;

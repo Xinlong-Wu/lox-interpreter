@@ -1,7 +1,7 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 
 // CHECK-PARSER:         class Foo {
-// CHECK-PARSER-NEXT:      function init(Variable: [a], Variable: [b], )
+// CHECK-PARSER-NEXT:      function Foo(Variable: [a], Variable: [b], )
 // CHECK-PARSER-NEXT:      BlockStmt: {
 // CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["init"], )];
 // CHECK-PARSER-NEXT:           Assign: [Access: [ this.a ] = Variable: [a]];
@@ -11,7 +11,9 @@
 // CHECK-PARSER:         var foo = Call: [Variable: [Foo](Number: [1], Number: [2], )];
 
 class Foo {
-  init(a, b) {
+  var a;
+  var b;
+  Foo(a, b) {
     print ("init"); // expect: init
     this.a = a;
     this.b = b;

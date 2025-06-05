@@ -4,6 +4,5 @@
 // CHECK-PARSER-LABEL: Assign: [Variable: [unknown] = String: ["what"]];
 
 // CHECK-SEMANTIC-LABEL:    Error: Use of Undeclared Variable 'unknown' at
-// CHECK-SEMANTIC:          Variable 'unknown' is not declared at
 
 unknown = "what";

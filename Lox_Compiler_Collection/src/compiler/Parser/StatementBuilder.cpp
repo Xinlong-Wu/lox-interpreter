@@ -79,19 +79,20 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
       // }
     }
   }
-  std::unordered_map<std::string, std::unique_ptr<DeclarationStmt>> methods;
-  // std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
+  std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
+  std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
   this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
   while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) &&
          this->hasNext()) {
-    // if (this->parseOptional(lox::TokenType::TOKEN_VAR)) {
-    //     std::unique_ptr<DeclarationStmt> field = this->parseVarDecl();
-    //     fields.insert({field->getName(), std::move(field)});
-    // } else
+    if (this->parseOptional(lox::TokenType::TOKEN_VAR)) {
+        std::unique_ptr<VarDeclStmt> field = this->parseVarDecl();
+        fields.insert({field->getName(), std::move(field)});
+    } else
     if (this->parseOptional(lox::TokenType::TOKEN_FUN) ||
         (this->match(TokenType::TOKEN_IDENTIFIER) &&
-         this->getCurrentToken() == "init")) {
-      std::unique_ptr<DeclarationStmt> method = this->parseFunctionDecl();
+        //  this->getCurrentToken() == "init")) {
+        this->getCurrentToken() == name)) {
+      std::unique_ptr<FunctionDecl> method = this->parseFunctionDecl();
       methods.insert({method->getName(), std::move(method)});
     } else {
       this->parseError("Expect `var` or `fun` or constructor.");
@@ -101,11 +102,11 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
 
   if (!superclass) {
     return std::make_unique<ClassDeclStmt>(
-        std::move(name), std::move(methods),
+        std::move(name), std::move(fields), std::move(methods),
         this->getPreviousToken().getLoction());
   }
   return std::make_unique<ClassDeclStmt>(std::move(name), std::move(superclass),
-                                         std::move(methods),
+                                         std::move(fields), std::move(methods),
                                          this->getPreviousToken().getLoction());
 }
 

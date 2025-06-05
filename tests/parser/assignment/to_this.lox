@@ -3,7 +3,7 @@
 
 // CHECK-PARSER-LABEL:     Assign: [this = String: ["value"]];
 
-// CHECK-SEMANTIC-LABEL:     Error: Incompatible types in assignment at
+// CHECK-SEMANTIC-LABEL:     Error: Cannot assign to 'this' or 'super' at
 // CHECK-SEMANTIC:           Call: [Variable: [Foo: () -> instance of Foo]()];
 
 class Foo {

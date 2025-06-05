@@ -1,4 +1,5 @@
 #include "Compiler/AST/Type.h"
+#include "Compiler/Sema/Scope.h"
 
 #include <iostream>
 #include <memory>
@@ -198,12 +199,16 @@ bool ClassType::isCompatible(shared_ptr<Type> other) {
     return false;
 }
 
-const std::shared_ptr<ConstructorType> ClassType::getConstructor() {
-    auto it = properties.find(name);
-    if (it != properties.end()) {
-        return dyn_cast<ConstructorType>(it->second);
+bool ClassType::hasConstructor() const {
+    if (getConstructor() == nullptr) {
+        return false;
     }
-    return nullptr;
+    return isa<ConstructorType>(getConstructor()->getType());
+}
+
+const std::shared_ptr<Symbol> ClassType::getConstructor() const {
+    std::shared_ptr<Symbol> symbol = getProperty(name);
+    return symbol;
 }
 
 shared_ptr<InstanceType> ClassType::getInstanceType() {
@@ -213,30 +218,19 @@ shared_ptr<InstanceType> ClassType::getInstanceType() {
     return instanceType;
 }
 
-const std::shared_ptr<Type> ClassType::getPropertyType(const std::string &property) const {
-    auto it = properties.find(property);
-    if (it != properties.end()) {
-        return it->second;
+const std::shared_ptr<Symbol> ClassType::getProperty(const std::string &property) const {
+    if (this->properties == nullptr) {
+        // ErrorReporter::reportError("Class '" + name +
+        //                            "' has no properties defined");
+        assert_not_reached("Class has no properties defined, should have been caught earlier");
     }
-    if (superClass) {
-        return superClass->getPropertyType(property);
+    
+    shared_ptr<Symbol> symbol = this->properties->resolveLocal(property);
+    if (symbol == nullptr && superClass != nullptr) {
+        symbol = this->superClass->getProperty(property);
     }
-    // ErrorReporter::reportError(
-    //     "Property '" + property + "' not found in class '" + name + "'");
-    assert_not_reached(
-        "Property not found in class, should have been caught earlier");
-}
 
-bool ClassType::addProperty(const std::string &property,
-                            shared_ptr<Type> type) {
-    if (properties.find(property) != properties.end()) {
-        // ErrorReporter::reportError("Property '" + property +
-        //                            "' already exists in class '" + name + "'");
-        assert_not_reached("Property already exists in class, should have been caught earlier");
-        return false;
-    }
-    properties[property] = std::move(type);
-    return true;
+    return symbol;
 }
 
 size_t ClassType::hash() const {
@@ -245,9 +239,8 @@ size_t ClassType::hash() const {
     if (superClass) {
         lox::hash_combine(superClass->hash(), seed);
     }
-    for (const auto &property : properties) {
-        lox::hash_combine(property.first, seed);
-        lox::hash_combine(property.second->hash(), seed);
+    if (properties) {
+        lox::hash_combine(properties->hash(), seed);
     }
     return seed;
 }

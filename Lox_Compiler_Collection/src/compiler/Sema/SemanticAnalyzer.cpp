@@ -88,10 +88,10 @@ DEFINE_VISIT(Sema, ClassDeclStmt) {
   // visit each field in the class
   for (const auto &field : expr.getFields()) {
     field.second->accept(*this);
-    classType->addProperty(field.first,
-                           field.second->getType());
+    // classType->addProperty(field.first,
+                          //  field.second->getType());
   }
-  expr.setClassScope(symbolTable.getCurrentScope());
+  // expr.setClassScope(symbolTable.getCurrentScope());
   // exit the class scope
   symbolTable.exitScope();
 
@@ -101,7 +101,7 @@ DEFINE_VISIT(Sema, ClassDeclStmt) {
     std::shared_ptr<ConstructorType> defaultConstructor =
         std::make_shared<ConstructorType>(classSymbol->getName(),
                                           parameters, classType->getInstanceType());
-    classType->addProperty(classSymbol->getName(), defaultConstructor);
+    // classType->addProperty(classSymbol->getName(), defaultConstructor);
   }
 }
 
@@ -131,7 +131,9 @@ DEFINE_VISIT(Sema, FunctionDecl) {
     if (isConstructor) {
       // funcType = std::make_shared<ConstructorType>(
       //     expr.getName(), parameterTypes, cast<ClassType>(currentScope->getCurrentClassSymbol()->getType())->getInstanceType());
-      funcType = std::make_shared<ConstructorType>(expr.getName());
+      funcType = std::make_shared<ConstructorType>(expr.getName(),
+                                                   cast<ClassType>(currentScope->getCurrentClassSymbol()->getType())
+                                                       ->getInstanceType());
     }
     else {
       funcType = std::make_shared<FunctionType>(expr.getName());
@@ -314,7 +316,7 @@ DEFINE_VISIT(Sema, CallExpr) {
         dyn_cast<ClassType>(callee->getType());
     assert(classType->hasConstructor() &&
            "Class type should have a constructor");
-    calleeType = classType->getConstructor();
+    calleeType = cast<ConstructorType>(classType->getConstructor()->getType());
   } else {
     ErrorReporter::reportError(
         &expr, "Callee type should be a function type or class type");
@@ -486,9 +488,9 @@ DEFINE_VISIT(Sema, AccessExpr) {
     const std::shared_ptr<Type> baseType = base->getType();
     assert(baseType != nullptr && "Base type should not be null in AccessExpr");
     if (auto classType = dyn_cast<ClassType>(baseType)) {
-      const std::shared_ptr<Type> propertyType =
-          classType->getPropertyType(expr.getProperty());
-      expr.setType(propertyType);
+      // const std::shared_ptr<Type> propertyType =
+      //     classType->getPropertyType(expr.getProperty());
+      // expr.setType(propertyType);
     }
     else {
       ErrorReporter::reportError(&expr,

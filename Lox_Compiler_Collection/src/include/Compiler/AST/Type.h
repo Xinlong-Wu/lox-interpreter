@@ -8,6 +8,9 @@
 #include "Common.h"
 
 namespace lox {
+class Scope;
+class Symbol;
+
 class Type {
 protected:
   enum class Kind {
@@ -184,8 +187,8 @@ public:
 class InstanceType;
 class ConstructorType : public FunctionType {
 public:
-  ConstructorType(std::string name)
-      : FunctionType(std::move(name)) {}
+  ConstructorType(std::string name, std::shared_ptr<InstanceType> returnType)
+      : FunctionType(std::move(name), {}, std::move(std::static_pointer_cast<Type>(returnType))) {}
   ConstructorType(std::string name,
                   std::vector<std::shared_ptr<Type>> parameters, std::shared_ptr<InstanceType> returnType)
       : FunctionType(std::move(name), std::move(parameters), std::move(std::static_pointer_cast<Type>(returnType))) {}
@@ -199,7 +202,7 @@ class ClassType : public Type {
 private:
   std::string name;
   std::shared_ptr<ClassType> superClass = nullptr;
-  std::unordered_map<std::string, std::shared_ptr<Type>> properties;
+  std::shared_ptr<Scope> properties = nullptr;
   std::shared_ptr<InstanceType> instanceType = nullptr;
 
 public:
@@ -215,11 +218,12 @@ public:
   virtual ClassType *getSuperClass() const { return superClass.get(); }
   std::shared_ptr<InstanceType> getInstanceType();
   virtual bool isCompatible(std::shared_ptr<Type> other) override;
-  bool hasConstructor() const { return properties.find(name) != properties.end(); }
-  const std::shared_ptr<ConstructorType> getConstructor();
-  virtual const std::shared_ptr<Type> getPropertyType(const std::string &property) const;
-  bool addProperty(const std::string &property,
-                     std::shared_ptr<Type> type);
+  bool hasConstructor() const;
+  const std::shared_ptr<Symbol> getConstructor() const;
+  virtual const std::shared_ptr<Symbol> getProperty(const std::string &property) const;
+  virtual const void setProperties(std::shared_ptr<Scope> properties) {
+    this->properties = std::move(properties);
+  }
   std::string getName() const { return name; }
   bool operator==(const ClassType &other) const { return name == other.name; }
   virtual size_t hash() const override;
