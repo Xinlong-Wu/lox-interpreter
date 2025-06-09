@@ -195,6 +195,14 @@ DEFINE_VISIT(SymbolResolver, AccessExpr) {
             ErrorReporter::reportError(&expr, "Property '" + expr.getProperty() + "' is not defined in class '" + classType->getName() + "'");
             return;
         }
+
+        // cannot access constructor function as a property
+        if (isa<ConstructorType>(propertyType)) {
+            ErrorReporter::reportError(&expr, "Cannot access constructor function as a property");
+            expr.setType(UnresolvedType::getInstance());
+            return;
+        }
+
         expr.setType(propertyType);
     }
     else if (isa<UnresolvedType>(baseType)) {
@@ -415,7 +423,7 @@ DEFINE_VISIT(SymbolResolver, FunctionDecl) {
     symbol->markAsDefined();
     
     // Enter a new scope for the function
-    symbolTable.enterFunctionScope(functionName);
+    symbolTable.enterFunctionScope(functionName, symbol);
     
     // Declare the function parameters in the current scope
     std::vector<shared_ptr<Type>> parameterTypes;
@@ -507,5 +515,30 @@ DEFINE_VISIT(SymbolResolver, ForStmt) {
 }
 
 DEFINE_VISIT(SymbolResolver, ReturnStmt) {
-    expr.getValue()->accept(*this);
+    if (!symbolTable.getCurrentScope()->inFunctionScope()) {
+        ErrorReporter::reportError(&expr, "Return statement is not allowed outside a function");
+        return;
+    }
+
+    shared_ptr<FunctionType> currentFunctionType = symbolTable.getCurrentScope()->getCurrentFunctionType();
+
+    // check if we are in a constructor
+    if (isa<ConstructorType>(currentFunctionType)) {
+        ErrorReporter::reportError(&expr, "Return statement is not allowed in a constructor");
+        return;
+    }
+
+    shared_ptr<Type> returnType = nullptr;
+    if (expr.getValue()) {
+        // If there is a return value, visit the expression
+        expr.getValue()->accept(*this);
+        
+        returnType = expr.getValue()->getType();
+    }
+    else {
+        // If there is no return value, we assume the return type is NilType
+        returnType = NilType::getInstance();
+    }
+
+    symbolTable.getCurrentScope()->setCurrentReturnType(returnType);
 }

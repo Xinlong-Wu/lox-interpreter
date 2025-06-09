@@ -6,7 +6,7 @@
 // CHECK-PARSER-NEXT:       return String: ["result"];
 
 class Foo {
-  init() {
+  Foo() {
     return "result"; // Error at 'return': Can't return a value from an initializer.
   }
 }

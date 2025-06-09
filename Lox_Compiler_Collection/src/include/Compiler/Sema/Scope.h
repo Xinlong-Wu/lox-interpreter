@@ -30,6 +30,14 @@ public:
     }
     return false; // 如果没有找到函数作用域，返回false
   }
+
+  virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const {
+    if (enclosingScope == nullptr) {
+      return nullptr;
+    }
+    return enclosingScope->getCurrentFunctionType();
+  }
+
   virtual bool inClassScope() const {
     const Scope *current = this;
     while (current != nullptr) {
@@ -176,10 +184,18 @@ public:
 
 class FunctionScope : public Scope {
 private:
+  std::shared_ptr<Symbol> funcSymbol = nullptr; // 函数符号
   std::shared_ptr<std::vector<std::shared_ptr<Type>>> allReturnTypes = std::make_shared<std::vector<std::shared_ptr<Type>>>(); // 所有返回类型
 public:
-  FunctionScope(const std::shared_ptr<Scope> &parent, const std::string &name)
-      : Scope(parent, name, false, true) {}
+  FunctionScope(const std::shared_ptr<Scope> &parent, const std::string &name, 
+                std::shared_ptr<Symbol> funcSymbol)
+      : Scope(parent, name, false, true), 
+        funcSymbol(funcSymbol) {}
+
+  virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const override {
+    assert(funcSymbol != nullptr && "Function symbol should not be null");
+    return dyn_cast<FunctionType>(funcSymbol->getType());
+  }
 
   virtual bool setCurrentReturnType(std::shared_ptr<Type> type) override {
     allReturnTypes->push_back(std::move(type));

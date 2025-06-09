@@ -14,7 +14,8 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Access: [ Variable: [foo].field ], )];
 
 class Foo {
-  init(arg) {
+  var field;
+  Foo(arg) {
     print ("Foo.init(" + arg + ")");
     this.field = "init";
   }
@@ -23,7 +24,7 @@ class Foo {
 var foo = Foo("one"); // expect: Foo.init(one)
 foo.field = "field";
 
-var foo2 = foo.init("two"); // expect: Foo.init(two)
+var foo2 = foo.Foo("two"); // expect: Foo.init(two)
 print (foo2); // expect: Foo instance
 
 // Make sure init() doesn't create a fresh instance.

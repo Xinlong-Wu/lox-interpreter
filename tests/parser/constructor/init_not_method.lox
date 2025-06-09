@@ -13,7 +13,8 @@
 // CHECK-PARSER:         Call: [Variable: [init]()];
 
 class Foo {
-  init(arg) {
+  var field;
+  Foo(arg) {
     print ("Foo.init(" + arg + ")");
     this.field = "init";
   }

@@ -154,7 +154,7 @@ DEFINE_VISIT(Sema, FunctionDecl) {
   funcSymbol->markAsDefined();
 
   // enter a new function scope
-  symbolTable.enterFunctionScope(expr.getName());
+  symbolTable.enterFunctionScope(expr.getName(), funcSymbol);
   std::shared_ptr<Scope> functionScope = symbolTable.getCurrentScope();
   // visit the function body
   for (auto &statement : expr.getBody()->getStatements()) {

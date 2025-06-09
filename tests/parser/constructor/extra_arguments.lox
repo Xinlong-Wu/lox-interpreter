@@ -10,7 +10,9 @@
 // CHECK-PARSER:         var foo = Call: [Variable: [Foo](Number: [1], Number: [2], Number: [3], Number: [4], )];
 
 class Foo {
-  init(a, b) {
+  var a;
+  var b;
+  Foo(a, b) {
     this.a = a;
     this.b = b;
   }

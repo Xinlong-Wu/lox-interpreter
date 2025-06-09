@@ -16,8 +16,9 @@ public:
     scopes.push_back(std::make_shared<ClassScope>(scopes.back(), name));
   }
 
-  void enterFunctionScope(const std::string &name) {
-    scopes.push_back(std::make_shared<FunctionScope>(scopes.back(), name));
+  void enterFunctionScope(const std::string &name, 
+                          std::shared_ptr<Symbol> funcSymbol) {
+    scopes.push_back(std::make_shared<FunctionScope>(scopes.back(), name, funcSymbol));
   }
 
   void enterScope(const std::string &name = "anonymous") {

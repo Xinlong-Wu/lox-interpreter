@@ -11,7 +11,7 @@
 // CHECK-PARSER-NEXT:      Call: [Variable: [print](Call: [Access: [ Variable: [foo].init ]()], )];
 
 class Foo {
-  init() {
+  Foo() {
     print ("init");
     return;
     print ("nope");
@@ -19,5 +19,5 @@ class Foo {
 }
 
 var foo = Foo(); // expect: init
-print (foo.init()); // expect: init
+print (foo.Foo()); // expect: init
 // expect: Foo instance
