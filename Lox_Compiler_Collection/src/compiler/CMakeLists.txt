@@ -12,8 +12,8 @@ add_library(LoxParser STATIC
     AST/Type.cpp
 
     # SemanticAnalyzer
-    Sema/SymbolResolver.cpp
-    Sema/SemanticAnalyzer.cpp
+    # Sema/SymbolResolver.cpp
+    # Sema/SemanticAnalyzer.cpp
 
     Parser/Parser.cpp
     Parser/PrecedenceParser.cpp

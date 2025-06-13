@@ -1,6 +1,6 @@
 #include "Compiler/Parser/Parser.h"
 #include "Compiler/Sema/SymbolTable.h"
-#include "Compiler/Sema/SemanticAnalyzer.h"
+// #include "Compiler/Sema/SemanticAnalyzer.h"
 #include "Compiler/ErrorReporter.h"
 
 #include<iostream>
@@ -43,7 +43,7 @@ static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
-    lox::Sema sa = lox::Sema();
+    // lox::Sema sa = lox::Sema();
     parser.advance();
 
     std::vector<std::unique_ptr<lox::StmtBase>> statements;
@@ -54,15 +54,15 @@ static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
             statements.push_back(std::move(stmt));
         }
     }
-    
+
     if (enableSema) {
         // Perform semantic analysis
-        sa.analyze(statements);
+        // sa.analyze(statements);
     }
     else if (enableSymbolResolver) {
         // Perform symbol resolution
-        lox::SymbolResolver resolver;
-        resolver.resolve(statements);
+        // lox::SymbolResolver resolver;
+        // resolver.resolve(statements);
     }
 
     for (auto &stmt : statements) {
@@ -81,7 +81,7 @@ static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
 static void repl()
 {
     char line[1024];
-    lox::Sema sa = lox::Sema();
+    // lox::Sema sa = lox::Sema();
     for (;;)
     {
         printf("> ");
@@ -103,7 +103,7 @@ static void repl()
         }
 
         if (stmt != nullptr){
-            stmt->accept(sa);
+            // stmt->accept(sa);
             stmt->dump();
         }
         std::cout << std::endl;
