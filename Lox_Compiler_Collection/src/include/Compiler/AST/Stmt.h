@@ -46,19 +46,19 @@ protected:
 
   StmtCRTP(Location loc) : classID(_getClassID<Derived>()), loc(loc) {}
 public:
-  virtual const Location &getLoc() const override { return loc; }
+  const Location &getLoc() const override { return loc; }
 
-  virtual ClassID getClassID() const override { return classID; }
+  ClassID getClassID() const override { return classID; }
 
   static bool classof(const StmtBase *stmt) {
     return stmt->getClassID() == _getClassID<Derived>();
   }
 
-  virtual void print(std::ostream &os) const override {
+  void print(std::ostream &os) const override {
     cast<Derived>(this)->printImpl(os);
   }
 
-  virtual void accept(ASTVisitor &visitor) override {
+  void accept(ASTVisitor &visitor) override {
     visitor.visit(static_cast<Derived&>(*this));
   }
 };
@@ -95,6 +95,25 @@ public:
     expression->print(os);
     os << ";";
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = expression->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+    }
+
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
 };
 
 // template<typename Derived>
@@ -102,8 +121,8 @@ class Declaration {
 protected:
   std::unique_ptr<Symbol> symbol = nullptr;
 public:
-  virtual Symbol* getSymbol() const { return symbol ? symbol.get() : nullptr; }
-  virtual void setSymbol(std::unique_ptr<Symbol> newSymbol) {
+  Symbol* getSymbol() const { return symbol ? symbol.get() : nullptr; }
+  void setSymbol(std::unique_ptr<Symbol> newSymbol) {
     assert(symbol == nullptr && "Symbol has already been set");
     symbol = std::move(newSymbol);
   }
@@ -149,6 +168,28 @@ public:
     }
     os << ";";
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    if (initializer) {
+      WalkResult result = initializer->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      WalkResult result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
+  }
 };
 
 class BlockStmt : public ScopedMixin,
@@ -170,6 +211,28 @@ public:
       os << std::endl;
     }
     os << "}";
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    for (auto &stmt : statements) {
+      WalkResult result = stmt->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      WalkResult result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
   }
 };
 
@@ -204,6 +267,33 @@ public:
     }
     os << ") " << std::endl;
     body->print(os);
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    for (auto &param : parameters) {
+      WalkResult result = param->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (body) {
+      WalkResult result = body->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      WalkResult result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
   }
 };
 
@@ -260,6 +350,33 @@ public:
     }
     os << "}";
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    for (const auto &field : fields) {
+      WalkResult result = field.second->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    for (const auto &method : methods) {
+      WalkResult result = method.second->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      WalkResult result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
+  }
 };
 
 class IfStmt : public ScopedMixin,
@@ -292,6 +409,34 @@ public:
       elseBlock->print(os);
     }
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = condition->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    result = thenBlock->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (elseBlock) {
+      result = elseBlock->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
+  }
 };
 
 class ReturnStmt : public StmtCRTP<ReturnStmt> {
@@ -316,6 +461,28 @@ public:
       value->print(os);
     }
     os << ";";
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    if (value) {
+      WalkResult result = value->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      WalkResult result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
   }
 };
 
@@ -361,6 +528,41 @@ public:
     os << ") ";
     body->print(os);
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    if (initializer) {
+      WalkResult result = initializer->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (condition) {
+      WalkResult result = condition->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (increment) {
+      WalkResult result = increment->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    WalkResult result = body->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
+  }
 };
 
 class WhileStmt : public ScopedMixin,
@@ -381,6 +583,29 @@ public:
     os << std::endl << ") ";
     body->print(os);
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = condition->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    result = body->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+      return result == WalkResult::Skip ? WalkResult::Advance : result;
+    }
+
+    return WalkResult::Advance; // Continue with the next node
+  }
 };
 
 class BreakStmt : public StmtCRTP<BreakStmt> {
@@ -391,6 +616,11 @@ public:
   void printImpl(std::ostream &os) const {
     os << "break;";
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
 };
 
 class ContinueStmt : public StmtCRTP<ContinueStmt> {
@@ -400,6 +630,11 @@ public:
 
   void printImpl(std::ostream &os) const {
     os << "continue;";
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
 };
 } // namespace lox

@@ -8,6 +8,7 @@ add_library(LoxParser STATIC
     ErrorReporter.cpp
 
     # AST
+    AST/ASTWalker.cpp
     AST/Type.cpp
 
     # SemanticAnalyzer

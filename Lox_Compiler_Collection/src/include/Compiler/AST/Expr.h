@@ -29,7 +29,6 @@ public:
     print(std::cout);
     std::cout << std::endl;
   }
-  virtual void accept(ASTVisitor &visitor) = 0;
 };
 
 template<typename Derived>
@@ -49,22 +48,22 @@ protected:
 
   ExprCRTP(Location loc) : classID(_getClassID<Derived>()), loc(loc){}
 public:
-  virtual const Location& getLoc() const override { return loc; }
-  virtual const std::shared_ptr<Type> getType() const override {
+  const Location& getLoc() const override { return loc; }
+  const std::shared_ptr<Type> getType() const override {
     return type;
   }
 
-  virtual ClassID getClassID() const override { return classID; }
+  ClassID getClassID() const override { return classID; }
 
   static bool classof(const ExprBase* expr) {
     return expr->getClassID() == _getClassID<Derived>();
   }
 
-  virtual void print(std::ostream &os) const override {
+  void print(std::ostream &os) const override {
     cast<Derived>(this)->printImpl(os);
   }
 
-  virtual void accept(ASTVisitor &visitor) override {
+  void accept(ASTVisitor &visitor) override {
     visitor.visit(static_cast<Derived&>(*this));
   }
 };
@@ -79,6 +78,11 @@ public:
   void printImpl(std::ostream &os) const {
     os << value;
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
 };
 
 class StringExpr : public ExprCRTP<StringExpr> {
@@ -92,6 +96,11 @@ public:
   void printImpl(std::ostream &os) const {
     os << '"' << value << '"';
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
 };
 
 class BoolExpr : public ExprCRTP<BoolExpr> {
@@ -103,6 +112,11 @@ public:
   void printImpl(std::ostream &os) const {
     os << (value ? "true" : "false");
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
 };
 
 class NilExpr : public ExprCRTP<NilExpr> {
@@ -112,6 +126,11 @@ public:
 
   void printImpl(std::ostream &os) const {
     os << "nil";
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
 };
 
@@ -127,6 +146,11 @@ public:
   void printImpl(std::ostream &os) const {
     os << name;
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
 };
 
 class AccessExpr : public ExprCRTP<AccessExpr> {
@@ -139,6 +163,25 @@ public:
   void printImpl(std::ostream &os) const {
     base->print(os);
     os << "." << property;
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = base->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+    }
+
+    return result == WalkResult::Skip ? WalkResult::Advance : result; // Continue with the next node
   }
 };
 
@@ -165,6 +208,28 @@ public:
       case Op::Not: return "!";
       default: return "<unknown>";
     }
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = operand->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+    }
+
+    if (result == WalkResult::Skip) {
+      return WalkResult::Advance; // Skip children but continue with siblings
+    }
+    return result; // Continue with the next node
   }
 };
 
@@ -200,6 +265,31 @@ public:
       default: return "<unknown>";
     }
   }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = left->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    result = right->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+    }
+
+    if (result == WalkResult::Skip) {
+      return WalkResult::Advance; // Skip children but continue with siblings
+    }
+    return result; // Continue with the next node
+  }
 };
 
 class AssignExpr : public ExprCRTP<AssignExpr> {
@@ -213,6 +303,31 @@ public:
     left->print(os);
     os << " = ";
     right->print(os);
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = left->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    result = right->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+    }
+
+    if (result == WalkResult::Skip) {
+      return WalkResult::Advance; // Skip children but continue with siblings
+    }
+    return result; // Continue with the next node
   }
 };
 
@@ -231,6 +346,33 @@ public:
       arguments[i]->print(os);
     }
     os << ")";
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkOrder order = walker.getOrder();
+
+    if (order == WalkOrder::PreOrder) {
+      WalkResult result = walker.executeCallback(this);
+      if (result == WalkResult::Skip) return WalkResult::Advance;
+      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+    }
+
+    WalkResult result = callee->walkInternal(walker);
+    if (result == WalkResult::Interrupt) return result;
+
+    for (const auto &arg : arguments) {
+      result = arg->walkInternal(walker);
+      if (result == WalkResult::Interrupt) return result;
+    }
+
+    if (order == WalkOrder::PostOrder) {
+      result = walker.executeCallback(this);
+    }
+
+    if (result == WalkResult::Skip) {
+      return WalkResult::Advance; // Skip children but continue with siblings
+    }
+    return result; // Continue with the next node
   }
 };
 } // namespace lox
