@@ -1,9 +1,9 @@
 // RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 // RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SA
 
-// CHECK-PARSER-LABEL:     Error: Invalid left Value at `Binary: [Variable: [a] + Variable: [b]]`, before: `"value"`
-// CHECK-PARSER-NEXT:      var a = String: ["a"];
-// CHECK-PARSER-NEXT:      var b = String: ["b"];
+// CHECK-PARSER-LABEL:     var a = "a";
+// CHECK-PARSER-NEXT:      var b = "b";
+// CHECK-PARSER-NEXT:      a + b = "value";
 
 // CHECK-SA-LABEL:          Error: Invalid left Value at `Binary: [Variable: [a] + Variable: [b]]`, before: `"value"`
 // CHECK-SA-NEXT:           var a: string = String: ["a"];

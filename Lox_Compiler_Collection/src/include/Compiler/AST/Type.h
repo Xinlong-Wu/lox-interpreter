@@ -9,7 +9,7 @@
 
 namespace lox {
 class Scope;
-class Symbol;
+// class Symbol;
 
 class Type {
 protected:
@@ -219,8 +219,8 @@ public:
   std::shared_ptr<InstanceType> getInstanceType();
   virtual bool isCompatible(std::shared_ptr<Type> other) override;
   bool hasConstructor() const;
-  const std::shared_ptr<Symbol> getConstructor() const;
-  virtual const std::shared_ptr<Symbol> getProperty(const std::string &property) const;
+  // const std::shared_ptr<Symbol> getConstructor() const;
+  // virtual const std::shared_ptr<Symbol> getProperty(const std::string &property) const;
   virtual const void setProperties(std::shared_ptr<Scope> properties) {
     this->properties = std::move(properties);
   }

@@ -44,25 +44,24 @@ std::unique_ptr<VarDeclStmt> Parser::parseVarDecl() {
   return std::make_unique<VarDeclStmt>(name, std::move(initializer));
 }
 
-std::unique_ptr<FunctionDecl> Parser::parseFunctionDecl() {
+std::unique_ptr<FunctionDeclStmt> Parser::parseFunctionDecl() {
   this->parse(lox::TokenType::TOKEN_IDENTIFIER);
-  std::string name = std::string(this->getPreviousToken().getTokenString());
+  std::string name(this->getPreviousToken().getTokenString());
   this->parse(lox::TokenType::TOKEN_LEFT_PAREN);
   std::vector<std::unique_ptr<VariableExpr>> parameters;
   if (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_PAREN)) {
     do {
       this->parse(lox::TokenType::TOKEN_IDENTIFIER);
-      std::string paramName =
-          std::string(this->getPreviousToken().getTokenString());
+      Token identifier = this->getPreviousToken();
       parameters.push_back(std::make_unique<VariableExpr>(
-          std::move(paramName), this->getPreviousToken().getLoction()));
+          identifier.getTokenString(), identifier.getLoction()));
     } while (this->parseOptional(lox::TokenType::TOKEN_COMMA) &&
              this->hasNext());
     this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
   }
   this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
   std::unique_ptr<BlockStmt> body = this->parseBlockStmt();
-  return std::make_unique<FunctionDecl>(std::move(name), std::move(parameters),
+  return std::make_unique<FunctionDeclStmt>(std::move(name), std::move(parameters),
                                         std::move(body));
 }
 
@@ -79,7 +78,7 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
       // }
     }
   }
-  std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
+  std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods;
   std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
   this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
   while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) &&
@@ -92,7 +91,7 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
         (this->match(TokenType::TOKEN_IDENTIFIER) &&
         //  this->getCurrentToken() == "init")) {
         this->getCurrentToken() == name)) {
-      std::unique_ptr<FunctionDecl> method = this->parseFunctionDecl();
+      std::unique_ptr<FunctionDeclStmt> method = this->parseFunctionDecl();
       methods.insert({method->getName(), std::move(method)});
     } else {
       this->parseError("Expect `var` or `fun` or constructor.");
@@ -189,15 +188,18 @@ std::unique_ptr<IfStmt> Parser::parseIfStmt() {
 
 std::unique_ptr<ReturnStmt> Parser::parseReturnStmt() {
   std::unique_ptr<ExprBase> value;
+  Location loc = this->getPreviousToken().getLoction();
   if (!this->parseOptional(lox::TokenType::TOKEN_SEMICOLON)) {
     value = this->parseExpression();
     this->parse(lox::TokenType::TOKEN_SEMICOLON);
-    return std::make_unique<ReturnStmt>(std::move(value));
+    return std::make_unique<ReturnStmt>(std::move(value), loc);
   }
   return std::make_unique<ReturnStmt>(this->getPreviousToken().getLoction());
 }
 
 std::unique_ptr<ForStmt> Parser::parseForStmt() {
+  Location loc = this->getPreviousToken().getLoction();
+  // Parse the initializer.
   this->parse(lox::TokenType::TOKEN_LEFT_PAREN);
   std::unique_ptr<StmtBase> initializer;
   if (this->parseOptional(lox::TokenType::TOKEN_SEMICOLON)) {
@@ -240,10 +242,12 @@ std::unique_ptr<ForStmt> Parser::parseForStmt() {
   }
 
   return std::make_unique<ForStmt>(std::move(initializer), std::move(condition),
-                                   std::move(increment), std::move(body));
+                                   std::move(increment), std::move(body),
+                                   loc);
 }
 
 std::unique_ptr<WhileStmt> Parser::parseWhileStmt() {
+  Location loc = this->getPreviousToken().getLoction();
   this->parse(lox::TokenType::TOKEN_LEFT_PAREN);
   std::unique_ptr<ExprBase> condition = this->parseExpression();
   this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
@@ -259,6 +263,7 @@ std::unique_ptr<WhileStmt> Parser::parseWhileStmt() {
                                        this->getPreviousToken().getLoction());
   }
 
-  return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
+  return std::make_unique<WhileStmt>(std::move(condition), std::move(body),
+                                     loc);
 }
 } // namespace lox

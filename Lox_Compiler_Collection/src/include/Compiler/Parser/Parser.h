@@ -26,7 +26,7 @@ private:
   std::unique_ptr<WhileStmt> parseWhileStmt();
 
   std::unique_ptr<VarDeclStmt> parseVarDecl();
-  std::unique_ptr<FunctionDecl> parseFunctionDecl();
+  std::unique_ptr<FunctionDeclStmt> parseFunctionDecl();
   std::unique_ptr<ClassDeclStmt> parseClassDecl();
 
 public:

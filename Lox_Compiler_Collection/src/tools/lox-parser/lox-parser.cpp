@@ -1,5 +1,5 @@
 #include "Compiler/Parser/Parser.h"
-#include "Compiler/Sema/SymbolTable.h"
+// #include "Compiler/Sema/SymbolTable.h"
 // #include "Compiler/Sema/SemanticAnalyzer.h"
 #include "Compiler/ErrorReporter.h"
 

@@ -105,7 +105,12 @@ To* cast(From* from) {
 }
 
 template <typename To, typename From>
-std::shared_ptr<To> cast(const std::shared_ptr<From>& from) {
+const To* cast(const From* from) {
+    return static_cast<const To*>(from);
+}
+
+template <typename To, typename From>
+std::shared_ptr<To> cast(std::shared_ptr<From>& from) {
     assert(isa<To>(from) && "Invalid cast");
     return std::static_pointer_cast<To>(from);
 }

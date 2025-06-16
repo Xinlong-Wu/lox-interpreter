@@ -200,16 +200,16 @@ bool ClassType::isCompatible(shared_ptr<Type> other) {
 }
 
 bool ClassType::hasConstructor() const {
-    if (getConstructor() == nullptr) {
-        return false;
-    }
-    return isa<ConstructorType>(getConstructor()->getType());
+    // if (getConstructor() == nullptr) {
+    //     return false;
+    // }
+    // return isa<ConstructorType>(getConstructor()->getType());
 }
 
-const std::shared_ptr<Symbol> ClassType::getConstructor() const {
-    std::shared_ptr<Symbol> symbol = getProperty(name);
-    return symbol;
-}
+// const std::shared_ptr<Symbol> ClassType::getConstructor() const {
+//     std::shared_ptr<Symbol> symbol = getProperty(name);
+//     return symbol;
+// }
 
 shared_ptr<InstanceType> ClassType::getInstanceType() {
     if (!instanceType) {
@@ -218,20 +218,20 @@ shared_ptr<InstanceType> ClassType::getInstanceType() {
     return instanceType;
 }
 
-const std::shared_ptr<Symbol> ClassType::getProperty(const std::string &property) const {
-    if (this->properties == nullptr) {
-        // ErrorReporter::reportError("Class '" + name +
-        //                            "' has no properties defined");
-        assert_not_reached("Class has no properties defined, should have been caught earlier");
-    }
+// const std::shared_ptr<Symbol> ClassType::getProperty(const std::string &property) const {
+//     if (this->properties == nullptr) {
+//         // ErrorReporter::reportError("Class '" + name +
+//         //                            "' has no properties defined");
+//         assert_not_reached("Class has no properties defined, should have been caught earlier");
+//     }
     
-    shared_ptr<Symbol> symbol = this->properties->resolveLocal(property);
-    if (symbol == nullptr && superClass != nullptr) {
-        symbol = this->superClass->getProperty(property);
-    }
+//     shared_ptr<Symbol> symbol = this->properties->resolveLocal(property);
+//     if (symbol == nullptr && superClass != nullptr) {
+//         symbol = this->superClass->getProperty(property);
+//     }
 
-    return symbol;
-}
+//     return symbol;
+// }
 
 size_t ClassType::hash() const {
     std::size_t seed = Type::hash();

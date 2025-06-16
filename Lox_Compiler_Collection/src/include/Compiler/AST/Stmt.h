@@ -10,30 +10,18 @@
 #include "Compiler/AST/Expr.h"
 #include "Compiler/Sema/Scope.h"
 #include "Compiler/Sema/Symbol.h"
+#include "Compiler/Location.h"
 
 namespace lox {
 class StmtBase : public ASTNode {
-protected:
-  Location loc;
-
-  enum class Kind {
-    ExpressionStmt,
-    DeclarationStmt,
-    VarDeclStmt,
-    BlockStmt,
-    ClassDeclStmt,
-    FunctionDecl,
-    IfStmt,
-    WhileStmt,
-    ForStmt,
-    ReturnStmt
-  };
-
 public:
-  StmtBase(Location location) : loc(location){};
+  using ClassID = const void*;
+
   virtual ~StmtBase() = default;
 
-  virtual const Location &getLoc() const { return loc; };
+  virtual const Location &getLoc() const = 0;
+
+  virtual ClassID getClassID() const = 0;
 
   virtual void print(std::ostream &os) const = 0;
   virtual void dump() const {
@@ -41,207 +29,224 @@ public:
     std::cout << std::endl;
   }
 
-  virtual Kind getKind() const = 0;
   virtual void accept(ASTVisitor &visitor) = 0;
 };
 
-class ExpressionStmt : public StmtBase {
+template<typename Derived>
+class StmtCRTP : public StmtBase {
+protected:
+  ClassID classID;
+  template<typename T>
+  static ClassID _getClassID() {
+    static char id;
+    return &id;
+  }
+
+  Location loc;
+
+  StmtCRTP(Location loc) : classID(_getClassID<Derived>()), loc(loc) {}
+public:
+  virtual const Location &getLoc() const override { return loc; }
+
+  virtual ClassID getClassID() const override { return classID; }
+
+  static bool classof(const StmtBase *stmt) {
+    return stmt->getClassID() == _getClassID<Derived>();
+  }
+
+  virtual void print(std::ostream &os) const override {
+    cast<Derived>(this)->printImpl(os);
+  }
+
+  virtual void accept(ASTVisitor &visitor) override {
+    visitor.visit(static_cast<Derived&>(*this));
+  }
+};
+
+// template<typename Derived>
+class ScopedMixin {
+  std::unique_ptr<Scope> scope;
+public:
+  Scope* getScope() const { return scope.get(); }
+
+  void setScope(std::unique_ptr<Scope> newScope) {
+    assert(scope == nullptr && "Scope has already been set");
+    scope = std::move(newScope);
+  }
+
+  // static bool classof(const StmtBase* stmt) {
+  //   // 派发给子类实现
+  //   return Derived::classof(stmt);
+  // }
+};
+
+class ExpressionStmt : public StmtCRTP<ExpressionStmt> {
 private:
   std::unique_ptr<ExprBase> expression;
 
 public:
-  ExpressionStmt(std::unique_ptr<ExprBase> expression)
-      : StmtBase(expression->getLoc().getNextColumn()),
+  ExpressionStmt(std::unique_ptr< ExprBase> expression)
+      : StmtCRTP<ExpressionStmt>(expression->getLoc()),
         expression(std::move(expression)) {}
 
   ExprBase *getExpression() const { return expression.get(); }
 
-  virtual void print(std::ostream &os) const override {
+  void printImpl(std::ostream &os) const {
     expression->print(os);
     os << ";";
   }
-
-  TYPEID_SYSTEM(StmtBase, ExpressionStmt);
-  ACCEPT_DECL();
 };
 
-class DeclarationStmt : public StmtBase {
+// template<typename Derived>
+class Declaration {
 protected:
-  std::shared_ptr<Symbol> symbol;
-
+  std::unique_ptr<Symbol> symbol = nullptr;
 public:
-  DeclarationStmt(std::shared_ptr<Symbol> symbol, Location loc)
-      : StmtBase(std::move(loc)), symbol(std::move(symbol)) {}
-  DeclarationStmt(std::string name, Location loc)
-      : DeclarationStmt(std::make_shared<Symbol>(name), std::move(loc)) {}
-  DeclarationStmt(std::string name, std::shared_ptr<Type> type, Location loc)
-      : DeclarationStmt(std::make_shared<Symbol>(name, type), std::move(loc)) {}
-  ~DeclarationStmt() override = default;
-
-  virtual const std::string &getName() const { return symbol->getName(); }
-  virtual const std::shared_ptr<Type> &getType() const {
-    return symbol->getType();
-  }
-  virtual std::shared_ptr<Symbol> &getSymbol() { return symbol; }
-  virtual void setSymbol(std::shared_ptr<Symbol> symbol) {
-    this->symbol = std::move(symbol);
+  virtual Symbol* getSymbol() const { return symbol ? symbol.get() : nullptr; }
+  virtual void setSymbol(std::unique_ptr<Symbol> newSymbol) {
+    assert(symbol == nullptr && "Symbol has already been set");
+    symbol = std::move(newSymbol);
   }
 
-  TYPEID_SYSTEM(StmtBase, DeclarationStmt);
-  ACCEPT_DECL();
+  // static bool classof(const StmtBase* stmt) {
+  //   // 派发给子类实现
+  //   return Derived::classof(stmt);
+  // }
 };
 
-class VarDeclStmt : public DeclarationStmt {
+class VarDeclStmt : public Declaration,
+                   public StmtCRTP<VarDeclStmt> {
 private:
+  std::string name;
   std::unique_ptr<ExprBase> initializer = nullptr;
 
 public:
   VarDeclStmt(const std::string &name, std::unique_ptr<ExprBase> initializer)
-      : VarDeclStmt(std::make_shared<Symbol>(name), std::move(initializer)) {}
-  VarDeclStmt(const std::string &name, Location loc)
-      : VarDeclStmt(std::make_shared<Symbol>(name), std::move(loc)) {}
-  VarDeclStmt(std::shared_ptr<Symbol> symbol,
-              std::unique_ptr<ExprBase> initializer)
-      : DeclarationStmt(std::move(symbol), initializer->getLoc()),
+      : StmtCRTP<VarDeclStmt>(initializer->getLoc()), name(name),
         initializer(std::move(initializer)) {}
-  VarDeclStmt(std::shared_ptr<Symbol> symbol, Location loc)
-      : DeclarationStmt(std::move(symbol), std::move(loc)) {}
+  VarDeclStmt(const std::string &name, Location loc)
+      : StmtCRTP<VarDeclStmt>(std::move(loc)), name(name), initializer(nullptr) {}
   ~VarDeclStmt() override = default;
+
+  const std::string &getName() const { return name; }
 
   ExprBase *getInitializer() const {
     return initializer ? initializer.get() : nullptr;
   }
-  void setInitializer(std::unique_ptr<ExprBase> expr) {
-    initializer = std::move(expr);
-  }
 
-  virtual void print(std::ostream &os) const override {
+  void printImpl(std::ostream &os) const {
     os << "var ";
-    symbol->print(os);
+    if (symbol) {
+      symbol->print(os);
+    }
+    else {
+      os << name;
+    }
+
     if (initializer) {
       os << " = ";
       initializer->print(os);
     }
     os << ";";
   }
-
-  TYPEID_SYSTEM(StmtBase, VarDeclStmt);
-  ACCEPT_DECL();
 };
 
-class BlockStmt : public StmtBase {
+class BlockStmt : public ScopedMixin,
+                  public StmtCRTP<BlockStmt> {
 protected:
-  std::shared_ptr<Scope> scope;
   std::vector<std::unique_ptr<StmtBase>> statements;
 public:
-
   BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements,
             Location location)
-      : StmtBase(location), statements(std::move(statements)) {}
-  BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements)
-      : BlockStmt(std::move(statements),
-                  statements[statements.size() - 1]->getLoc().getNextColumn()) {
-  }
+      : StmtCRTP<BlockStmt>(location), statements(std::move(statements)) {}
   ~BlockStmt() override = default;
 
-  void setScope(std::shared_ptr<Scope> scope) {
-    assert(this->scope == nullptr && "Scope has already been set");
-    this->scope = std::move(scope);
-  }
-  std::shared_ptr<Scope> &getScope() { return scope; }
   std::vector<std::unique_ptr<StmtBase>> &getStatements() { return statements; }
 
-  virtual void print(std::ostream &os) const override {
-    os << "BlockStmt: " << "{" << std::endl;
+  void printImpl(std::ostream &os) const {
+    os << "{" << std::endl;
     for (const auto &stmt : statements) {
       stmt->print(os);
       os << std::endl;
     }
-    os << "}" << std::endl;
+    os << "}";
   }
-
-  TYPEID_SYSTEM(StmtBase, BlockStmt);
-  ACCEPT_DECL();
 };
 
-class FunctionDecl : public DeclarationStmt {
+class FunctionDeclStmt : public Declaration,
+                          public ScopedMixin,
+                          public StmtCRTP<FunctionDeclStmt> {
 private:
+  std::string name;
   std::vector<std::unique_ptr<VariableExpr>> parameters;
   std::unique_ptr<BlockStmt> body;
 
 public:
-  FunctionDecl(std::string name,
+  FunctionDeclStmt(std::string name,
                std::vector<std::unique_ptr<VariableExpr>> parameters,
                std::unique_ptr<BlockStmt> body)
-      : DeclarationStmt(std::make_shared<Symbol>(name), body->getLoc()),
+      : StmtCRTP<FunctionDeclStmt>(body->getLoc()), name(std::move(name)),
         parameters(std::move(parameters)), body(std::move(body)) {}
-  ~FunctionDecl() override = default;
+  ~FunctionDeclStmt() override = default;
+
+  const std::string &getName() const { return name; }
 
   std::vector<std::unique_ptr<VariableExpr>> &getParameters() {
     return parameters;
   }
   BlockStmt *getBody() const { return body.get(); }
 
-  virtual void print(std::ostream &os) const override {
-    os << "function " << getName() << "(";
+  void printImpl(std::ostream &os) const {
+    os << "fun " << name << "(";
     for (const auto &param : parameters) {
       param->print(os);
       os << ", ";
     }
     os << ") " << std::endl;
     body->print(os);
-    os << std::endl;
   }
-
-  TYPEID_SYSTEM(StmtBase, FunctionDecl);
-  ACCEPT_DECL();
 };
 
-class ClassDeclStmt : public DeclarationStmt {
+class ClassDeclStmt : public Declaration,
+                      public ScopedMixin,
+                      public StmtCRTP<ClassDeclStmt> {
 private:
-  std::optional<std::string> superclass;
+  std::string className;
+  std::optional<std::string> superclassName;
   std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
-  std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods;
-
-  // for semantic analysis, we need to keep track of the class scope
-  // std::shared_ptr<Scope> classScope;
+  std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods;
 
 public:
   ClassDeclStmt(
-      std::string name, std::optional<std::string> superclass,
+      std::string name, std::optional<std::string> superclassName,
       std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
-      std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods,
+      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods,
       Location loc)
-      : DeclarationStmt(std::move(name), loc),
-        superclass(std::move(superclass)), fields(std::move(fields)), methods(std::move(methods)) {}
+      : StmtCRTP<ClassDeclStmt>(loc), className(name), superclassName(std::move(superclassName)),
+        fields(std::move(fields)), methods(std::move(methods)) {}
   ClassDeclStmt(
       std::string name,
       std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
-      std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> methods,
+      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods,
       Location loc)
       : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields), std::move(methods) , loc) {}
   ~ClassDeclStmt() override = default;
 
-  bool hasSuperclass() const { return superclass.has_value(); }
-  const std::string &getSuperclassName() const { return *superclass; }
+  bool hasSuperclass() const { return superclassName.has_value(); }
+  const std::string &getSuperclassName() const { return *superclassName; }
   const std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> &
   getFields() {
     return fields;
   }
-  const std::unordered_map<std::string, std::unique_ptr<FunctionDecl>> &
+  const std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> &
   getMethods() {
     return methods;
   }
-  // std::shared_ptr<Scope> &getClassScope() { return classScope; }
-  // void setClassScope(std::shared_ptr<Scope> scope) {
-  //   assert(classScope == nullptr && "Class scope has already been set");
-  //   classScope = std::move(scope);
-  // }
 
-  virtual void print(std::ostream &os) const override {
-    os << "class " << getName();
-    if (superclass) {
-      os << " < " << *superclass;
+  void printImpl(std::ostream &os) const {
+    os << "class " << className;
+    if (hasSuperclass()) {
+      os << " < " << getSuperclassName();
     }
     os << " {" << std::endl;
     for (const auto &field : fields) {
@@ -253,16 +258,13 @@ public:
       method.second->print(os);
       os << std::endl;
     }
-    os << "}" << std::endl;
+    os << "}";
   }
-
-  TYPEID_SYSTEM(StmtBase, ClassDeclStmt);
-  ACCEPT_DECL();
 };
 
-class IfStmt : public StmtBase {
+class IfStmt : public ScopedMixin,
+                public StmtCRTP<IfStmt> {
 private:
-  std::shared_ptr<Scope> scope = nullptr;
   std::unique_ptr<ExprBase> condition;
   std::unique_ptr<BlockStmt> thenBlock;
   std::unique_ptr<BlockStmt> elseBlock;
@@ -270,21 +272,17 @@ private:
 public:
   IfStmt(std::unique_ptr<ExprBase> condition,
          std::unique_ptr<BlockStmt> thenBlock,
-         std::unique_ptr<BlockStmt> elseBlock, Location location)
-      : StmtBase(location), condition(std::move(condition)),
+         std::unique_ptr<BlockStmt> elseBlock, Location loc)
+      : StmtCRTP<IfStmt>(loc), condition(std::move(condition)),
         thenBlock(std::move(thenBlock)), elseBlock(std::move(elseBlock)) {}
   ~IfStmt() override = default;
 
   ExprBase *getCondition() const { return condition.get(); }
   BlockStmt *getThenBranch() const { return thenBlock.get(); }
   BlockStmt *getElseBranch() const { return elseBlock.get(); }
-  void setScope(std::shared_ptr<Scope> scope) {
-    assert(this->scope == nullptr && "Scope has already been set");
-    this->scope = std::move(scope);
-  }
   bool hasElseBranch() const { return elseBlock != nullptr; }
 
-  virtual void print(std::ostream &os) const override {
+  void printImpl(std::ostream &os) const {
     os << "if (";
     condition->print(os);
     os << ") " << std::endl;
@@ -294,38 +292,35 @@ public:
       elseBlock->print(os);
     }
   }
-
-  TYPEID_SYSTEM(StmtBase, IfStmt);
-  ACCEPT_DECL();
 };
 
-class ReturnStmt : public StmtBase {
+class ReturnStmt : public StmtCRTP<ReturnStmt> {
 private:
   std::unique_ptr<ExprBase> value;
 
 public:
-  ReturnStmt(std::unique_ptr<ExprBase> value)
-      : StmtBase(value->getLoc()), value(std::move(value)) {}
-  ReturnStmt(Location loc) : StmtBase(loc) {}
+  ReturnStmt(std::unique_ptr<ExprBase> value, Location loc)
+      : StmtCRTP<ReturnStmt>(loc), value(std::move(value)) {}
+  ReturnStmt(Location loc)
+      : StmtCRTP<ReturnStmt>(loc), value(nullptr) {}
   ~ReturnStmt() override = default;
 
   ExprBase *getValue() {
     return value.get();
   }
 
-  virtual void print(std::ostream &os) const override {
-    os << "return ";
+  void printImpl(std::ostream &os) const {
+    os << "return";
     if (value) {
+      os << " ";
       value->print(os);
     }
     os << ";";
   }
-
-  TYPEID_SYSTEM(StmtBase, ReturnStmt);
-  ACCEPT_DECL();
 };
 
-class ForStmt : public StmtBase {
+class ForStmt : public ScopedMixin,
+                public StmtCRTP<ForStmt> {
 protected:
   std::unique_ptr<StmtBase> initializer;
   std::unique_ptr<ExprBase> condition;
@@ -335,8 +330,8 @@ protected:
 public:
   ForStmt(std::unique_ptr<StmtBase> initializer,
           std::unique_ptr<ExprBase> condition,
-          std::unique_ptr<ExprBase> increment, std::unique_ptr<BlockStmt> body)
-      : StmtBase(body->getLoc()), initializer(std::move(initializer)),
+          std::unique_ptr<ExprBase> increment, std::unique_ptr<BlockStmt> body, Location loc)
+      : StmtCRTP<ForStmt>(loc), initializer(std::move(initializer)),
         condition(std::move(condition)), increment(std::move(increment)),
         body(std::move(body)) {}
   ~ForStmt() override = default;
@@ -346,7 +341,7 @@ public:
   ExprBase *getIncrement() const { return increment.get(); }
   BlockStmt *getBody() const { return body.get(); }
 
-  virtual void print(std::ostream &os) const override {
+  void printImpl(std::ostream &os) const {
     os << "for (" << std::endl;
     if (initializer) {
       os << "initializer: ";
@@ -366,28 +361,46 @@ public:
     os << ") ";
     body->print(os);
   }
-
-  TYPEID_SYSTEM(StmtBase, ForStmt);
-  ACCEPT_DECL();
 };
 
-class WhileStmt : public ForStmt {
+class WhileStmt : public ScopedMixin,
+                  public StmtCRTP<WhileStmt> {
+private:
+  std::unique_ptr<ExprBase> condition;
+  std::unique_ptr<BlockStmt> body;
 public:
   WhileStmt(std::unique_ptr<ExprBase> condition,
-            std::unique_ptr<BlockStmt> body)
-      : ForStmt(nullptr, std::move(condition), nullptr, std::move(body)) {}
+            std::unique_ptr<BlockStmt> body, Location loc)
+      : StmtCRTP<WhileStmt>(loc), condition(std::move(condition)),
+        body(std::move(body)) {}
   ~WhileStmt() override = default;
 
-  virtual void print(std::ostream &os) const override {
-    os << "while (" << std::endl;
-    os << "condition: ";
+  void printImpl(std::ostream &os) const {
+    os << "while (";
     condition->print(os);
     os << std::endl << ") ";
     body->print(os);
   }
+};
 
-  TYPEID_SYSTEM(StmtBase, WhileStmt);
-  ACCEPT_DECL();
+class BreakStmt : public StmtCRTP<BreakStmt> {
+public:
+  BreakStmt(Location loc) : StmtCRTP<BreakStmt>(loc) {}
+  ~BreakStmt() override = default;
+
+  void printImpl(std::ostream &os) const {
+    os << "break;";
+  }
+};
+
+class ContinueStmt : public StmtCRTP<ContinueStmt> {
+public:
+  ContinueStmt(Location loc) : StmtCRTP<ContinueStmt>(loc) {}
+  ~ContinueStmt() override = default;
+
+  void printImpl(std::ostream &os) const {
+    os << "continue;";
+  }
 };
 } // namespace lox
 

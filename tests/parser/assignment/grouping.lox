@@ -1,8 +1,8 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 // RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SA
 
-// CHECK-PARSER-LABEL:     var a = String: ["a"];
-// CHECK-PARSER-NEXT:      Assign: [( Variable: [a] ) = String: ["value"]];
+// CHECK-PARSER-LABEL:     var a = "a";
+// CHECK-PARSER-NEXT:      a = "value";
 
 // CHECK-SA-LABEL:         var a: string = String: ["a"];
 // CHECK-SA-NEXT:          Assign: [( Variable: [a: string] ) = String: ["value"]];
