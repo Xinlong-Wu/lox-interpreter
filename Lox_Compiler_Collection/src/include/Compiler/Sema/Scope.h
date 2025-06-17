@@ -7,214 +7,290 @@
 namespace lox {
 class FunctionScope;
 class ClassScope;
+
 class Scope {
 protected:
-  enum class Kind { GlobalScope, ClassScope, FunctionScope, BlockScope };
+  using ClassID = const void*;
 
   std::string name;
   std::unordered_map<std::string, std::shared_ptr<Symbol>> symbols;
-  const std::shared_ptr<Scope> enclosingScope; // 外层作用域
+  std::unordered_map<std::string, std::shared_ptr<Type>> types;
+  std::shared_ptr<Scope> enclosingScope;
 public:
-  Scope(std::shared_ptr<Scope> parent, const std::string &name,
-        bool isClassScope = false, bool isFunctionScope = false)
+  Scope(std::shared_ptr<Scope> parent, const std::string &name)
       : enclosingScope(parent), name(name) {}
   virtual ~Scope() = default;
 
-  virtual bool inFunctionScope() const { 
-    const Scope *current = this;
-    while (current != nullptr) {
-      if (isa<FunctionScope>(current)) {
-        return true; // 如果当前作用域是函数作用域，返回true
-      }
-      current = current->enclosingScope.get(); // 向外层作用域移动
-    }
-    return false; // 如果没有找到函数作用域，返回false
-  }
+  // 纯虚接口
+  const std::string& getName() const { return name; }
+  std::shared_ptr<Scope> getEnclosingScope() const { return enclosingScope; }
 
-  virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const {
-    if (enclosingScope == nullptr) {
-      return nullptr;
-    }
-    return enclosingScope->getCurrentFunctionType();
-  }
+  // 作用域检查
+  virtual bool inFunctionScope() const = 0;
+  virtual bool inClassScope() const = 0;
 
-  virtual bool inClassScope() const {
-    const Scope *current = this;
-    while (current != nullptr) {
-      if (isa<ClassScope>(current)) {
-        return true; // 如果当前作用域是类作用域，返回true
-      }
-      current = current->enclosingScope.get(); // 向外层作用域移动
-    }
-    return false; // 如果没有找到类作用域，返回false
-  }
+  // 类型获取
+  virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
+  virtual std::shared_ptr<ClassType> getCurrentClassType() const = 0;
 
-  virtual std::shared_ptr<Symbol> getCurrentClassSymbol() const {
-    if (enclosingScope == nullptr) {
-      return nullptr;
+  // 符号管理
+  bool declare(std::shared_ptr<Symbol> &symbol) {
+    if (lookupLocal(symbol->getName())) {
+        ErrorReporter::reportError("Symbol '" + symbol->getName() +
+                                  "' is already declared in scope '" +
+                                  this->getName() + "'");
+        return false;
     }
-    return enclosingScope->getCurrentClassSymbol();
-  }
-
-  virtual bool setCurrentReturnType(std::shared_ptr<Type> type) {
-    if (enclosingScope == nullptr) {
-      return false; // 如果没有外层作用域，无法设置返回类型
-    }
-    return enclosingScope->setCurrentReturnType(std::move(type));
-  }
-  virtual const std::vector<std::shared_ptr<Type>>* getCurrentReturnTypes() const {
-    if (enclosingScope == nullptr) {
-      return nullptr;
-    }
-    return enclosingScope->getCurrentReturnTypes();
-  }
-
-  virtual bool declare(std::shared_ptr<Symbol> &symbol) {
-    if (resolveLocal(symbol->getName())) {
-      ErrorReporter::reportError("Symbol '" + symbol->getName() +
-                                 "' is already declared in scope '" +
-                                 this->getName() + "'");
-      return false; // 如果符号已存在，返回false
+    if (lookupTypeLocal(symbol->getName())) {
+        ErrorReporter::reportError("Symbol '" + symbol->getName() +
+                                  "' is conflicting with a type in scope '" +
+                                  this->getName() + "'");
+        return false;
     }
     symbols[symbol->getName()] = symbol;
     return true;
   }
 
-  std::shared_ptr<Symbol> resolve(const std::string &name) {
-    auto it = symbols.find(name);
-    if (it != symbols.end()) {
-      return it->second;
+  bool declareType(const std::string &name, std::shared_ptr<Type> type) {
+    if (lookupLocal(name)) {
+        ErrorReporter::reportError("Type '" + name +
+                                  "' is conflicting with a symbol in scope '" +
+                                  this->getName() + "'");
+        return false;
     }
-
-    // 如果当前作用域没有找到，尝试外层作用域
-    return enclosingScope ? enclosingScope->resolve(name) : nullptr;
+    if (lookupTypeLocal(name)) {
+        ErrorReporter::reportError("Type '" + name +
+                                  "' is already declared in scope '" +
+                                  this->getName() + "'");
+        return false;
+    }
+    types[name] = std::move(type);
+    return true;
   }
 
-  std::shared_ptr<Symbol> resolveLocal(const std::string &name) {
-    // 只在当前作用域查找，不查找外层作用域
-    auto it = symbols.find(name);
-    if (it != symbols.end()) {
-      return it->second;
-    }
-    return nullptr;
-  }
-
-  std::shared_ptr<Scope> getEnclosingScope() const { return enclosingScope; }
-
-  // 在scope退出时，检查是否有未定义和未使用的符号
-  void checkUnusedSymbols() const {
-    for (const auto &[name, symbol] : symbols) {
-      if (!symbol->isDefinedSymbol()) {
-        ErrorReporter::reportError("Symbol '" + name +
-                                   "' is declared but not defined in scope '" +
-                                   this->getName() + "'");
-      } else if (!symbol->isUsedSymbol()) {
-        ErrorReporter::reportWarning("Symbol '" + name +
-                                     "' is defined but not used in scope '" +
-                                     this->getName() + "'");
+  std::shared_ptr<Symbol> lookup(const std::string &name) {
+      auto it = symbols.find(name);
+      if (it != symbols.end()) {
+          return it->second;
       }
-    }
+      return enclosingScope ? enclosingScope->lookup(name) : nullptr;
   }
 
-  virtual size_t hash() const {
+  std::shared_ptr<Type> lookupType(const std::string &name) {
+      auto it = types.find(name);
+      if (it != types.end()) {
+          return it->second;
+      }
+      return enclosingScope ? enclosingScope->lookupType(name) : nullptr;
+  }
+
+  std::shared_ptr<Symbol> lookupLocal(const std::string &name) {
+      auto it = symbols.find(name);
+      return (it != symbols.end()) ? it->second : nullptr;
+  }
+
+  std::shared_ptr<Type> lookupTypeLocal(const std::string &name) {
+    auto it = types.find(name);
+    return (it != types.end()) ? it->second : nullptr;
+  }
+
+  // 工具函数
+  // virtual void checkUnusedSymbols() const = 0;
+  size_t hash() const {
     size_t seed = 0;
     lox::hash_combine(name, seed);
     for (const auto &[name, symbol] : symbols) {
       lox::hash_combine(symbol->hash(), seed);
     }
+    for (const auto &[name, type] : types) {
+      lox::hash_combine(type->hash(), seed);
+    }
     return seed;
   }
 
-  const std::string &getName() const { return name; }
+  virtual ClassID getClassID() const = 0;
+  virtual void print(std::ostream &os, int level = 0) const = 0;
 
-  void print(std::ostream &os, int level = 0) const {
-    std::string indent(level * 1, '\t');
-    os << indent << "Scope: " << name << std::endl;
-
-    for (const auto &[name, symbol] : symbols) {
-      os << indent << " ";
-      symbol->print(os);
-      os << std::endl;
-    }
-  }
-
-  virtual void dump(int level = 0) const {
+  void dump(int level = 0) const {
     print(std::cout, level);
     std::cout << std::endl;
-  }
-
-  static bool classof(const Scope *ptr) {
-    return ptr->getKind() == Kind::BlockScope;
-  }
-  static bool classof(const std::shared_ptr<Scope> ptr) {
-    return Scope::classof(ptr.get());
-  }
-  virtual Kind getKind() const { return Kind::BlockScope; }
+  };
 };
 
-class GlobalScope : public Scope {
-public:
-  GlobalScope() : Scope(nullptr, "Global") {}
 
-  TYPEID_SYSTEM(Scope, GlobalScope)
+// CRTP基类模板，同时实现接口
+template<typename Derived>
+class ScopeBase : public Scope {
+protected:
+  mutable std::optional<bool> _inClassScope = std::nullopt;
+  mutable std::optional<bool> _inFunctionScope = std::nullopt;
+  mutable std::shared_ptr<ClassType> currentClassType = nullptr;
+  mutable std::shared_ptr<FunctionType> currentFunctionType = nullptr;
+
+protected:
+  // 存储实际的类型ID
+  ClassID classID;
+  // 获取类型的唯一ID
+  template<typename T>
+  static ClassID _getClassID() {
+    static char id;
+    return &id;
+  }
+
+  // CRTP辅助函数
+  Derived& derived() { return static_cast<Derived&>(*this); }
+  const Derived& derived() const { return static_cast<const Derived&>(*this); }
+
+public:
+  ScopeBase(std::shared_ptr<Scope> parent, const std::string &name)
+        : Scope(parent, name) {}
+
+  virtual ~ScopeBase() = default;
+
+  // 实现复杂的缓存逻辑
+  bool inFunctionScope() const override {
+      if (_inFunctionScope.has_value()) {
+          return _inFunctionScope.value();
+      }
+
+      const Scope* current = this;
+      while (current != nullptr) {
+          if (isa<FunctionScope>(current)) {
+              _inFunctionScope = true;
+              return true;
+          }
+          current = current->getEnclosingScope().get();
+      }
+      _inFunctionScope = false;
+      return false;
+  }
+
+  bool inClassScope() const override {
+      if (_inClassScope.has_value()) {
+          return _inClassScope.value();
+      }
+
+      const Scope* current = this;
+      while (current != nullptr) {
+          if (isa<ClassScope>(current)) {
+              _inClassScope = true;
+              return true;
+          }
+          current = current->getEnclosingScope().get();
+      }
+      _inClassScope = false;
+      return false;
+  }
+
+  std::shared_ptr<FunctionType> getCurrentFunctionType() const override {
+    if (!inFunctionScope()) {
+        return nullptr;
+    }
+
+    if (currentFunctionType != nullptr) {
+        return currentFunctionType;
+    }
+
+    // 让派生类提供具体实现
+    if (auto funcType = derived().getCurrentFunctionTypeImpl()) {
+        currentFunctionType = funcType;
+        return funcType;
+    }
+
+    // 向外层作用域查找
+    if (enclosingScope) {
+        auto funcType = enclosingScope->getCurrentFunctionType();
+        if (funcType) {
+            currentFunctionType = funcType;
+        }
+        return funcType;
+    }
+    return nullptr;
+  }
+
+  std::shared_ptr<ClassType> getCurrentClassType() const override {
+    if (!inClassScope()) {
+        return nullptr;
+    }
+
+    if (currentClassType != nullptr) {
+        return currentClassType;
+    }
+
+    // 让派生类提供具体实现
+    if (auto classType = derived().getCurrentClassTypeImpl()) {
+        currentClassType = classType;
+        return classType;
+    }
+
+    // 向外层作用域查找
+    if (enclosingScope) {
+        auto classType = enclosingScope->getCurrentClassType();
+        if (classType) {
+            currentClassType = classType;
+        }
+        return classType;
+    }
+    return nullptr;
+  }
+
+
+  ClassID getClassID() const override { return classID; }
+
+  static bool classof(const Scope* expr) {
+    return expr->getClassID() == _getClassID<Derived>();
+  }
+
+  // 默认实现，派生类可以重写
+  virtual std::shared_ptr<FunctionType> getCurrentFunctionTypeImpl() const { return nullptr; }
+  virtual std::shared_ptr<ClassType> getCurrentClassTypeImpl() const { return nullptr; }
 };
 
-class ClassScope : public Scope {
-private:
-std::shared_ptr<Symbol> currentClassSymbol = nullptr; // 当前类符号
+// 具体的作用域类型实现
+class GlobalScope : public ScopeBase<GlobalScope> {
 public:
-  ClassScope(std::shared_ptr<Scope> &parent, const std::string &name)
-      : Scope(parent, name, true, false) {
-    assert(parent != nullptr && "Class scope must have an enclosing scope");
-    std::shared_ptr<Symbol> classSymbol = parent->resolveLocal(name);
-    if (classSymbol == nullptr || !isa<ClassType>(classSymbol->getType())) {
-      ErrorReporter::reportError("Class '" + name +
-                                 "' is not defined in enclosing scope");
-    } else {
-      currentClassSymbol = classSymbol;
+  GlobalScope() : ScopeBase(nullptr, "Global") {}
+};
+
+class ClassScope : public ScopeBase<ClassScope> {
+public:
+  ClassScope(std::shared_ptr<Scope> parent, const std::string &name)
+        : ScopeBase(parent, name) {
+    if (!parent) {
+      ErrorReporter::reportError("Class scope must have an enclosing scope");
+      return;
+    }
+
+    this->currentClassType = cast<ClassType>(parent->lookupType(name));
+    if (this->currentClassType) {
+      ErrorReporter::reportError("Class '" + name + "' is not defined in enclosing scope");
     }
   }
 
-  virtual std::shared_ptr<Symbol> getCurrentClassSymbol() const override {
-    return currentClassSymbol;
+  std::shared_ptr<ClassType> getCurrentClassTypeImpl() const override {
+    return currentClassType;
   }
-
-  TYPEID_SYSTEM(Scope, ClassScope)
 };
 
-class FunctionScope : public Scope {
-private:
-  std::shared_ptr<Symbol> funcSymbol = nullptr; // 函数符号
-  std::shared_ptr<std::vector<std::shared_ptr<Type>>> allReturnTypes = std::make_shared<std::vector<std::shared_ptr<Type>>>(); // 所有返回类型
+class FunctionScope : public ScopeBase<FunctionScope> {
 public:
-  FunctionScope(const std::shared_ptr<Scope> &parent, const std::string &name, 
-                std::shared_ptr<Symbol> funcSymbol)
-      : Scope(parent, name, false, true), 
-        funcSymbol(funcSymbol) {}
-
-  virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const override {
-    assert(funcSymbol != nullptr && "Function symbol should not be null");
-    return dyn_cast<FunctionType>(funcSymbol->getType());
+  FunctionScope(std::shared_ptr<Scope> parent, const std::string &name)
+      : ScopeBase(parent, name) {
+    this->currentFunctionType = cast<FunctionType>(parent->lookupType(name));
+    if (this->currentFunctionType == nullptr) {
+      ErrorReporter::reportError("Function '" + name + "' is not defined in enclosing scope");
+    }
   }
 
-  virtual bool setCurrentReturnType(std::shared_ptr<Type> type) override {
-    allReturnTypes->push_back(std::move(type));
-    return true;
+  std::shared_ptr<FunctionType> getCurrentFunctionTypeImpl() const override {
+    return currentFunctionType;
   }
-  virtual const std::vector<std::shared_ptr<Type>>* getCurrentReturnTypes() const override {
-    return allReturnTypes.get();
-  }
-
-  TYPEID_SYSTEM(Scope, FunctionScope)
 };
 
-// class BlockScope : public Scope {
-// public:
-//     BlockScope(std::shared_ptr<Scope>& parent, const std::string& name)
-//         : Scope(parent, name) {}
-
-//     TYPEID_SYSTEM(Scope, BlockScope)
-// };
-} // namespace lox
-
+class BlockScope : public ScopeBase<BlockScope> {
+public:
+  BlockScope(std::shared_ptr<ScopeBase> parent, const std::string &name)
+      : ScopeBase(parent, name) {}
+};
+}
 #endif // SCOPE_H

@@ -9,8 +9,9 @@ class Symbol {
 protected:
   std::string name;
   std::shared_ptr<Type> type;
-  bool isDefined = false;
-  bool isUsed = false;
+  bool _isDefined = false;
+  bool _isUsed = false;
+  bool isMutable = true;
 
 public:
   Symbol(const std::string &name, std::shared_ptr<Type> type = nullptr)
@@ -21,7 +22,7 @@ public:
       ErrorReporter::reportError("Function type cannot be null for symbol '" +
                                   name + "'.");
     }
-    isDefined = true; // Functions are defined when created
+    _isDefined = true; // Functions are defined when created
   }
   Symbol(std::shared_ptr<ClassType> classType)
       : name(classType->getName()), type(std::move(classType)) {
@@ -29,7 +30,7 @@ public:
       ErrorReporter::reportError("Class type cannot be null for symbol '" +
                                   name + "'.");
     }
-    isDefined = true; // Classes are defined when created
+    _isDefined = true; // Classes are defined when created
   }
 
   const std::string &getName() const { return name; }
@@ -40,22 +41,22 @@ public:
 
   void setType(std::shared_ptr<Type> t) { type = std::move(t); }
 
-  void markAsDefined() { isDefined = true; }
+  void markAsDefined() { _isDefined = true; }
 
-  bool isDefinedSymbol() const { return isDefined; }
+  bool isDefined() const { return _isDefined; }
 
   void markAsUsed() {
-    if (!isDefined) {
+    if (!_isDefined) {
       // // If the symbol is not defined, we should not mark it as used.
       // // This can happen if the symbol is used before it is defined.
       ErrorReporter::reportError("Symbol '" + name +
                                  "' is used before it is defined.");
       return;
     }
-    isUsed = true;
+    _isUsed = true;
   }
 
-  bool isUsedSymbol() const { return isUsed; }
+  bool isUsed() const { return _isUsed; }
 
   virtual size_t hash() const {
     std::size_t seed = 0;
