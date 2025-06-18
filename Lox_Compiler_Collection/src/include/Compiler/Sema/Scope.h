@@ -8,6 +8,29 @@ namespace lox {
 class FunctionScope;
 class ClassScope;
 
+struct SymbolOrType {
+  std::veriant<std::shared_ptr<Symbol>, std::shared_ptr<Type>> value;
+  SymbolOrType(std::shared_ptr<Symbol> sym) : value(sym) {}
+  SymbolOrType(std::shared_ptr<Type> type) : value(type) {}
+
+  bool isSymbol() const { return std::holds_alternative<std::shared_ptr<Symbol>>(value); }
+  bool isType() const { return std::holds_alternative<std::shared_ptr<Type>>(value); }
+
+  std::shared_ptr<Symbol> getSymbol() const {
+    if (isSymbol()) {
+      return std::get<std::shared_ptr<Symbol>>(value);
+    }
+    return nullptr;
+  }
+  std::shared_ptr<Type> getType() const {
+    if (isType()) {
+      return std::get<std::shared_ptr<Type>>(value);
+    }
+    return nullptr;
+  }
+};
+
+
 class Scope {
 protected:
   std::string name;
@@ -90,6 +113,19 @@ public:
   std::shared_ptr<Type> lookupTypeLocal(const std::string &name) {
     auto it = types.find(name);
     return (it != types.end()) ? it->second : nullptr;
+  }
+
+  std::optional<SymbolOrType> lookupSymbolOrType(const std::string &name) {
+    if (auto sym = lookupLocal(name)) {
+      return SymbolOrType(sym);
+    }
+    if (auto type = lookupTypeLocal(name)) {
+      return SymbolOrType(type);
+    }
+    if (enclosingScope) {
+      return enclosingScope->lookupSymbolOrType(name);
+    }
+    return std::nullopt;
   }
 
   // 工具函数
@@ -293,9 +329,13 @@ public:
 };
 
 class BlockScope : public ScopeBase<BlockScope> {
+private:
+  static size_t anonymousCounter;
 public:
   BlockScope(std::shared_ptr<ScopeBase> parent, const std::string &name)
       : ScopeBase(parent, name) {}
+  BlockScope(std::shared_ptr<ScopeBase> parent)
+      : ScopeBase(parent, "Block" + std::to_string(anonymousCounter++)) {}
 };
 }
 #endif // SCOPE_H

@@ -92,6 +92,30 @@ public:
   }
 };
 
+class NilType : public TypeBase<NilType> {
+private:
+  // Singleton instance for NilType
+  static std::shared_ptr<NilType> instance;
+  NilType() : TypeBase("nil") {}
+public:
+  ~NilType() override = default;
+
+  static std::shared_ptr<NilType> create() {
+    if (!instance) {
+      instance = std::shared_ptr<NilType>(new NilType());
+    }
+    return instance;
+  }
+
+  bool isCompatibleWith(std::shared_ptr<Type> other) override {
+    return other->getTypeID() == getClassIdOf<NilType>();
+  }
+
+  void printImpl(std::ostream &os) const override {
+    os << "nil";
+  }
+};
+
 class ClassType : public TypeBase<ClassType> {
 private:
   std::shared_ptr<ClassType> superclass = nullptr;

@@ -58,14 +58,14 @@ public:
 
 // template<typename Derived>
 class ScopedMixin {
-  std::unique_ptr<Scope> scope;
-public:
-  Scope* getScope() const { return scope.get(); }
+//   std::unique_ptr<Scope> scope;
+// public:
+//   Scope* getScope() const { return scope.get(); }
 
-  void setScope(std::unique_ptr<Scope> newScope) {
-    assert(scope == nullptr && "Scope has already been set");
-    scope = std::move(newScope);
-  }
+//   void setScope(std::unique_ptr<Scope> newScope) {
+//     assert(scope == nullptr && "Scope has already been set");
+//     scope = std::move(newScope);
+//   }
 
   // static bool classof(const StmtBase* stmt) {
   //   // 派发给子类实现
@@ -234,12 +234,12 @@ class FunctionDeclStmt : public Declaration,
                           public StmtCRTP<FunctionDeclStmt> {
 private:
   std::string name;
-  std::vector<std::unique_ptr<VariableExpr>> parameters;
+  std::vector<std::unique_ptr<ParameterExpr>> parameters;
   std::unique_ptr<BlockStmt> body;
 
 public:
   FunctionDeclStmt(std::string name,
-               std::vector<std::unique_ptr<VariableExpr>> parameters,
+               std::vector<std::unique_ptr<ParameterExpr>> parameters,
                std::unique_ptr<BlockStmt> body)
       : StmtCRTP<FunctionDeclStmt>(body->getLoc()), name(std::move(name)),
         parameters(std::move(parameters)), body(std::move(body)) {}
@@ -247,7 +247,7 @@ public:
 
   const std::string &getName() const { return name; }
 
-  std::vector<std::unique_ptr<VariableExpr>> &getParameters() {
+  std::vector<std::unique_ptr<ParameterExpr>> &getParameters() {
     return parameters;
   }
   BlockStmt *getBody() const { return body.get(); }

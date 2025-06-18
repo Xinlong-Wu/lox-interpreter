@@ -12,28 +12,26 @@ public:
   SymbolTable() { scopes.push_back(std::make_shared<GlobalScope>()); }
   ~SymbolTable() = default;
 
-  void enterClassScope(const std::string &name) {
-    scopes.push_back(std::make_shared<ClassScope>(scopes.back(), name));
-  }
-
-  void enterFunctionScope(const std::string &name, 
-                          std::shared_ptr<Symbol> funcSymbol) {
-    scopes.push_back(std::make_shared<FunctionScope>(scopes.back(), name, funcSymbol));
-  }
-
-  void enterScope(const std::string &name = "anonymous") {
-    scopes.push_back(std::make_shared<Scope>(scopes.back(), name));
+  void enterScope(const std::shared_ptr<Scope> &scope) {
+    scopes.push_back(scope);
   }
 
   void exitScope() {
-    assert(!scopes.empty() && "No scope to exit");
-    scopes.pop_back();
+    if (scopes.size() > 1) {
+      scopes.pop_back();
+    } else {
+      ErrorReporter::reportError("Cannot exit the global scope");
+    }
   }
 
-  std::shared_ptr<Scope> getCurrentScope() const { return scopes.back(); }
+  std::shared_ptr<Scope> currentScope() const { return scopes.back(); }
 
   bool declare(std::shared_ptr<Symbol> sym) {
     return scopes.back()->declare(sym);
+  }
+
+  bool declareType(const std::string &name, std::shared_ptr<Type> type) {
+    return scopes.back()->declareType(name, type);
   }
 
   std::shared_ptr<Symbol> lookupSymbol(const std::string &name) {

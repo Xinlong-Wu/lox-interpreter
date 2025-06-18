@@ -367,5 +367,34 @@ public:
     return result; // Continue with the next node
   }
 };
+
+class ParameterExpr : public ExprCRTP<ParameterExpr> {
+protected:
+  std::string name;
+  std::optional<std::string> typeName = std::nullopt;
+  // std::unique_ptr<ExprBase> defaultValue;
+public:
+  ParameterExpr(const std::string &name, const Location &loc)
+      : ExprCRTP(loc), name(name){}
+  ParameterExpr(const std::string &name, const std::string &typeName, const Location &loc)
+      : ExprCRTP(loc), name(name), type(type) {}
+
+  std::optional<std::string> getTypeName() const {
+    return typeName;
+  }
+
+  void printImpl(std::ostream &os) const {
+    os << name;
+    if (type) {
+      os << ": " << type;
+    }
+  }
+
+  WalkResult walkInternal(Walker& walker) override {
+    WalkResult result = walker.executeCallback(this);
+    return result == WalkResult::Skip ? WalkResult::Advance : result;
+  }
+};
+
 } // namespace lox
 #endif // EXPR_H
