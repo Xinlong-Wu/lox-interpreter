@@ -14,12 +14,14 @@
 
 namespace lox {
 class StmtBase : public ASTNode {
-public:
-  using ClassID = const void*;
+protected:
+  Location loc;
 
+public:
+  StmtBase(Location loc) : loc(loc) {}
   virtual ~StmtBase() = default;
 
-  virtual const Location &getLoc() const = 0;
+  const Location &getLoc() const { return loc; }
 
   virtual ClassID getClassID() const = 0;
 
@@ -36,22 +38,13 @@ template<typename Derived>
 class StmtCRTP : public StmtBase {
 protected:
   ClassID classID;
-  template<typename T>
-  static ClassID _getClassID() {
-    static char id;
-    return &id;
-  }
 
-  Location loc;
-
-  StmtCRTP(Location loc) : classID(_getClassID<Derived>()), loc(loc) {}
+  StmtCRTP(Location loc) : StmtBase(loc), classID(getClassIdOf<Derived>()) {}
 public:
-  const Location &getLoc() const override { return loc; }
-
   ClassID getClassID() const override { return classID; }
 
   static bool classof(const StmtBase *stmt) {
-    return stmt->getClassID() == _getClassID<Derived>();
+    return stmt->getClassID() == getClassIdOf<Derived>();
   }
 
   void print(std::ostream &os) const override {

@@ -15,12 +15,17 @@
 namespace lox {
 
 class ExprBase : public ASTNode {
+protected:
+  Location loc;
+  std::shared_ptr<Type> type = nullptr;
 public:
-  using ClassID = const void*;
-
+  ExprBase(Location loc) : loc(loc) {}
   virtual ~ExprBase() = default;
-  virtual const Location& getLoc() const = 0;
-  virtual const std::shared_ptr<Type> getType() const = 0;
+
+  const Location& getLoc() const { return loc; }
+  const std::shared_ptr<Type> getType() const {
+    return type;
+  }
 
   virtual ClassID getClassID() const = 0;
 
@@ -36,27 +41,14 @@ class ExprCRTP : public ExprBase {
 protected:
   // 存储实际的类型ID
   ClassID classID;
-  // 获取类型的唯一ID
-  template<typename T>
-  static ClassID _getClassID() {
-    static char id;
-    return &id;
-  }
 
-  const Location loc;
-  std::shared_ptr<Type> type;
-
-  ExprCRTP(Location loc) : classID(_getClassID<Derived>()), loc(loc){}
+  ExprCRTP(Location loc)
+      : ExprBase(loc), classID(getClassIdOf<Derived>()) {}
 public:
-  const Location& getLoc() const override { return loc; }
-  const std::shared_ptr<Type> getType() const override {
-    return type;
-  }
-
   ClassID getClassID() const override { return classID; }
 
   static bool classof(const ExprBase* expr) {
-    return expr->getClassID() == _getClassID<Derived>();
+    return expr->getClassID() == getClassIdOf<Derived>();
   }
 
   void print(std::ostream &os) const override {

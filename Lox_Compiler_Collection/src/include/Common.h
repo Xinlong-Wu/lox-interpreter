@@ -42,6 +42,13 @@
 namespace lox
 {
 
+using ClassID = const void*;
+template<typename T>
+static ClassID getClassIdOf() {
+    static char id;
+    return &id;
+}
+
 template <typename Enum, typename... Enums>
 bool isOneOf(Enum value, Enum first, Enums... rest) {
     return ((value == first) || ... || (value == rest));

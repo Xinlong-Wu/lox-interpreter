@@ -3,9 +3,8 @@
 
 #include <iostream>
 
-#include "Compiler/AST/Expr.h"
-
 namespace lox {
+class ExprBase;
 class StmtBase;
 class ErrorReporter {
 private:

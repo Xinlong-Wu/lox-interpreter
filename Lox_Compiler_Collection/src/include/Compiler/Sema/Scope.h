@@ -10,8 +10,6 @@ class ClassScope;
 
 class Scope {
 protected:
-  using ClassID = const void*;
-
   std::string name;
   std::unordered_map<std::string, std::shared_ptr<Symbol>> symbols;
   std::unordered_map<std::string, std::shared_ptr<Type>> types;
@@ -130,12 +128,6 @@ protected:
 protected:
   // 存储实际的类型ID
   ClassID classID;
-  // 获取类型的唯一ID
-  template<typename T>
-  static ClassID _getClassID() {
-    static char id;
-    return &id;
-  }
 
   // CRTP辅助函数
   Derived& derived() { return static_cast<Derived&>(*this); }
@@ -143,7 +135,7 @@ protected:
 
 public:
   ScopeBase(std::shared_ptr<Scope> parent, const std::string &name)
-        : Scope(parent, name) {}
+        : Scope(parent, name), classID(getClassIdOf<Derived>()) {}
 
   virtual ~ScopeBase() = default;
 
@@ -234,11 +226,22 @@ public:
     return nullptr;
   }
 
-
   ClassID getClassID() const override { return classID; }
 
   static bool classof(const Scope* expr) {
-    return expr->getClassID() == _getClassID<Derived>();
+    return expr->getClassID() == getClassIdOf<Derived>();
+  }
+
+  void print(std::ostream &os, int level = 0) const override {
+    os << std::string(level * 2, ' ') << "Scope: " << name << "\n";
+    for (const auto &[name, type] : types) {
+      os << std::string((level + 1) * 2, ' ') << "Type: " << name << "\n";
+      type->print(os);
+    }
+    for (const auto &[name, symbol] : symbols) {
+      os << std::string((level + 1) * 2, ' ') << "Symbol: " << name << "\n";
+      symbol->print(os);
+    }
   }
 
   // 默认实现，派生类可以重写
@@ -253,6 +256,8 @@ public:
 };
 
 class ClassScope : public ScopeBase<ClassScope> {
+private:
+  std::unordered_map<std::string, std::shared_ptr<Symbol>> staticSymbols;
 public:
   ClassScope(std::shared_ptr<Scope> parent, const std::string &name)
         : ScopeBase(parent, name) {
