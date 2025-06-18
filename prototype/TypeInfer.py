@@ -181,6 +181,27 @@ class AssignmentExpr(Expression):
     value: Expression
 
 @dataclass
+class NewExpr(Expression):
+    """构造函数调用表达式"""
+    class_name: str
+    args: List[Expression]
+
+@dataclass
+class ConstructorDecl(Statement):
+    """构造函数声明"""
+    class_name: str
+    params: List['Parameter']
+    body: List[Statement]
+    constructor_env: Optional['Environment'] = None
+
+@dataclass
+class FieldDecl(Statement):
+    """字段声明"""
+    name: str
+    type: Optional[Type]
+    initializer: Optional[Expression]
+
+@dataclass
 class VarDecl(Statement):
     name: str
     type_annotation: Optional[Type]
@@ -192,6 +213,7 @@ class FunctionDecl(Statement):
     params: List['Parameter']
     return_type: Optional[Type]
     body: List[Statement]
+    function_env: Optional['Environment'] = None
 
 @dataclass
 class Parameter:
@@ -204,6 +226,12 @@ class ClassDecl(Statement):
     super_class: Optional[str]
     methods: List[FunctionDecl]
     fields: List[VarDecl]
+    constructors: List[ConstructorDecl] = None
+    class_env: Optional['Environment'] = None
+
+    def __post_init__(self):
+        if self.constructors is None:
+            self.constructors = []
 
 @dataclass
 class ReturnStmt(Statement):
@@ -264,6 +292,8 @@ class TypeInferenceEngine:
         self.constraints: List[tuple] = []  # (type1, type2, relation)
         self.substitutions: Dict[TypeVariable, Type] = {}
         self.overload_sets: Dict[str, OverloadSet] = {}
+        self.class_definitions: Dict[str, ClassDecl] = {}
+        self.constructors: Dict[str, List[ConstructorDecl]] = {}
 
         # 内置类型
         self.int_type = PrimitiveType("int")
@@ -333,8 +363,33 @@ class TypeInferenceEngine:
             elif isinstance(stmt, FunctionDecl):
                 self._collect_function_decl(stmt)
 
+    def _collect_constructor(self, constructor: ConstructorDecl, class_name: str):
+        """收集构造函数"""
+        param_types = []
+        for param in constructor.params:
+            if param.type:
+                param_types.append(param.type)
+            else:
+                param_types.append(self.fresh_type_var(f"P_{param.name}"))
+
+        # 构造函数返回类实例
+        class_type = self.current_env().lookup_type(class_name)
+        constructor_type = FunctionType(param_types, class_type)
+
+        # 存储构造函数
+        if class_name not in self.constructors:
+            self.constructors[class_name] = []
+        self.constructors[class_name].append(constructor)
+
+        # 将构造函数作为特殊函数处理
+        symbol = Symbol(f"{class_name}.__init__", constructor_type)
+        self.current_env().define(f"{class_name}.__init__", symbol)
+
     def _collect_class_decl(self, decl: ClassDecl):
-        """收集类声明"""
+        """改进的类声明收集"""
+        # 存储类定义用于后续查找
+        self.class_definitions[decl.name] = decl
+
         # 创建类类型
         super_type = None
         if decl.super_class:
@@ -343,12 +398,24 @@ class TypeInferenceEngine:
         class_type = ClassType(decl.name, super_type)
         self.current_env().define_type(decl.name, class_type)
 
-        # 处理方法
+        # 创建类环境
         class_env = Environment(self.current_env())
+        decl.class_env = class_env
+
+        # 收集字段信息
+        for field in decl.fields:
+            if isinstance(field, FieldDecl):
+                field_type = field.type if field.type else self.fresh_type_var(f"F_{field.name}")
+                class_env.define(field.name, Symbol(field.name, field_type))
+
         self.push_env(class_env)
 
+        # 收集方法和构造函数
         for method in decl.methods:
-            self._collect_function_decl(method)
+            if isinstance(method, ConstructorDecl):
+                self._collect_constructor(method, decl.name)
+            else:
+                self._collect_function_decl(method)
 
         self.pop_env()
 
@@ -380,6 +447,66 @@ class TypeInferenceEngine:
         symbol = Symbol(decl.name, func_type)
         self.current_env().define(decl.name, symbol)
 
+    def _infer_field_decl(self, decl: FieldDecl):
+        """推断字段声明"""
+        if decl.initializer:
+            init_type = self._infer_expression(decl.initializer)
+
+            if decl.type:
+                # 有类型注解，检查兼容性
+                self.add_constraint(init_type, decl.type, "assignable")
+                field_type = decl.type
+            else:
+                # 无类型注解，使用推断类型
+                field_type = init_type
+        else:
+            if decl.type:
+                field_type = decl.type
+            else:
+                # 无初始化器且无类型注解，创建类型变量
+                field_type = self.fresh_type_var(f"Field_{decl.name}")
+
+        # 将字段添加到当前环境（类环境）
+        symbol = Symbol(decl.name, field_type)
+        self.current_env().define(decl.name, symbol)
+        decl.inferred_type = field_type
+
+        print(f"推断字段 {decl.name}: {field_type}")
+
+    def _infer_constructor_decl(self, decl: ConstructorDecl):
+        """推断构造函数声明"""
+        # 创建构造函数环境
+        constructor_env = Environment(self.current_env())
+        self.push_env(constructor_env)
+
+        # 添加参数到环境
+        param_types = []
+        for param in decl.params:
+            if param.type:
+                param_type = param.type
+            else:
+                param_type = self.fresh_type_var(f"ConstructorParam_{param.name}")
+
+            param_types.append(param_type)
+            param_symbol = Symbol(param.name, param_type)
+            constructor_env.define(param.name, param_symbol)
+
+        # 推断构造函数体
+        for stmt in decl.body:
+            self._infer_statement(stmt)
+
+        # 构造函数返回当前类的实例
+        class_type = self.current_env().parent.parent.lookup_type(decl.class_name)
+        if not class_type:
+            class_type = self.fresh_type_var(f"Class_{decl.class_name}")
+
+        constructor_type = FunctionType(param_types, class_type)
+        decl.inferred_type = constructor_type
+
+        print(f"推断构造函数 {decl.class_name}: {constructor_type}")
+
+        self.pop_env()
+
     def _infer_statement(self, stmt: Statement):
         """推断语句类型"""
         if isinstance(stmt, VarDecl):
@@ -392,6 +519,12 @@ class TypeInferenceEngine:
             self._infer_return_stmt(stmt)
         elif isinstance(stmt, Expression):
             self._infer_expression(stmt)
+        elif isinstance(stmt, FieldDecl):          # ✅ 添加字段声明处理
+            self._infer_field_decl(stmt)
+        elif isinstance(stmt, ConstructorDecl):    # ✅ 添加构造函数处理
+            self._infer_constructor_decl(stmt)
+        else:
+            print(f"警告: 未处理的语句类型: {type(stmt)}")
 
     def _infer_var_decl(self, decl: VarDecl):
         """推断变量声明"""
@@ -453,16 +586,20 @@ class TypeInferenceEngine:
 
     def _infer_class_decl(self, decl: ClassDecl):
         """推断类声明"""
-        class_env = Environment(self.current_env())
+        class_env = decl.class_env or Environment(self.current_env())
         self.push_env(class_env)
 
-        # 推断字段
         for field in decl.fields:
             self._infer_statement(field)
 
         # 推断方法
         for method in decl.methods:
             self._infer_statement(method)
+
+        # 如果有构造函数，也要推断
+        if hasattr(decl, 'constructors'):
+            for constructor in decl.constructors:
+                self._infer_statement(constructor)  # 这会调用 _infer_constructor_decl
 
         self.pop_env()
 
@@ -472,6 +609,45 @@ class TypeInferenceEngine:
             stmt.inferred_type = self._infer_expression(stmt.value)
         else:
             stmt.inferred_type = self.void_type
+
+    def _infer_new_expr(self, expr: NewExpr, expected_type: Optional[Type] = None) -> Type:
+        """推断构造函数调用"""
+        # 查找类类型
+        class_type = self.current_env().lookup_type(expr.class_name)
+        if not class_type:
+            raise Exception(f"未定义的类: {expr.class_name}")
+
+        if not isinstance(class_type, ClassType):
+            raise Exception(f"{expr.class_name} 不是类类型")
+
+        # 推断参数类型
+        arg_types = [self._infer_expression(arg) for arg in expr.args]
+
+        # 查找匹配的构造函数
+        if expr.class_name in self.constructors:
+            constructors = self.constructors[expr.class_name]
+            best_constructor = self._resolve_constructor_overload(constructors, arg_types)
+
+            if best_constructor:
+                # 检查参数类型匹配
+                constructor_symbol = self.current_env().lookup(f"{expr.class_name}.__init__")
+                if constructor_symbol and isinstance(constructor_symbol.type, FunctionType):
+                    for arg_type, param_type in zip(arg_types, constructor_symbol.type.param_types):
+                        self.add_constraint(arg_type, param_type, "assignable")
+
+        expr.inferred_type = class_type
+        return class_type
+
+    def _resolve_constructor_overload(self, constructors: List[ConstructorDecl], arg_types: List[Type]) -> Optional[ConstructorDecl]:
+        """解析构造函数重载"""
+        candidates = []
+
+        for constructor in constructors:
+            if len(constructor.params) == len(arg_types):
+                # 简化的匹配逻辑
+                candidates.append(constructor)
+
+        return candidates[0] if candidates else None
 
     def _infer_expression(self, expr: Expression, expected_type: Optional[Type] = None) -> Type:
         """推断表达式类型（双向类型检查）"""
@@ -501,6 +677,9 @@ class TypeInferenceEngine:
 
         elif isinstance(expr, AssignmentExpr):
             return self._infer_assignment(expr, expected_type)
+
+        elif isinstance(expr, NewExpr):
+            return self._infer_new_expr(expr, expected_type)
 
         else:
             # 未知表达式类型
@@ -572,13 +751,43 @@ class TypeInferenceEngine:
         return result_type
 
     def _infer_member_access(self, expr: MemberAccessExpr, expected_type: Optional[Type] = None) -> Type:
-        """推断成员访问表达式"""
+        """改进的成员访问推断"""
         obj_type = self._infer_expression(expr.object)
+        obj_type = self._apply_substitution(obj_type)
 
-        # 这里简化处理，实际需要查找类的成员
-        member_type = self.fresh_type_var(f"MEMBER_{expr.member}")
-        expr.inferred_type = member_type
-        return member_type
+        if isinstance(obj_type, ClassType):
+            # 查找类定义
+            if obj_type.name in self.class_definitions:
+                class_decl = self.class_definitions[obj_type.name]
+
+                # 查找字段
+                for field in class_decl.fields:
+                    if isinstance(field, FieldDecl) and field.name == expr.member:
+                        member_type = field.type if field.type else self.fresh_type_var(f"F_{field.name}")
+                        expr.inferred_type = member_type
+                        return member_type
+
+                # 查找方法
+                for method in class_decl.methods:
+                    if isinstance(method, FunctionDecl) and method.name == expr.member:
+                        # 获取方法类型
+                        symbol = class_decl.class_env.lookup(f"{method.name}")
+                        if symbol:
+                            expr.inferred_type = symbol.type
+                            return symbol.type
+
+                # 成员不存在
+                raise Exception(f"类 {obj_type.name} 没有成员 {expr.member}")
+
+        elif isinstance(obj_type, TypeVariable):
+            # 对象类型是类型变量，创建约束
+            member_type = self.fresh_type_var(f"MEMBER_{expr.member}")
+            # 这里可以添加更复杂的约束逻辑
+            expr.inferred_type = member_type
+            return member_type
+
+        else:
+            raise Exception(f"无法访问类型 {obj_type} 的成员 {expr.member}")
 
     def _infer_assignment(self, expr: AssignmentExpr, expected_type: Optional[Type] = None) -> Type:
         """推断赋值表达式"""
@@ -791,8 +1000,60 @@ def test_type_inference():
     for var, type_val in engine.substitutions.items():
         print(f"  {var} -> {type_val}")
 
+def test_class_instances():
+    """测试类实例处理"""
+    engine = TypeInferenceEngine()
+
+    # 定义Point类
+    point_class = ClassDecl(
+        name="Point",
+        super_class=None,
+        methods=[
+            FunctionDecl("getX", [], engine.int_type, [
+                ReturnStmt(MemberAccessExpr(IdentifierExpr("this"), "x"))
+            ]),
+            FunctionDecl("getY", [], engine.int_type, [
+                ReturnStmt(MemberAccessExpr(IdentifierExpr("this"), "y"))
+            ])
+        ],
+        fields=[
+            FieldDecl("x", engine.int_type, None),
+            FieldDecl("y", engine.int_type, None)
+        ],
+        constructors=[
+            ConstructorDecl("Point", [
+                Parameter("x", engine.int_type),
+                Parameter("y", engine.int_type)
+            ], [])
+        ]
+    )
+
+    statements = [
+        point_class,
+        # var p = new Point(10, 20);
+        VarDecl("p", None, NewExpr("Point", [
+            LiteralExpr(10, engine.int_type),
+            LiteralExpr(20, engine.int_type)
+        ])),
+        # var x = p.x;
+        VarDecl("x", None, MemberAccessExpr(IdentifierExpr("p"), "x")),
+        # var y = p.getY();
+        VarDecl("y", None, CallExpr(
+            MemberAccessExpr(IdentifierExpr("p"), "getY"),
+            []
+        ))
+    ]
+
+    success = engine.infer_program(statements)
+    print(f"类实例测试: {'成功' if success else '失败'}")
+
+    for stmt in statements:
+        if isinstance(stmt, VarDecl):
+            print(f"  {stmt.name}: {stmt.inferred_type}")
+
 if __name__ == "__main__":
-    test_type_inference()
+    # test_type_inference()
+    test_class_instances()
 
 # ==================== 高级特性扩展 ====================
 
