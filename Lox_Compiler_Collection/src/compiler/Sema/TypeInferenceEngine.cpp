@@ -25,7 +25,15 @@ void lox::TypeInferenceEngine::inferProgramTypes(const vector<unique_ptr<StmtBas
     // 推断类型
     inferStatements(statements);
 
+    // 解决约束
+    bool success = solveConstraints();
+    if (!success) {
+        ErrorReporter::reportError("Type inference failed due to unsolvable constraints");
+        return;
+    }
 
+    // 应用类型替换
+    applySubstitution(statements);
 }
 
 void lox::TypeInferenceEngine::collectTypeDeclarations(const vector<unique_ptr<StmtBase>> &statements) {
@@ -446,4 +454,134 @@ const Type *lox::TypeInferenceEngine::inferAccessExpr(AccessExpr *accessExpr, co
         ErrorReporter::reportError(ss.str());
         return nullptr;
     }
+}
+
+void lox::TypeInferenceEngine::solveConstraints() {
+    bool inferSuccess = true;
+    for (const auto &constraint : constraints) {
+        const Type *leftType = constraint.getLeft();
+        const Type *rightType = constraint.getRight();
+        Constraint::ConstraintType relation = constraint.getRelation();
+
+        // Apply the constraint based on its type
+        switch (relation) {
+            case Constraint::ConstraintType::EQUAL:
+                inferSuccess &= unify(leftType, rightType);
+                break;
+            case Constraint::ConstraintType::ASSIGNABLE:
+                inferSuccess &= assinable(leftType, rightType);
+                break;
+        }
+    }
+    return inferSuccess;
+}
+
+bool lox::TypeInferenceEngine::unify(const Type *left, const Type *right) {
+    Type *leftType = applySubstitutions(left);
+    Type *rightType = applySubstitutions(right);
+
+    if (leftType == rightType) {
+        return true; // already unified
+    }
+
+    if (isa<TypeVariable>(leftType)) {
+        if (occursCheck(cast<TypeVariable>(leftType), rightType)) {
+            ErrorReporter::reportError("Type variable '" + leftType->getName() + "' occurs in '" + rightType->getName() + "'");
+            return false;
+        }
+        substitutions[cast<TypeVariable>(leftType)] = rightType;
+    }
+
+    if (isa<TypeVariable>(rightType)) {
+        if (occursCheck(cast<TypeVariable>(rightType), leftType)) {
+            ErrorReporter::reportError("Type variable '" + rightType->getName() + "' occurs in '" + leftType->getName() + "'");
+            return false;
+        }
+        substitutions[cast<TypeVariable>(rightType)] = leftType;
+    }
+
+    if (isa<FunctionType>(leftType) && isa<FunctionType>(rightType)) {
+        assert_not_reached("Unimplemented FunctionType unification");
+    }
+
+    if (isa<ClassType>(leftType) && isa<ClassType>(rightType)) {
+        const ClassType *leftClass = cast<ClassType>(leftType);
+        const ClassType *rightClass = cast<ClassType>(rightType);
+
+        if (leftClass != rightClass) {
+            ErrorReporter::reportError("Cannot unify different class types: '" + leftClass->getName() + "' and '" + rightClass->getName() + "'");
+            return false;
+        }
+        return true;
+    }
+
+    ErrorReporter::reportError("Cannot unify different types: '" + leftType->getName() + "' and '" + rightType->getName() + "'");
+    return false;
+}
+
+bool lox::TypeInferenceEngine::assinable(const Type *left, const Type *right) {
+    Type *from = applySubstitutions(left);
+    Type *to = applySubstitutions(right);
+
+    return from->isCompatibleWith(to);
+}
+
+bool lox::TypeInferenceEngine::occursCheck(const TypeVariable *var, const Type *type) {
+    Type *subStitutedType = applySubstitutions(type);
+
+    if (var == subStitutedType) {
+        return true; // Type variable occurs in the type
+    }
+
+    if (auto classType = dyn_cast<ClassType>(subStitutedType)) {
+        // Check if the type variable occurs in the class's fields
+        for (const auto &field : classType->getFields()) {
+            if (occursCheck(var, field.second)) {
+                return true;
+            }
+        }
+    } else if (auto functionType = dyn_cast<FunctionType>(subStitutedType)) {
+        // Check if the type variable occurs in the function's parameters or return type
+        for (const auto &param : functionType->getSignature()->getParameters()) {
+            if (occursCheck(var, param)) {
+                return true;
+            }
+        }
+        if (occursCheck(var, functionType->getSignature()->getReturnType())) {
+            return true;
+        }
+    }
+}
+
+void lox::TypeInferenceEngine::applySubstitutions(vector<unique_ptr<StmtBase>> &statements) {
+    Walk astWalker();
+    astWalker.registerCallback<ExprBase>([this](ExprBase *expr) {
+        if (auto typeVar = dyn_cast<TypeVariable>(expr->getType())) {
+            expr->setType(applySubstitution(typeVar));
+        }
+        return WalkResult::Advance;
+    });
+
+    astWalker.registerCallback<Declaration>([this](Declaration *decl) {
+        if (auto typeVar = dyn_cast<TypeVariable>(decl->getType())) {
+            decl->setType(applySubstitution(typeVar));
+        }
+        return WalkResult::Advance;
+    });
+
+    for (auto &stmt : statements) {
+        astWalker.walk(stmt);
+    }
+}
+
+const Type *lox::TypeInferenceEngine::applySubstitutions(const Type *type) {
+    if (auto typeVar = dyn_cast<TypeVariable>(type)) {
+        auto it = substitutions.find(typeVar);
+        if (it != substitutions.end()) {
+            return it->second;
+        }
+    }
+    ErrorReporter::reportError("Type variable not found in substitutions: " + type->getName());
+    assert_not_reached("Type variable not found in substitutions: " + type->getName());
+    return type; // No substitution found, return the original type
 }

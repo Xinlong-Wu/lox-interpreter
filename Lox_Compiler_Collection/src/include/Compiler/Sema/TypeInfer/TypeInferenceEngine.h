@@ -33,7 +33,16 @@ private:
     const Type *inferAssignExpr(AssignExpr *assignExpr, const Type *expectedType = nullptr);
     const Type *inferAccessExpr(AccessExpr *accessExpr, const Type *expectedType = nullptr);
 
+    bool solveConstraints();
+    bool unify(const Type *left, const Type *right);
+    // check if left is assignable to right
+    bool assinable(const Type *left, const Type *right);
+    // to avoid infinite recursion, we need to check if a type variable occurs in a type
+    // e.g. T occurs in T -> false, T occurs in T -> true
+    bool occursCheck(const TypeVariable *var, const Type *type);
+
     const Type *applySubstitutions(const Type *type);
+    void applySubstitution(std::vector<std::unique_ptr<StmtBase>> &statements);
 public:
     TypeInferenceEngine();
     ~TypeInferenceEngine() = default;
