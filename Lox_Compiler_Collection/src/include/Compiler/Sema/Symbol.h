@@ -8,13 +8,13 @@ namespace lox {
 class Symbol {
 protected:
   std::string name;
-  std::shared_ptr<Type> type;
+  Type* type;
   bool _isDefined = false;
   bool _isUsed = false;
   bool isMutable = true;
 
 public:
-  Symbol(const std::string &name, std::shared_ptr<Type> type = nullptr)
+  Symbol(const std::string &name, Type* type = nullptr)
       : name(name), type(std::move(type)) {}
   Symbol(std::shared_ptr<FunctionType> funcType)
       : name(funcType->getName()), type(std::move(funcType)) {
@@ -37,9 +37,9 @@ public:
 
   bool hasType() const { return type != nullptr; }
 
-  const std::shared_ptr<Type> &getType() const { return type; }
+  const Type* getType() const { return type; }
 
-  void setType(std::shared_ptr<Type> t) { type = std::move(t); }
+  void setType(Type* t) { type = t; }
 
   void markAsDefined() { _isDefined = true; }
 

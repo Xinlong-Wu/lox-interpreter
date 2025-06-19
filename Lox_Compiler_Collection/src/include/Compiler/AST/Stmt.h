@@ -58,14 +58,14 @@ public:
 
 // template<typename Derived>
 class ScopedMixin {
-//   std::unique_ptr<Scope> scope;
-// public:
-//   Scope* getScope() const { return scope.get(); }
+  std::shared_ptr<Scope> scope = nullptr;
+public:
+  std::shared_ptr<Scope> getScope() const { return scope; }
 
-//   void setScope(std::unique_ptr<Scope> newScope) {
-//     assert(scope == nullptr && "Scope has already been set");
-//     scope = std::move(newScope);
-//   }
+  void setScope(std::shared_ptr<Scope> newScope) {
+    assert(scope == nullptr && "Scope has already been set");
+    scope = std::move(newScope);
+  }
 
   // static bool classof(const StmtBase* stmt) {
   //   // 派发给子类实现
@@ -112,35 +112,43 @@ public:
 // template<typename Derived>
 class Declaration {
 protected:
-  std::unique_ptr<Symbol> symbol = nullptr;
+  Type* type = nullptr;
 public:
-  Symbol* getSymbol() const { return symbol ? symbol.get() : nullptr; }
-  void setSymbol(std::unique_ptr<Symbol> newSymbol) {
-    assert(symbol == nullptr && "Symbol has already been set");
-    symbol = std::move(newSymbol);
+  Type *getType() const { return type; }
+  void setType(Type* newType) {
+    assert(type == nullptr && "Type has already been set");
+    type = newType;
   }
-
   // static bool classof(const StmtBase* stmt) {
   //   // 派发给子类实现
   //   return Derived::classof(stmt);
   // }
 };
 
-class VarDeclStmt : public Declaration,
+class VarDeclStmt : public DeclVararation,
                    public StmtCRTP<VarDeclStmt> {
 private:
   std::string name;
+  std::optional<std::string> typeAnnotation = std::nullopt;
   std::unique_ptr<ExprBase> initializer = nullptr;
 
 public:
   VarDeclStmt(const std::string &name, std::unique_ptr<ExprBase> initializer)
       : StmtCRTP<VarDeclStmt>(initializer->getLoc()), name(name),
         initializer(std::move(initializer)) {}
+  VarDeclStmt(const std::string &name, const std::optional<std::string> &typeAnnotation, std::unique_ptr<ExprBase> initializer)
+      : StmtCRTP<VarDeclStmt>(initializer->getLoc()), name(name),
+        typeAnnotation(typeAnnotation), initializer(std::move(initializer)) {}
+  VarDeclStmt(const std::string &name, const std::optional<std::string> &typeAnnotation, Location loc)
+      : StmtCRTP<VarDeclStmt>(std::move(loc)), name(name),
+        typeAnnotation(typeAnnotation) {}
   VarDeclStmt(const std::string &name, Location loc)
-      : StmtCRTP<VarDeclStmt>(std::move(loc)), name(name), initializer(nullptr) {}
+      : StmtCRTP<VarDeclStmt>(std::move(loc)), name(name) {}
   ~VarDeclStmt() override = default;
 
   const std::string &getName() const { return name; }
+
+  const std::optional<std::string> &getTypeAnnotation() const { return typeAnnotation; }
 
   ExprBase *getInitializer() const {
     return initializer ? initializer.get() : nullptr;
@@ -234,8 +242,10 @@ class FunctionDeclStmt : public Declaration,
                           public StmtCRTP<FunctionDeclStmt> {
 private:
   std::string name;
+  std::optional<std::string> returnTypeAnnotation = std::nullopt;
   std::vector<std::unique_ptr<ParameterExpr>> parameters;
   std::unique_ptr<BlockStmt> body;
+  std::unique_ptr<FunctionType::Signature> signature = nullptr;
 
 public:
   FunctionDeclStmt(std::string name,
@@ -243,9 +253,28 @@ public:
                std::unique_ptr<BlockStmt> body)
       : StmtCRTP<FunctionDeclStmt>(body->getLoc()), name(std::move(name)),
         parameters(std::move(parameters)), body(std::move(body)) {}
+  FunctionDeclStmt(std::string name,
+               std::vector<std::unique_ptr<ParameterExpr>> parameters,
+               const std::optional<std::string> &returnTypeAnnotation,
+               std::unique_ptr<BlockStmt> body)
+      : StmtCRTP<FunctionDeclStmt>(body->getLoc()), name(std::move(name)),
+        returnTypeAnnotation(returnTypeAnnotation),
+        parameters(std::move(parameters)), body(std::move(body)) {}
   ~FunctionDeclStmt() override = default;
 
   const std::string &getName() const { return name; }
+
+  const std::optional<std::string> &getReturnTypeAnnotation() const {
+    return returnTypeAnnotation;
+  }
+
+  void setSignature(std::unique_ptr<FunctionType::Signature> sig) {
+    assert(signature == nullptr && "Signature has already been set");
+    signature = std::move(sig);
+  }
+  const FunctionType::Signature *getSignature() const {
+    return signature.get();
+  }
 
   std::vector<std::unique_ptr<ParameterExpr>> &getParameters() {
     return parameters;
@@ -298,6 +327,7 @@ private:
   std::optional<std::string> superclassName;
   std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
   std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods;
+  std::unique_ptr<ClassType> classType = nullptr;
 
 public:
   ClassDeclStmt(

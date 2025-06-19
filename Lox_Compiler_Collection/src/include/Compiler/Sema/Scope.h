@@ -9,22 +9,22 @@ class FunctionScope;
 class ClassScope;
 
 struct SymbolOrType {
-  std::veriant<std::shared_ptr<Symbol>, std::shared_ptr<Type>> value;
-  SymbolOrType(std::shared_ptr<Symbol> sym) : value(sym) {}
-  SymbolOrType(std::shared_ptr<Type> type) : value(type) {}
+  std::veriant<Symbol*, Type*> value;
+  SymbolOrType(Symbol* sym) : value(sym) {}
+  SymbolOrType(Type* type) : value(type) {}
 
-  bool isSymbol() const { return std::holds_alternative<std::shared_ptr<Symbol>>(value); }
-  bool isType() const { return std::holds_alternative<std::shared_ptr<Type>>(value); }
+  bool isSymbol() const { return std::holds_alternative<Symbol*>(value); }
+  bool isType() const { return std::holds_alternative<Type*>(value); }
 
-  std::shared_ptr<Symbol> getSymbol() const {
+  Symbol* getSymbol() const {
     if (isSymbol()) {
-      return std::get<std::shared_ptr<Symbol>>(value);
+      return std::get<Symbol*>(value);
     }
     return nullptr;
   }
-  std::shared_ptr<Type> getType() const {
+  Type* getType() const {
     if (isType()) {
-      return std::get<std::shared_ptr<Type>>(value);
+      return std::get<Type*>(value);
     }
     return nullptr;
   }
@@ -34,8 +34,8 @@ struct SymbolOrType {
 class Scope {
 protected:
   std::string name;
-  std::unordered_map<std::string, std::shared_ptr<Symbol>> symbols;
-  std::unordered_map<std::string, std::shared_ptr<Type>> types;
+  std::unordered_map<std::string, std::unique_ptr<Symbol>> symbols;
+  std::unordered_map<std::string, std::unique_ptr<Type>> types;
   std::shared_ptr<Scope> enclosingScope;
 public:
   Scope(std::shared_ptr<Scope> parent, const std::string &name)
@@ -55,7 +55,7 @@ public:
   virtual std::shared_ptr<ClassType> getCurrentClassType() const = 0;
 
   // 符号管理
-  bool declare(std::shared_ptr<Symbol> &symbol) {
+  bool declare(std::unique_ptr<Symbol> symbol) {
     if (lookupLocal(symbol->getName())) {
         ErrorReporter::reportError("Symbol '" + symbol->getName() +
                                   "' is already declared in scope '" +
@@ -68,11 +68,11 @@ public:
                                   this->getName() + "'");
         return false;
     }
-    symbols[symbol->getName()] = symbol;
+    symbols[symbol->getName()] = std::move(symbol);
     return true;
   }
 
-  bool declareType(const std::string &name, std::shared_ptr<Type> type) {
+  bool declareType(const std::string &name, std::unique_ptr<Type> type) {
     if (lookupLocal(name)) {
         ErrorReporter::reportError("Type '" + name +
                                   "' is conflicting with a symbol in scope '" +
@@ -89,30 +89,30 @@ public:
     return true;
   }
 
-  std::shared_ptr<Symbol> lookup(const std::string &name) {
+  Symbol* lookup(const std::string &name) {
       auto it = symbols.find(name);
       if (it != symbols.end()) {
-          return it->second;
+          return it->second.get();
       }
       return enclosingScope ? enclosingScope->lookup(name) : nullptr;
   }
 
-  std::shared_ptr<Type> lookupType(const std::string &name) {
+  Type* lookupType(const std::string &name) {
       auto it = types.find(name);
       if (it != types.end()) {
-          return it->second;
+          return it->second.get();
       }
       return enclosingScope ? enclosingScope->lookupType(name) : nullptr;
   }
 
-  std::shared_ptr<Symbol> lookupLocal(const std::string &name) {
+  Symbol* lookupLocal(const std::string &name) {
       auto it = symbols.find(name);
-      return (it != symbols.end()) ? it->second : nullptr;
+      return (it != symbols.end()) ? it->second.get() : nullptr;
   }
 
-  std::shared_ptr<Type> lookupTypeLocal(const std::string &name) {
+  Type* lookupTypeLocal(const std::string &name) {
     auto it = types.find(name);
-    return (it != types.end()) ? it->second : nullptr;
+    return (it != types.end()) ? it->second.get() : nullptr;
   }
 
   std::optional<SymbolOrType> lookupSymbolOrType(const std::string &name) {
@@ -159,7 +159,7 @@ protected:
   mutable std::optional<bool> _inClassScope = std::nullopt;
   mutable std::optional<bool> _inFunctionScope = std::nullopt;
   mutable std::shared_ptr<ClassType> currentClassType = nullptr;
-  mutable std::shared_ptr<FunctionType> currentFunctionType = nullptr;
+  mutable FunctionType::Signature* currentSignature = nullptr;
 
 protected:
   // 存储实际的类型ID
@@ -210,28 +210,28 @@ public:
       return false;
   }
 
-  std::shared_ptr<FunctionType> getCurrentFunctionType() const override {
+  FunctionType::Signature* getCurrentSignature() const override {
     if (!inFunctionScope()) {
         return nullptr;
     }
 
-    if (currentFunctionType != nullptr) {
-        return currentFunctionType;
+    if (currentSignature != nullptr) {
+        return currentSignature;
     }
 
     // 让派生类提供具体实现
-    if (auto funcType = derived().getCurrentFunctionTypeImpl()) {
-        currentFunctionType = funcType;
-        return funcType;
+    if (auto signature = derived().getCurrentSignatureImpl()) {
+        currentSignature = signature;
+        return signature;
     }
 
     // 向外层作用域查找
     if (enclosingScope) {
-        auto funcType = enclosingScope->getCurrentFunctionType();
-        if (funcType) {
-            currentFunctionType = funcType;
+        auto signature = enclosingScope->getCurrentSignature();
+        if (signature) {
+          currentSignature = signature;
         }
-        return funcType;
+        return signature;
     }
     return nullptr;
   }
@@ -281,7 +281,7 @@ public:
   }
 
   // 默认实现，派生类可以重写
-  virtual std::shared_ptr<FunctionType> getCurrentFunctionTypeImpl() const { return nullptr; }
+  virtual std::shared_ptr<FunctionType> getCurrentSignatureImpl() const { return nullptr; }
   virtual std::shared_ptr<ClassType> getCurrentClassTypeImpl() const { return nullptr; }
 };
 
@@ -314,6 +314,8 @@ public:
 };
 
 class FunctionScope : public ScopeBase<FunctionScope> {
+private:
+  std::shared_ptr<Type> returnType = nullptr;
 public:
   FunctionScope(std::shared_ptr<Scope> parent, const std::string &name)
       : ScopeBase(parent, name) {
@@ -323,8 +325,16 @@ public:
     }
   }
 
-  std::shared_ptr<FunctionType> getCurrentFunctionTypeImpl() const override {
-    return currentFunctionType;
+  FunctionScope(std::shared_ptr<Scope> parent, const std::string &name, const FunctionType::Signature *signature)
+      : ScopeBase(parent, funcType->getName()) {
+    this->currentSignature = signature;
+  }
+
+  FunctionType::Signature* getCurrentSignatureImpl() const override {
+    return currentSignature;
+  }
+
+  void set
   }
 };
 

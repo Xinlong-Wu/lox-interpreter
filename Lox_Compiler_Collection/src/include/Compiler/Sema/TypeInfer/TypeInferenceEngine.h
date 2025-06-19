@@ -6,24 +6,34 @@
 
 class TypeInferenceEngine {
 private:
-    static std::shared_ptr<PrimitiveType> NumberType;
-    static std::shared_ptr<PrimitiveType> StringType;
-    static std::shared_ptr<PrimitiveType> BoolType;
-    static std::shared_ptr<NilType> NilType;
+    static std::unique_ptr<PrimitiveType> NumberType;
+    static std::unique_ptr<PrimitiveType> StringType;
+    static std::unique_ptr<PrimitiveType> BoolType;
+    static std::unique_ptr<NilType> NilType;
 
     SymbolTable symbolTable;
     std::vector<Constraint> constraints;
-    std::unordered_map<TypeVariable *, Type *> typeCache;
+    std::unordered_map<TypeVariable *, Type *> substitutions;
 
     void collectTypeDeclarations(const std::vector<std::unique_ptr<StmtBase>> &statements);
     void collectClassDeclarations(ClassDeclStmt *classDecl);
     void collectFunctionDeclarations(FunctionDeclStmt *funcDecl);
 
     void inferStatements(const std::vector<std::unique_ptr<StmtBase>> &statements);
+    void inferStatement(StmtBase *stmt);
     void inferVarDeclStmt(VarDeclStmt *varDecl);
     void inferFunctionDeclStmt(FunctionDeclStmt *funcDecl);
     void inferClassDeclStmt(ClassDeclStmt *classDecl);
     void inferBlockStmt(BlockStmt *blockStmt);
+
+    const Type *inferExpr(ExprBase *expr, const Type *expectedType = nullptr);
+    const Type *inferBinaryExpr(BinaryExpr *binaryExpr, const Type *expectedType = nullptr);
+    const Type *inferUnaryExpr(UnaryExpr *unaryExpr, const Type *expectedType = nullptr);
+    const Type *inferCallExpr(CallExpr *callExpr, const Type *expectedType = nullptr);
+    const Type *inferAssignExpr(AssignExpr *assignExpr, const Type *expectedType = nullptr);
+    const Type *inferAccessExpr(AccessExpr *accessExpr, const Type *expectedType = nullptr);
+
+    const Type *applySubstitutions(const Type *type);
 public:
     TypeInferenceEngine();
     ~TypeInferenceEngine() = default;

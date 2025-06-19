@@ -9,11 +9,8 @@ public:
     // Constraint 类型的枚举
     enum class ConstraintType
     {
-        EQUAL,      // 等于
-        NOT_EQUAL,  // 不等于
-        SUBTYPE,    // 子类型
-        SUPER_TYPE, // 超类型
-        UNKNOWN     // 未知类型
+        ASSIGNABLE, // 可赋值
+        EQUAL,      // 相等
     };
 private:
     /* data */

@@ -17,13 +17,13 @@ namespace lox {
 class ExprBase : public ASTNode {
 protected:
   Location loc;
-  std::shared_ptr<Type> type = nullptr;
+  Type* type = nullptr;
 public:
   ExprBase(Location loc) : loc(loc) {}
   virtual ~ExprBase() = default;
 
   const Location& getLoc() const { return loc; }
-  const std::shared_ptr<Type> getType() const {
+  const Type* getType() const {
     return type;
   }
 
@@ -285,16 +285,18 @@ public:
 };
 
 class AssignExpr : public ExprCRTP<AssignExpr> {
-  std::unique_ptr<ExprBase> left;
-  std::unique_ptr<ExprBase> right;
+  std::unique_ptr<ExprBase> target;
+  std::unique_ptr<ExprBase> value;
 public:
-  AssignExpr(std::unique_ptr<ExprBase> left, std::unique_ptr<ExprBase> right, const Location &loc)
-      : ExprCRTP(loc), left(std::move(left)), right(std::move(right)) {}
+  AssignExpr(std::unique_ptr<ExprBase> target, std::unique_ptr<ExprBase> value, const Location &loc)
+      : ExprCRTP(loc), target(std::move(target)), value(std::move(value)) {}
+
+
 
   void printImpl(std::ostream &os) const {
-    left->print(os);
+    target->print(os);
     os << " = ";
-    right->print(os);
+    value->print(os);
   }
 
   WalkResult walkInternal(Walker& walker) override {
@@ -306,10 +308,10 @@ public:
       if (result == WalkResult::Interrupt) return result; // Interrupt the walk
     }
 
-    WalkResult result = left->walkInternal(walker);
+    WalkResult result = target->walkInternal(walker);
     if (result == WalkResult::Interrupt) return result;
 
-    result = right->walkInternal(walker);
+    result = value->walkInternal(walker);
     if (result == WalkResult::Interrupt) return result;
 
     if (order == WalkOrder::PostOrder) {
@@ -371,16 +373,16 @@ public:
 class ParameterExpr : public ExprCRTP<ParameterExpr> {
 protected:
   std::string name;
-  std::optional<std::string> typeName = std::nullopt;
+  std::optional<std::string> typeAnnotation = std::nullopt;
   // std::unique_ptr<ExprBase> defaultValue;
 public:
   ParameterExpr(const std::string &name, const Location &loc)
       : ExprCRTP(loc), name(name){}
-  ParameterExpr(const std::string &name, const std::string &typeName, const Location &loc)
-      : ExprCRTP(loc), name(name), type(type) {}
+  ParameterExpr(const std::string &name, const std::string &typeAnnotation, const Location &loc)
+      : ExprCRTP(loc), name(name), typeAnnotation(typeAnnotation) {}
 
-  std::optional<std::string> getTypeName() const {
-    return typeName;
+  std::optional<std::string> getTypeAnnotation() const {
+    return typeAnnotation;
   }
 
   void printImpl(std::ostream &os) const {

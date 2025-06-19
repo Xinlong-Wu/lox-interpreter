@@ -30,21 +30,21 @@ public:
     return scopes.back()->declare(sym);
   }
 
-  bool declareType(const std::string &name, std::shared_ptr<Type> type) {
+  bool declareType(const std::string &name, std::unique_ptr<Type> type) {
     return scopes.back()->declareType(name, type);
   }
 
-  std::shared_ptr<Symbol> lookupSymbol(const std::string &name) {
+  Symbol* lookupSymbol(const std::string &name) {
     for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
       auto sym = (*it)->resolve(name);
       if (sym) {
-        return sym;
+        return sym.get();
       }
     }
     return nullptr;
   }
 
-  std::shared_ptr<Symbol> lookupLocalSymbol(const std::string &name) {
+  Symbol* lookupLocalSymbol(const std::string &name) {
     return scopes.back()->resolveLocal(name);
   }
 

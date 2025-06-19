@@ -21,8 +21,8 @@ public:
 
   std::string getName() const { return name; }
 
-  virtual bool isCompatibleWith(std::shared_ptr<Type> other) {
-    return this == other.get();
+  virtual bool isCompatibleWith(Type* other) {
+    return this == other;
   }
 
   virtual bool operator==(const Type &other) const{
@@ -83,10 +83,6 @@ public:
   PrimitiveType(std::string name) : TypeBase(std::move(name)) {}
   ~PrimitiveType() override = default;
 
-  bool isCompatibleWith(std::shared_ptr<Type> other) override {
-    return this == other.get();
-  }
-
   void printImpl(std::ostream &os) const override {
     os << name;
   }
@@ -107,9 +103,9 @@ public:
     return instance;
   }
 
-  bool isCompatibleWith(std::shared_ptr<Type> other) override {
-    return other->getTypeID() == getClassIdOf<NilType>();
-  }
+  // bool isCompatibleWith(Type* other) override {
+  //   return other->getTypeID() == getClassIdOf<NilType>();
+  // }
 
   void printImpl(std::ostream &os) const override {
     os << "nil";
@@ -118,16 +114,33 @@ public:
 
 class ClassType : public TypeBase<ClassType> {
 private:
-  std::shared_ptr<ClassType> superclass = nullptr;
-  std::shared_ptr<ClassScope> properties = nullptr;
+  const ClassType* superclass = nullptr;
+  ClassScope* properties = nullptr;
 public:
-  ClassType(const std::string &name, std::shared_ptr<ClassType> superClass)
-    : TypeBase(name), superclass(std::move(superClass)) {}
+  ClassType(const std::string &name, const ClassType* superClass)
+    : TypeBase(name), superclass(superClass) {}
   ClassType(const std::string &name)
     : TypeBase(name) {}
 
   ~ClassType() override = default;
   std::string getName() const { return name; }
+
+  bool isCompatibleWith(Type* other) override {
+    if (this == other) {
+      return true;
+    }
+    if (auto classType = dyn_cast<ClassType*>(other)) {
+      // Check if this class is a subclass of the other class
+      ClassType* current = this->getSuperClass();
+      while (current) {
+        if (current == classType) {
+          return true;
+        }
+        current = current->superclass;
+      }
+    }
+    return false;
+  }
 
   const ClassType *getSuperClass() const {
     return superclass.get();
@@ -138,18 +151,29 @@ public:
   }
 };
 
-class FunctionType : public TypeBase<FunctionType> {
+class FunctionType : public std::enable_shared_from_this<MyClass>,
+                      public TypeBase<FunctionType> {
 public:
   struct Signature {
-    std::vector<std::shared_ptr<Type>> parameters;
-    std::shared_ptr<Type> returnType;
+    std::vector<Type*> parameters;
+    Type* returnType;
 
-    Signature(std::vector<std::shared_ptr<Type>> parameters,
-              std::shared_ptr<Type> returnType = nullptr)
-        : parameters(std::move(parameters)), returnType(std::move(returnType)) {}
+    Signature(const std::vector<Type*> parameters,
+              Type* returnType = nullptr)
+        : parameters(std::move(parameters)), returnType(returnType) {}
 
     Signature(const Signature &other)
         : parameters(other.parameters), returnType(other.returnType) {}
+
+    Type *getParameterType(size_t index) const {
+      assert(index < parameters.size() && "Index out of bounds");
+      if (index < parameters.size()) {
+        return parameters[index];
+      }
+      return nullptr;
+    }
+
+    FunctionType::Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
 
     bool operator==(const Signature &other) const {
       if (this == &other) {
@@ -179,38 +203,38 @@ public:
     }
   };
 private:
-  std::vector<std::shared_ptr<Signature>> overloads;
+  std::vector<Signature*> overloads;
 public:
   FunctionType(std::string name) : TypeBase(name) {}
-  FunctionType(std::string name, const Signature &signature)
+  FunctionType(std::string name, const Signature *signature)
       : TypeBase(name) {
-    overloads.push_back(std::make_shared<Signature>(signature));
+    overloads.push_back(signature);
   }
 
   ~FunctionType() override = default;
 
-  bool isCompatibleWith(std::shared_ptr<Type> other) override {
+  bool isCompatibleWith(Type* other) override {
     assert(false && "Unimplemented FunctionType isCompatibleWith");
     return false;
   }
 
   std::string getName() const { return name; }
 
-  bool hasOverload(const Signature &signature) const {
+  bool hasOverload(const Signature *signature) const {
     return std::any_of(overloads.begin(), overloads.end(),
-                       [&signature](const std::shared_ptr<Signature> &overload) {
-                         return *overload == signature;
+                       [&signature](const Signature *s) {
+                        return *s == *signature;
                        });
   }
 
-  void addOverload(const Signature &signature) {
+  void addOverload(const Signature *signature) {
     if (hasOverload(signature)) {
       ErrorReporter::reportError(
           "Function '" + name + "' already has an overload with the same "
                              "signature.");
       return;
     }
-    overloads.push_back(std::make_shared<Signature>(signature));
+    overloads.push_back(signature);
   }
 
   bool operator==(const FunctionType *other) const {
