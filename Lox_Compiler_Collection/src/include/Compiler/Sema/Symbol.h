@@ -1,7 +1,7 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
-#include "Compiler/AST/Type.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/ErrorReporter.h"
 
 namespace lox {

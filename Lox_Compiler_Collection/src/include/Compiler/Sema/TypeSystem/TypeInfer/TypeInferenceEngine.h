@@ -4,17 +4,13 @@
 #include "Compiler/AST/Expr.h"
 #include "Compiler/AST/Stmt.h"
 #include "Compiler/Sema/SymbolTable.h"
-#include "Compiler/Sema/TypeInfer/Constraint.h"
+#include "Compiler/Sema/TypeSystem/TypeInfer/Constraint.h"
 
 namespace lox
 {
     class TypeInferenceEngine {
     private:
-        static PrimitiveType *NumberType;
-        static PrimitiveType *StringType;
-        static PrimitiveType *BoolType;
-        static NilType* NilType;
-
+        std::unique_ptr<TypeContext> typeContext;
         SymbolTable symbolTable;
         std::vector<Constraint> constraints;
         std::unordered_map<const TypeVariable *, Type *> substitutions;

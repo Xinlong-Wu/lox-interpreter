@@ -37,7 +37,7 @@ class Scope {
 protected:
   std::string name;
   std::unordered_map<std::string, std::unique_ptr<Symbol>> symbols;
-  std::unordered_map<std::string, std::unique_ptr<Type>> types;
+  std::unordered_map<std::string, Type *> types;
   std::shared_ptr<Scope> enclosingScope;
 public:
   Scope(std::shared_ptr<Scope> parent, const std::string &name)
@@ -75,7 +75,7 @@ public:
     return true;
   }
 
-  bool declareType(const std::string &name, std::unique_ptr<Type> type) {
+  bool declareType(const std::string &name, Type *type) {
     if (lookupLocal(name)) {
         ErrorReporter::reportError("Type '" + name +
                                   "' is conflicting with a symbol in scope '" +
@@ -88,7 +88,7 @@ public:
                                   this->getName() + "'");
         return false;
     }
-    types[name] = std::move(type);
+    types[name] = type;
     return true;
   }
 
@@ -103,7 +103,7 @@ public:
   Type* lookupType(const std::string &name) {
       auto it = types.find(name);
       if (it != types.end()) {
-          return it->second.get();
+          return it->second;
       }
       return enclosingScope ? enclosingScope->lookupType(name) : nullptr;
   }
@@ -115,7 +115,7 @@ public:
 
   Type* lookupTypeLocal(const std::string &name) {
     auto it = types.find(name);
-    return (it != types.end()) ? it->second.get() : nullptr;
+    return (it != types.end()) ? it->second : nullptr;
   }
 
   std::optional<SymbolOrType> lookupSymbolOrType(const std::string &name) {

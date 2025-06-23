@@ -9,16 +9,17 @@
 #include "Compiler/ErrorReporter.h"
 
 namespace lox {
+class TypeContext;
 class Scope;
 class ClassScope;
 
 class Type {
 protected:
   std::string name;
-public:
-  Type(const std::string &name) : name(name) {}
-  virtual ~Type() = default;
 
+  Type(const std::string &name) : name(name) {}
+public:
+  virtual ~Type() = default;
   std::string getName() const { return name; }
 
   virtual bool isCompatibleWith(const Type* other) const {
@@ -47,13 +48,17 @@ public:
 
 template<typename Derived>
 class TypeBase : public Type {
-public:
-  TypeBase(const std::string &name)
-      : Type(name) {};
+protected:
+    TypeBase(const std::string &name)
+        : Type(name) {};
+    TypeBase& operator=(const TypeBase&) = delete;
 
-  ClassID getTypeID() const override {
-    return ClassID::get<Derived>();
-  }
+    TypeBase(TypeBase&&) = default;
+    TypeBase& operator=(TypeBase&&) = default;
+public:
+    ClassID getTypeID() const override {
+      return ClassID::get<Derived>();
+    }
 
   static bool classof(const Type *type) {
     return type->getTypeID() == ClassID::get<Derived>();
@@ -67,11 +72,12 @@ public:
 };
 
 class TypeVariable : public TypeBase<TypeVariable> {
-private:
+protected:
   static std::vector<std::unique_ptr<TypeVariable>> instances;
 
   TypeVariable(const std::string& name) : TypeBase(name) {}
 public:
+  ~TypeVariable() override = default;
 
   static TypeVariable* create(std::string name = "") {
     if (name.empty()) {
@@ -84,57 +90,51 @@ public:
     return ptr;
   }
 
-  ~TypeVariable() override = default;
-
   void printImpl(std::ostream &os) const override {
     os << name;
   }
+
+  friend class TypeContext;
 };
 
 class PrimitiveType : public TypeBase<PrimitiveType> {
-public:
+protected:
   PrimitiveType(std::string name) : TypeBase(std::move(name)) {}
+public:
   ~PrimitiveType() override = default;
-
   void printImpl(std::ostream &os) const override {
     os << name;
   }
+
+  friend class TypeContext;
 };
 
 class NilType : public TypeBase<NilType> {
 private:
   // Singleton instance for NilType
   // static std::unique_ptr<NilType> instance;
-public:
+protected:
   NilType() : TypeBase("nil") {}
+public:
   ~NilType() override = default;
-
-  // static NilType* create() {
-  //   if (!instance) {
-  //     instance = std::unique_ptr<NilType>(new NilType());
-  //   }
-  //   return instance.get();
-  // }
-
-  // bool isCompatibleWith(Type* other) override {
-  //   return other->getTypeID() == getClassIdOf<NilType>();
-  // }
-
   void printImpl(std::ostream &os) const override {
     os << "nil";
   }
+
+  friend class TypeContext;
 };
 
 class ClassType : public TypeBase<ClassType> {
 private:
   const ClassType* superclass = nullptr;
   ClassScope* properties = nullptr;
-public:
+protected:
   ClassType(const std::string &name, const ClassType* superClass)
     : TypeBase(name), superclass(superClass) {}
   ClassType(const std::string &name)
     : TypeBase(name) {}
 
+public:
   ~ClassType() override = default;
   std::string getName() const { return name; }
 
@@ -166,6 +166,8 @@ public:
   void printImpl(std::ostream &os) const override {
     os << "class " << name;
   }
+
+  friend class TypeContext;
 };
 
 class FunctionType : public TypeBase<FunctionType> {
@@ -225,15 +227,16 @@ public:
       return seed;
     }
   };
-private:
+protected:
   std::vector<const Signature*> overloads;
-public:
+
   FunctionType(std::string name) : TypeBase(name) {}
   FunctionType(std::string name, const Signature *signature)
       : TypeBase(name) {
     overloads.push_back(signature);
   }
 
+public:
   ~FunctionType() override = default;
 
   const FunctionType::Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
@@ -291,6 +294,8 @@ public:
     }
     os << overloads.size() << " overloads ";
   }
+
+  friend class TypeContext;
 };
 } // namespace lox
 

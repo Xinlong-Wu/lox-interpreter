@@ -1,36 +1,23 @@
-#include "Compiler/AST/Type.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/AST/ASTWalker.h"
-#include "Compiler/Sema/TypeInfer/TypeInferenceEngine.h"
+#include "Compiler/Sema/TypeSystem/TypeInfer/TypeInferenceEngine.h"
 
 #include <iostream>
 
 using namespace std;
 using namespace lox;
 
-lox::PrimitiveType *lox::TypeInferenceEngine::NumberType = nullptr;
-lox::PrimitiveType *lox::TypeInferenceEngine::StringType = nullptr;
-lox::PrimitiveType *lox::TypeInferenceEngine::BoolType = nullptr;
-lox::NilType* lox::TypeInferenceEngine::NilType = nullptr;
-
 lox::TypeInferenceEngine::TypeInferenceEngine() {
     // 初始化符号表
     symbolTable = SymbolTable();
 
-    // 添加基本类型到符号表
-    unique_ptr<lox::PrimitiveType> numberType = make_unique<lox::PrimitiveType>("Number");
-    unique_ptr<lox::PrimitiveType> stringType = make_unique<lox::PrimitiveType>("String");
-    unique_ptr<lox::PrimitiveType> boolType = make_unique<lox::PrimitiveType>("Bool");
-    unique_ptr<lox::NilType> nilType = make_unique<lox::NilType>();
+    // 初始化类型上下文
+    typeContext = make_unique<TypeContext>();
 
-    NumberType = numberType.get();
-    StringType = stringType.get();
-    BoolType = boolType.get();
-    NilType = nilType.get();
-
-    symbolTable.declareType("Number", std::move(numberType));
-    symbolTable.declareType("String", std::move(stringType));
-    symbolTable.declareType("Bool", std::move(boolType));
-    symbolTable.declareType("Nil", std::move(nilType));
+    symbolTable.declareType("Number", typeContext->getNumberType());
+    symbolTable.declareType("String", std::move(typeContext->getStringType()));
+    symbolTable.declareType("Bool", std::move(typeContext->getBoolType()));
+    symbolTable.declareType("Nil", std::move(typeContext->getNilType()));
 }
 
 void lox::TypeInferenceEngine::inferProgramTypes(const vector<unique_ptr<StmtBase>> &statements) {
@@ -84,7 +71,7 @@ void lox::TypeInferenceEngine::collectClassDeclarations(ClassDeclStmt *classDecl
     }
 
     string className = classDecl->getName();
-    if (!symbolTable.declareType(className, std::move(make_unique<ClassType>(className, superClass)))) {
+    if (!symbolTable.declareType(className, typeContext->make<ClassType>(className, superClass))) {
         ErrorReporter::reportError("Class '" + classDecl->getName() + "' already declared");
         return;
     }
@@ -126,7 +113,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(FunctionDeclStmt *fun
 
     // check if the function is overloaded
     Symbol* overloadedFunc = symbolTable.lookupLocalSymbol(funcDecl->getName());
-    unique_ptr<FunctionType> funcType = nullptr;
+    FunctionType *funcType = nullptr;
     if (overloadedFunc) {
         FunctionType *existingFuncTypePtr = dyn_cast<FunctionType>(overloadedFunc->getType());
         if (!existingFuncTypePtr) {
@@ -137,13 +124,13 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(FunctionDeclStmt *fun
         funcDecl->setType(existingFuncTypePtr);
     } else {
         // create a new function type and declare it
-        funcType = make_unique<FunctionType>(funcDecl->getName(), signature);
-        if (!symbolTable.declare(std::move(make_unique<Symbol>(funcType.get())))) {
+        funcType = typeContext->make<FunctionType>(funcDecl->getName(), signature);
+        if (!symbolTable.declare(std::move(make_unique<Symbol>(funcType)))) {
             ErrorReporter::reportError("Function '" + funcDecl->getName() + "' already declared");
             return;
         }
 
-        funcDecl->setType(funcType.get());
+        funcDecl->setType(funcType);
         if (!symbolTable.declareType(funcDecl->getName(), std::move(funcType))) {
             ErrorReporter::reportError("Function type '" + funcDecl->getName() + "' already declared");
             return;
@@ -303,16 +290,16 @@ void lox::TypeInferenceEngine::inferBlockStmt(BlockStmt *blockStmt) {
 
 Type * lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
     if (isa<NumberExpr>(expr)) {
-        return lox::TypeInferenceEngine::NumberType;
+        return typeContext->getNumberType();
     }
     if (isa<StringExpr>(expr)) {
-        return lox::TypeInferenceEngine::StringType;
+        return typeContext->getStringType();
     }
     if (isa<BoolExpr>(expr)) {
-        return lox::TypeInferenceEngine::BoolType;
+        return typeContext->getBoolType();
     }
     if (isa<NilExpr>(expr)) {
-        return lox::TypeInferenceEngine::NilType;
+        return typeContext->getNilType();
     }
     if (auto varExpr = dyn_cast<VariableExpr>(expr)) {
         Symbol *symbol = symbolTable.lookupLocalSymbol(varExpr->getName());
@@ -364,7 +351,7 @@ Type *lox::TypeInferenceEngine::inferBinaryExpr(BinaryExpr *binaryExpr, Type *ex
         case BinaryExpr::Op::GreaterThan:
         case BinaryExpr::Op::GreaterThanOrEqual:
             addConstraint(leftType, rightType, Constraint::ConstraintType::EQUAL);
-            resultType = lox::TypeInferenceEngine::BoolType;
+            resultType = typeContext->getBoolType();
         default:
             ErrorReporter::reportError("Unknown binary operation: " + BinaryExpr::toString(binaryExpr->getOp()));
             return nullptr;
@@ -381,17 +368,16 @@ Type *lox::TypeInferenceEngine::inferUnaryExpr(UnaryExpr *unaryExpr, const Type 
 
     switch (unaryExpr->getOp()) {
         case UnaryExpr::Op::Negate:
-            addConstraint(operandType, lox::TypeInferenceEngine::NumberType, Constraint::ConstraintType::EQUAL);
-            resultType = lox::TypeInferenceEngine::NumberType;
+            resultType = typeContext->getNumberType();
             break;
         case UnaryExpr::Op::Not:
-            addConstraint(operandType, lox::TypeInferenceEngine::BoolType, Constraint::ConstraintType::EQUAL);
-            resultType = lox::TypeInferenceEngine::BoolType;
+            resultType = typeContext->getBoolType();
             break;
         default:
             ErrorReporter::reportError("Unknown unary operation: " + UnaryExpr::toString(unaryExpr->getOp()));
             return nullptr;
     }
+    addConstraint(operandType, resultType, Constraint::ConstraintType::EQUAL);
 
     unaryExpr->setType(resultType);
     return resultType;

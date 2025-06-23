@@ -8,7 +8,7 @@
 #include "Common.h"
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/AST/ASTVisitor.h"
-#include "Compiler/AST/Type.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/Scanner/Token.h"
 // #include "Compiler/Sema/Symbol.h"
 

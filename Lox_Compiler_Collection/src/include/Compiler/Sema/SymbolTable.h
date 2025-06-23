@@ -2,12 +2,19 @@
 #define SYMBOLTABLE_H
 
 #include "Compiler/Sema/Scope.h"
+#include "Compiler/Sema/TypeSystem/TypeContext.h"
 
 namespace lox {
 class SymbolTable {
 private:
   std::vector<std::shared_ptr<Scope>> scopes;
   std::shared_ptr<Scope> globalScope;
+
+  // 禁止复制和赋值
+  // SymbolTable(const SymbolTable&) = delete;
+  // SymbolTable& operator=(const SymbolTable&) = delete;
+  // SymbolTable(SymbolTable&&) = delete;
+  // SymbolTable& operator=(SymbolTable&&) = delete;
 
 public:
   SymbolTable() {
@@ -34,8 +41,8 @@ public:
     return scopes.back()->declare(std::move(sym));
   }
 
-  bool declareType(const std::string &name, std::unique_ptr<Type> type) {
-    return scopes.back()->declareType(name, std::move(type));
+  bool declareType(const std::string &name, Type *type) {
+    return scopes.back()->declareType(name, type);
   }
 
   Symbol* lookupSymbol(const std::string &name) {

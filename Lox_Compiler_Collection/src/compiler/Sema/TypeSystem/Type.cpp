@@ -1,4 +1,4 @@
-#include "Compiler/AST/Type.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/Sema/Scope.h"
 
 #include <queue>
