@@ -246,7 +246,7 @@ private:
   std::optional<std::string> returnTypeAnnotation = std::nullopt;
   std::vector<std::unique_ptr<ParameterExpr>> parameters;
   std::unique_ptr<BlockStmt> body;
-  std::unique_ptr<FunctionType::Signature> signature = nullptr;
+  Signature* signature = nullptr;
 
 public:
   FunctionDeclStmt(std::string name,
@@ -269,12 +269,12 @@ public:
     return returnTypeAnnotation;
   }
 
-  void setSignature(std::unique_ptr<FunctionType::Signature> sig) {
+  void setSignature(Signature* sig) {
     assert(signature == nullptr && "Signature has already been set");
     signature = std::move(sig);
   }
-  FunctionType::Signature *getSignature() const {
-    return signature.get();
+  Signature *getSignature() const {
+    return signature;
   }
 
   std::vector<std::unique_ptr<ParameterExpr>> &getParameters() {

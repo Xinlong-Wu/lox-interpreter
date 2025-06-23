@@ -108,8 +108,9 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(FunctionDeclStmt *fun
 
     // collect the function's return type
     Type* returnType = TypeVariable::create();
-    funcDecl->setSignature(make_unique<FunctionType::Signature>(paramTypes, returnType));
-    const FunctionType::Signature *signature = funcDecl->getSignature();
+    unique_ptr<Signature> signature = make_unique<Signature>(std::move(paramTypes), returnType);
+    Signature *signaturePtr = signature.get();
+    funcDecl->setSignature(signaturePtr);
 
     // check if the function is overloaded
     Symbol* overloadedFunc = symbolTable.lookupLocalSymbol(funcDecl->getName());
@@ -120,11 +121,11 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(FunctionDeclStmt *fun
             ErrorReporter::reportError("Symbol '" + funcDecl->getName() + "' is not a function");
             return;
         }
-        existingFuncTypePtr->addOverload(signature);
+        existingFuncTypePtr->addOverload(std::move(signature));
         funcDecl->setType(existingFuncTypePtr);
     } else {
         // create a new function type and declare it
-        funcType = typeContext->make<FunctionType>(funcDecl->getName(), signature);
+        funcType = typeContext->make<FunctionType>(funcDecl->getName(), std::move(signature));
         if (!symbolTable.declare(std::move(make_unique<Symbol>(funcType)))) {
             ErrorReporter::reportError("Function '" + funcDecl->getName() + "' already declared");
             return;
@@ -138,7 +139,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(FunctionDeclStmt *fun
     }
 
     // enter function scope
-    shared_ptr<FunctionScope> funcScope = make_shared<FunctionScope>(symbolTable.currentScope(), funcDecl->getName(), signature);
+    shared_ptr<FunctionScope> funcScope = make_shared<FunctionScope>(symbolTable.currentScope(), funcDecl->getName(), signaturePtr);
     funcDecl->setScope(funcScope);
     symbolTable.enterScope(funcScope);
 
@@ -248,7 +249,7 @@ void lox::TypeInferenceEngine::inferFunctionDeclStmt(FunctionDeclStmt *funcDecl)
     //     else {
     //         returnType = TypeInferenceEngine::NilType;
     //     }
-    //     FunctionType::Signature *signature = funcDecl->getSignature();
+    //     Signature *signature = funcDecl->getSignature();
     //     if (signature->getReturnType() == nullptr) {
     //         signature->setReturnType(returnType);
     //     } else {
@@ -399,7 +400,7 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr, Type *expected
     const Type *calleeType = inferExpr(callExpr->getCallee());
     if (auto functionType = dyn_cast<const FunctionType>(calleeType)) {
         // check if function has a matching signature
-        const FunctionType::Signature *bestMatch = functionType->resolveOverload(argTypes);
+        const Signature *bestMatch = functionType->resolveOverload(argTypes);
         if (!bestMatch) {
             ErrorReporter::reportError("No matching function overload found for call");
             return nullptr;

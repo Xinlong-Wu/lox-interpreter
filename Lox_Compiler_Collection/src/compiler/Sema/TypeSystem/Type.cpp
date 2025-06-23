@@ -24,8 +24,8 @@ int64_t calculateMatchScore(const vector<Type*> &params, const vector<Type*> &ar
 }
 
 
-const lox::FunctionType::Signature *lox::FunctionType::resolveOverload(const std::vector<Type*> &argTypes) const {
-    priority_queue<pair<int64_t, const FunctionType::Signature*>> candidates;
+const lox::Signature *lox::FunctionType::resolveOverload(const std::vector<Type*> &argTypes) const {
+    priority_queue<pair<int64_t, const Signature*>> candidates;
 
     for (const auto &overload : overloads) {
         if (overload->parameters.size() != argTypes.size()) {
@@ -33,7 +33,7 @@ const lox::FunctionType::Signature *lox::FunctionType::resolveOverload(const std
         }
         int64_t score = calculateMatchScore(overload->parameters, argTypes);
         if (score >= 0) {
-            candidates.push(make_pair(score, overload));
+            candidates.push(make_pair(score, overload.get()));
         }
     }
 

@@ -170,76 +170,98 @@ public:
   friend class TypeContext;
 };
 
-class FunctionType : public TypeBase<FunctionType> {
+class FunctionType;
+class Signature : public TypeBase<Signature> {
+protected:
+  std::vector<Type*> parameters;
+  Type* returnType;
+
+  FunctionType *functionType = nullptr;
+
 public:
-  struct Signature {
-    std::vector<Type*> parameters;
-    Type* returnType;
+  Signature(std::vector<Type*> parameters,
+            Type* returnType = nullptr)
+      : TypeBase("Signature"), parameters(std::move(parameters)), returnType(returnType) {}
 
-    Signature(std::vector<Type*> parameters,
-              Type* returnType = nullptr)
-        : parameters(std::move(parameters)), returnType(returnType) {}
+  Signature(const Signature &other)
+      : TypeBase("Signature"), parameters(other.parameters), returnType(other.returnType) {}
 
-    Signature(const Signature &other)
-        : parameters(other.parameters), returnType(other.returnType) {}
-
-    Type *getParameterType(size_t index) const {
-      assert(index < parameters.size() && "Index out of bounds");
-      if (index < parameters.size()) {
-        return parameters[index];
-      }
-      return nullptr;
+  Type *getParameterType(size_t index) const {
+    assert(index < parameters.size() && "Index out of bounds");
+    if (index < parameters.size()) {
+      return parameters[index];
     }
+    return nullptr;
+  }
 
-    Type *getReturnType() const {
-      return returnType;
+  Type *getReturnType() const {
+    return returnType;
+  }
+
+  void setReturnType(Type *type) {
+    assert(returnType == nullptr && "Return type has already been set");
+    returnType = type;
+  }
+
+  bool operator==(const Signature &other) const {
+    if (this == &other) {
+      return true;
     }
-
-    void setReturnType(Type *type) {
-      assert(returnType == nullptr && "Return type has already been set");
-      returnType = type;
+    if (parameters.size() != other.parameters.size()) {
+      return false;
     }
-
-    bool operator==(const Signature &other) const {
-      if (this == &other) {
-        return true;
-      }
-      if (parameters.size() != other.parameters.size()) {
+    for (size_t i = 0; i < parameters.size(); ++i) {
+      if (*parameters[i] != *other.parameters[i]) {
         return false;
       }
-      for (size_t i = 0; i < parameters.size(); ++i) {
-        if (*parameters[i] != *other.parameters[i]) {
-          return false;
-        }
-      }
-      return returnType == other.returnType;
     }
-    bool operator!=(const Signature &other) const { return !(*this == other); }
+    return returnType == other.returnType;
+  }
+  bool operator!=(const Signature &other) const { return !(*this == other); }
 
-    size_t hash() const {
-      size_t seed = 0;
-      for (const auto &param : parameters) {
-        hash_combine(param->hash(), seed);
-      }
-      if (returnType) {
-        hash_combine(returnType->hash(), seed);
-      }
-      return seed;
+  size_t hash() const override {
+    size_t seed = 0;
+    for (const auto &param : parameters) {
+      hash_combine(param->hash(), seed);
     }
-  };
+    if (returnType) {
+      hash_combine(returnType->hash(), seed);
+    }
+    return seed;
+  }
+
+  void printImpl(std::ostream &os) const override {
+    os << "(";
+    for (size_t i = 0; i < parameters.size(); ++i) {
+      os << parameters[i]->getName();
+      if (i < parameters.size() - 1) {
+        os << ", ";
+      }
+    }
+    os << ")";
+    if (returnType) {
+      os << " -> ";
+      os << returnType->getName();
+    }
+  }
+
+  friend class FunctionType;
+};
+
+class FunctionType : public TypeBase<FunctionType> {
 protected:
-  std::vector<const Signature*> overloads;
+  std::vector<std::unique_ptr<Signature>> overloads;
 
   FunctionType(std::string name) : TypeBase(name) {}
-  FunctionType(std::string name, const Signature *signature)
+  FunctionType(std::string name, std::unique_ptr<Signature> signature)
       : TypeBase(name) {
-    overloads.push_back(signature);
+    addOverload(std::move(signature));
   }
 
 public:
   ~FunctionType() override = default;
 
-  const FunctionType::Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
+  const Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
 
   bool isCompatibleWith(const Type* other) const override {
     assert(false && "Unimplemented FunctionType isCompatibleWith");
@@ -250,19 +272,22 @@ public:
 
   bool hasOverload(const Signature *signature) const {
     return std::any_of(overloads.begin(), overloads.end(),
-                       [&signature](const Signature *s) {
-                        return *s == *signature;
+                       [&signature](const std::unique_ptr<Signature> &s) {
+                        return *s.get() == *signature;
                        });
   }
 
-  void addOverload(const Signature *signature) {
-    if (hasOverload(signature)) {
+  void addOverload(std::unique_ptr<Signature> signature) {
+    if (hasOverload(signature.get())) {
       ErrorReporter::reportError(
           "Function '" + name + "' already has an overload with the same "
                              "signature.");
       return;
     }
-    overloads.push_back(signature);
+    assert (signature->functionType == nullptr &&
+           "Signature already has a function type set");
+    signature->functionType = this; // Set the function type for the signature
+    overloads.push_back(std::move(signature));
   }
 
   bool operator==(const FunctionType *other) const {
@@ -272,9 +297,7 @@ public:
     if (name != other->name || overloads.size() != other->overloads.size()) {
       return false;
     }
-    return std::equal(overloads.begin(), overloads.end(), other->overloads.begin(),
-                      [](const Signature *a,
-                         const Signature *b) { return *a == *b; });
+    return false;
   }
 
   size_t hash() const override {

@@ -55,7 +55,7 @@ public:
   // 类型获取
   // virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
   virtual const ClassType *getCurrentClassType() const = 0;
-  virtual const FunctionType::Signature* getCurrentSignature() const = 0;
+  virtual const Signature* getCurrentSignature() const = 0;
 
   // 符号管理
   bool declare(std::unique_ptr<Symbol> symbol) {
@@ -170,7 +170,7 @@ protected:
   mutable std::optional<bool> _inClassScope = std::nullopt;
   mutable std::optional<bool> _inFunctionScope = std::nullopt;
   mutable const ClassType *currentClassType = nullptr;
-  mutable const FunctionType::Signature* currentSignature = nullptr;
+  mutable const Signature* currentSignature = nullptr;
 
 protected:
   // CRTP辅助函数
@@ -218,7 +218,7 @@ public:
       return false;
   }
 
-  const FunctionType::Signature* getCurrentSignature() const override {
+  const Signature* getCurrentSignature() const override {
     if (!inFunctionScope()) {
         return nullptr;
     }
@@ -291,7 +291,7 @@ public:
   }
 
   // 默认实现，派生类可以重写
-  virtual const FunctionType::Signature *getCurrentSignatureImpl() const { return nullptr; }
+  virtual const Signature *getCurrentSignatureImpl() const { return nullptr; }
   virtual const ClassType *getCurrentClassTypeImpl() const { return nullptr; }
 };
 
@@ -330,12 +330,12 @@ public:
   FunctionScope(std::shared_ptr<Scope> parent, const std::string &name)
       : ScopeBase(parent, name) {}
 
-  FunctionScope(std::shared_ptr<Scope> parent, const std::string &name, const FunctionType::Signature *signature)
+  FunctionScope(std::shared_ptr<Scope> parent, const std::string &name, const Signature *signature)
       : ScopeBase(parent, name) {
     this->currentSignature = signature;
   }
 
-  const FunctionType::Signature* getCurrentSignatureImpl() const override {
+  const Signature* getCurrentSignatureImpl() const override {
     return currentSignature;
   }
 };
