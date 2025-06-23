@@ -25,26 +25,27 @@ public:
 
   virtual ClassID getClassID() const = 0;
 
+  bool isStatement() const override { return true; }
+  static bool classof(const ASTNode *node) {
+    return node->isStatement();
+  }
+
   virtual void print(std::ostream &os) const = 0;
   virtual void dump() const {
     this->print(std::cout);
     std::cout << std::endl;
   }
-
-  virtual void accept(ASTVisitor &visitor) = 0;
 };
 
 template<typename Derived>
 class StmtCRTP : public StmtBase {
 protected:
-  ClassID classID;
-
-  StmtCRTP(Location loc) : StmtBase(loc), classID(getClassIdOf<Derived>()) {}
+  StmtCRTP(Location loc) : StmtBase(loc) {}
 public:
-  ClassID getClassID() const override { return classID; }
+  ClassID getClassID() const override { return ClassID::get<Derived>(); }
 
   static bool classof(const StmtBase *stmt) {
-    return stmt->getClassID() == getClassIdOf<Derived>();
+    return stmt->getClassID() == ClassID::get<Derived>();
   }
 
   void print(std::ostream &os) const override {
@@ -125,7 +126,7 @@ public:
   // }
 };
 
-class VarDeclStmt : public DeclVararation,
+class VarDeclStmt : public Declaration,
                    public StmtCRTP<VarDeclStmt> {
 private:
   std::string name;
@@ -155,12 +156,12 @@ public:
   }
 
   void printImpl(std::ostream &os) const {
-    os << "var ";
-    if (symbol) {
-      symbol->print(os);
-    }
-    else {
-      os << name;
+    os << "var " << name;
+
+    if (type) {
+      os << ": " << type;
+    } else if (typeAnnotation) {
+      os << ": " << *typeAnnotation;
     }
 
     if (initializer) {
@@ -272,7 +273,7 @@ public:
     assert(signature == nullptr && "Signature has already been set");
     signature = std::move(sig);
   }
-  const FunctionType::Signature *getSignature() const {
+  FunctionType::Signature *getSignature() const {
     return signature.get();
   }
 
@@ -346,6 +347,7 @@ public:
   ~ClassDeclStmt() override = default;
 
   bool hasSuperclass() const { return superclassName.has_value(); }
+  const std::string &getName() const { return className; }
   const std::string &getSuperclassName() const { return *superclassName; }
   const std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> &
   getFields() {

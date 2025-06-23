@@ -12,6 +12,9 @@ public:
   virtual ~ASTNode() = default;
   virtual void accept(ASTVisitor &visitor) = 0;
 
+  virtual bool isExpression() const { return false; }
+  virtual bool isStatement() const { return false; }
+
   // 新增的walker接口 - 模板版本，直接传入lambda（返回WalkResult）
   template<typename T>
   WalkResult walk(WalkCallback<T> callback, WalkOrder order = WalkOrder::PreOrder) {

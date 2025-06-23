@@ -44,8 +44,8 @@ public:
     explicit Walker(WalkOrder order = WalkOrder::PreOrder) : order(order) {}
 
     // 注册特定类型的回调函数（返回WalkResult）
-    template<typename T>
-    void registerCallback(WalkCallback<T> callback) {
+    template<typename T, typename CallBack>
+    auto registerCallback(CallBack&& callback) -> std::enable_if_t<std::is_same_v<std::invoke_result_t<CallBack, T*>, WalkResult>, void> {
         callbacks[typeid(T)] = [callback](ASTNode* node) -> WalkResult {
             // if (auto* typed_node = dynamic_cast<T*>(node)) {
             if (auto* typed_node = dyn_cast<T>(node)) {
@@ -55,9 +55,9 @@ public:
         };
     }
 
-    // 注册特定类型的回调函数（无返回值）
-    template<typename T>
-    void registerCallback(VoidWalkCallback<T> callback) {
+    // 注册特定类型的回调函数（无返回值)
+    template<typename T, typename CallBack>
+    auto registerCallback(CallBack&& callback) -> std::enable_if_t<std::is_same_v<std::invoke_result_t<CallBack, T*>, void>, void> {
         callbacks[typeid(T)] = [callback](ASTNode* node) -> WalkResult {
             // if (auto* typed_node = dynamic_cast<T*>(node)) {
             if (auto* typed_node = dyn_cast<T>(node)) {

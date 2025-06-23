@@ -4,12 +4,14 @@
 #include "Common.h"
 #include "Compiler/Sema/Symbol.h"
 
+#include <variant>
+
 namespace lox {
 class FunctionScope;
 class ClassScope;
 
 struct SymbolOrType {
-  std::veriant<Symbol*, Type*> value;
+  std::variant<Symbol*, Type*> value;
   SymbolOrType(Symbol* sym) : value(sym) {}
   SymbolOrType(Type* type) : value(type) {}
 
@@ -51,8 +53,9 @@ public:
   virtual bool inClassScope() const = 0;
 
   // 类型获取
-  virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
-  virtual std::shared_ptr<ClassType> getCurrentClassType() const = 0;
+  // virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
+  virtual const ClassType *getCurrentClassType() const = 0;
+  virtual const FunctionType::Signature* getCurrentSignature() const = 0;
 
   // 符号管理
   bool declare(std::unique_ptr<Symbol> symbol) {
@@ -128,6 +131,14 @@ public:
     return std::nullopt;
   }
 
+  std::vector<Symbol*> getSymbols() const {
+    std::vector<Symbol*> result;
+    for (const auto &[name, symbol] : symbols) {
+      result.push_back(symbol.get());
+    }
+    return result;
+  }
+
   // 工具函数
   // virtual void checkUnusedSymbols() const = 0;
   size_t hash() const {
@@ -158,20 +169,17 @@ class ScopeBase : public Scope {
 protected:
   mutable std::optional<bool> _inClassScope = std::nullopt;
   mutable std::optional<bool> _inFunctionScope = std::nullopt;
-  mutable std::shared_ptr<ClassType> currentClassType = nullptr;
-  mutable FunctionType::Signature* currentSignature = nullptr;
+  mutable const ClassType *currentClassType = nullptr;
+  mutable const FunctionType::Signature* currentSignature = nullptr;
 
 protected:
-  // 存储实际的类型ID
-  ClassID classID;
-
   // CRTP辅助函数
   Derived& derived() { return static_cast<Derived&>(*this); }
   const Derived& derived() const { return static_cast<const Derived&>(*this); }
 
 public:
   ScopeBase(std::shared_ptr<Scope> parent, const std::string &name)
-        : Scope(parent, name), classID(getClassIdOf<Derived>()) {}
+        : Scope(parent, name) {}
 
   virtual ~ScopeBase() = default;
 
@@ -210,7 +218,7 @@ public:
       return false;
   }
 
-  FunctionType::Signature* getCurrentSignature() const override {
+  const FunctionType::Signature* getCurrentSignature() const override {
     if (!inFunctionScope()) {
         return nullptr;
     }
@@ -236,7 +244,7 @@ public:
     return nullptr;
   }
 
-  std::shared_ptr<ClassType> getCurrentClassType() const override {
+  const ClassType *getCurrentClassType() const override {
     if (!inClassScope()) {
         return nullptr;
     }
@@ -262,10 +270,12 @@ public:
     return nullptr;
   }
 
-  ClassID getClassID() const override { return classID; }
+  ClassID getClassID() const override {
+    return ClassID::get<Derived>();
+  }
 
   static bool classof(const Scope* expr) {
-    return expr->getClassID() == getClassIdOf<Derived>();
+    return expr->getClassID() == ClassID::get<Derived>();
   }
 
   void print(std::ostream &os, int level = 0) const override {
@@ -281,8 +291,8 @@ public:
   }
 
   // 默认实现，派生类可以重写
-  virtual std::shared_ptr<FunctionType> getCurrentSignatureImpl() const { return nullptr; }
-  virtual std::shared_ptr<ClassType> getCurrentClassTypeImpl() const { return nullptr; }
+  virtual const FunctionType::Signature *getCurrentSignatureImpl() const { return nullptr; }
+  virtual const ClassType *getCurrentClassTypeImpl() const { return nullptr; }
 };
 
 // 具体的作用域类型实现
@@ -308,7 +318,7 @@ public:
     }
   }
 
-  std::shared_ptr<ClassType> getCurrentClassTypeImpl() const override {
+  const ClassType *getCurrentClassTypeImpl() const override {
     return currentClassType;
   }
 };
@@ -318,23 +328,15 @@ private:
   std::shared_ptr<Type> returnType = nullptr;
 public:
   FunctionScope(std::shared_ptr<Scope> parent, const std::string &name)
-      : ScopeBase(parent, name) {
-    this->currentFunctionType = cast<FunctionType>(parent->lookupType(name));
-    if (this->currentFunctionType == nullptr) {
-      ErrorReporter::reportError("Function '" + name + "' is not defined in enclosing scope");
-    }
-  }
+      : ScopeBase(parent, name) {}
 
   FunctionScope(std::shared_ptr<Scope> parent, const std::string &name, const FunctionType::Signature *signature)
-      : ScopeBase(parent, funcType->getName()) {
+      : ScopeBase(parent, name) {
     this->currentSignature = signature;
   }
 
-  FunctionType::Signature* getCurrentSignatureImpl() const override {
+  const FunctionType::Signature* getCurrentSignatureImpl() const override {
     return currentSignature;
-  }
-
-  void set
   }
 };
 
@@ -342,10 +344,10 @@ class BlockScope : public ScopeBase<BlockScope> {
 private:
   static size_t anonymousCounter;
 public:
-  BlockScope(std::shared_ptr<ScopeBase> parent, const std::string &name)
+  BlockScope(std::shared_ptr<Scope> parent, const std::string &name)
       : ScopeBase(parent, name) {}
-  BlockScope(std::shared_ptr<ScopeBase> parent)
-      : ScopeBase(parent, "Block" + std::to_string(anonymousCounter++)) {}
+  BlockScope(std::shared_ptr<Scope> parent)
+      : BlockScope(parent, "Block" + std::to_string(anonymousCounter++)) {}
 };
 }
 #endif // SCOPE_H

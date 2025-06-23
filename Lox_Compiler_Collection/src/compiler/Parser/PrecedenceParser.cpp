@@ -235,10 +235,10 @@ InfixHandler(binary) {
         lox::BinaryExpr::Op::GreaterThan, std::move(left), std::move(right), loc);
   case lox::TokenType::TOKEN_GREATER_EQUAL:
     return std::make_unique<lox::BinaryExpr>(
-        lox::BinaryExpr::Op::GreaterThanEqual, std::move(left), std::move(right), loc);
+        lox::BinaryExpr::Op::GreaterThanOrEqual, std::move(left), std::move(right), loc);
   case lox::TokenType::TOKEN_LESS:
     return std::make_unique<lox::BinaryExpr>(
-        lox::BinaryExpr::Op::GreaterThanEqual, std::move(right), std::move(left), loc);
+        lox::BinaryExpr::Op::GreaterThanOrEqual, std::move(right), std::move(left), loc);
   case lox::TokenType::TOKEN_LESS_EQUAL:
     return std::make_unique<lox::BinaryExpr>(
         lox::BinaryExpr::Op::GreaterThan, std::move(right), std::move(left), loc);
