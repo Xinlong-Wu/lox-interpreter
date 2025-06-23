@@ -1,6 +1,10 @@
 #include "Compiler/AST/Type.h"
+#include "Compiler/Sema/Scope.h"
+
+#include <queue>
 
 using namespace std;
+using namespace lox;
 
 int64_t calculateMatchScore(const vector<Type*> &params, const vector<Type*> &args) {
     int64_t score = 0;
@@ -20,8 +24,8 @@ int64_t calculateMatchScore(const vector<Type*> &params, const vector<Type*> &ar
 }
 
 
-lox::FunctionType::Signature *lox::FunctionType::Signature::resolveOverload(const std::vector<Type*> &argTypes) const {
-    priority_queue<pair<int64_t, FunctionType::Signature*>> candidates;
+const lox::FunctionType::Signature *lox::FunctionType::resolveOverload(const std::vector<Type*> &argTypes) const {
+    priority_queue<pair<int64_t, const FunctionType::Signature*>> candidates;
 
     for (const auto &overload : overloads) {
         if (overload->parameters.size() != argTypes.size()) {
@@ -29,7 +33,7 @@ lox::FunctionType::Signature *lox::FunctionType::Signature::resolveOverload(cons
         }
         int64_t score = calculateMatchScore(overload->parameters, argTypes);
         if (score >= 0) {
-            candidates.push(overload);
+            candidates.push(make_pair(score, overload));
         }
     }
 
@@ -39,3 +43,23 @@ lox::FunctionType::Signature *lox::FunctionType::Signature::resolveOverload(cons
 
     return candidates.top().second;
 }
+
+lox::Type* lox::ClassType::getPropertyType(const std::string &propertyName) const {
+    if (properties) {
+      auto prop = properties->lookupLocal(propertyName);
+      if (prop) {
+        return prop->getType();
+      }
+    }
+    return nullptr;
+}
+
+const std::vector<lox::Type*> lox::ClassType::getPropertyTypes() const {
+    std::vector<lox::Type*> types;
+    if (properties) {
+      for (const auto &symbol : properties->getSymbols()) {
+        types.push_back(symbol->getType());
+      }
+    }
+    return types;
+  }

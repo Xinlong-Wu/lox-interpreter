@@ -7,9 +7,13 @@ namespace lox {
 class SymbolTable {
 private:
   std::vector<std::shared_ptr<Scope>> scopes;
+  std::shared_ptr<Scope> globalScope;
 
 public:
-  SymbolTable() { scopes.push_back(std::make_shared<GlobalScope>()); }
+  SymbolTable() {
+    globalScope = std::make_shared<GlobalScope>();
+    scopes.push_back(globalScope);
+  }
   ~SymbolTable() = default;
 
   void enterScope(const std::shared_ptr<Scope> &scope) {
@@ -26,26 +30,28 @@ public:
 
   std::shared_ptr<Scope> currentScope() const { return scopes.back(); }
 
-  bool declare(std::shared_ptr<Symbol> sym) {
-    return scopes.back()->declare(sym);
+  bool declare(std::unique_ptr<Symbol> sym) {
+    return scopes.back()->declare(std::move(sym));
   }
 
   bool declareType(const std::string &name, std::unique_ptr<Type> type) {
-    return scopes.back()->declareType(name, type);
+    return scopes.back()->declareType(name, std::move(type));
   }
 
   Symbol* lookupSymbol(const std::string &name) {
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
-      auto sym = (*it)->resolve(name);
-      if (sym) {
-        return sym.get();
-      }
-    }
-    return nullptr;
+    return scopes.back()->lookup(name);
   }
 
   Symbol* lookupLocalSymbol(const std::string &name) {
-    return scopes.back()->resolveLocal(name);
+    return scopes.back()->lookupLocal(name);
+  }
+
+  Type* lookupType(const std::string &name) {
+    return scopes.back()->lookupType(name);
+  }
+
+  Type* lookupTypeLocal(const std::string &name) {
+    return scopes.back()->lookupTypeLocal(name);
   }
 
   void print(std::ostream &os) const {

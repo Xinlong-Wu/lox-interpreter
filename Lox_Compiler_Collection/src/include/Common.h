@@ -42,12 +42,30 @@
 namespace lox
 {
 
-using ClassID = const void*;
-template<typename T>
-static ClassID getClassIdOf() {
-    static char id;
-    return &id;
-}
+// using ClassID = const uintptr_t;
+// template<typename T>
+// static ClassID getClassIdOf() {
+//     static char id;
+//     return reinterpret_cast<ClassID>(&id);
+// }
+
+class ClassID {
+private:
+    const uintptr_t id;
+public:
+    ClassID() : id(0) {}
+    explicit ClassID(uintptr_t id) : id(id) {}
+
+    template<typename T>
+    static ClassID get() {
+        static char dummy;
+        return ClassID(reinterpret_cast<uintptr_t>(&dummy));
+    }
+
+    operator uintptr_t() const { return id; }
+    bool operator==(const ClassID &other) const { return id == other.id; }
+    bool operator!=(const ClassID &other) const { return id != other.id; }
+};
 
 template <typename Enum, typename... Enums>
 bool isOneOf(Enum value, Enum first, Enums... rest) {

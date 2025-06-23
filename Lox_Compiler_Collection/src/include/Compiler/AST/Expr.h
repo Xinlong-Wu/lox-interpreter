@@ -23,7 +23,13 @@ public:
   virtual ~ExprBase() = default;
 
   const Location& getLoc() const { return loc; }
-  const Type* getType() const {
+  void setType(Type* type) {
+    if (this->type) {
+      ErrorReporter::reportError("Type already set for expression");
+    }
+    this->type = type;
+  }
+  Type* getType() const {
     return type;
   }
 
@@ -39,16 +45,13 @@ public:
 template<typename Derived>
 class ExprCRTP : public ExprBase {
 protected:
-  // 存储实际的类型ID
-  ClassID classID;
-
   ExprCRTP(Location loc)
-      : ExprBase(loc), classID(getClassIdOf<Derived>()) {}
+      : ExprBase(loc){}
 public:
-  ClassID getClassID() const override { return classID; }
+  ClassID getClassID() const override { return ClassID::get<Derived>(); }
 
   static bool classof(const ExprBase* expr) {
-    return expr->getClassID() == getClassIdOf<Derived>();
+    return expr->getClassID() == ClassID::get<Derived>();
   }
 
   void print(std::ostream &os) const override {
@@ -135,6 +138,8 @@ public:
   VariableExpr(std::string_view name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
 
+  const std::string& getName() const { return name; }
+
   void printImpl(std::ostream &os) const {
     os << name;
   }
@@ -151,6 +156,9 @@ class AccessExpr : public ExprCRTP<AccessExpr> {
 public:
   AccessExpr(std::unique_ptr<ExprBase> base, const std::string &property, const Location &loc)
       : ExprCRTP(loc), base(std::move(base)), property(property) {}
+
+  ExprBase* getObject() const { return base.get(); }
+  const std::string& getFieldName() const { return property; }
 
   void printImpl(std::ostream &os) const {
     base->print(os);
@@ -188,6 +196,9 @@ protected:
 public:
   UnaryExpr(Op op, std::unique_ptr<ExprBase> operand, const Location &loc)
       : ExprCRTP(loc), operand(std::move(operand)), op(op) {}
+
+  ExprBase* getOperand() const { return operand.get(); }
+  Op getOp() const { return op; }
 
   void printImpl(std::ostream &os) const {
     os << toString(op);
@@ -227,7 +238,7 @@ public:
 
 class BinaryExpr : public ExprCRTP<BinaryExpr> {
 public:
-  enum class Op { Add, Sub, Mul, Div, Mod, And, Or, Equal, NotEqual, GreaterThan, GreaterThanEqual };
+  enum class Op { Add, Sub, Mul, Div, Mod, And, Or, Equal, NotEqual, GreaterThan, GreaterThanOrEqual };
   std::unique_ptr<ExprBase> left;
   std::unique_ptr<ExprBase> right;
   Op op;
@@ -235,10 +246,19 @@ public:
   BinaryExpr(Op op, std::unique_ptr<ExprBase> left, std::unique_ptr<ExprBase> right, const Location &loc)
       : ExprCRTP(loc), left(std::move(left)), right(std::move(right)), op(op) {}
 
+  ExprBase* getLeft() const { return left.get(); }
+  ExprBase* getRight() const { return right.get(); }
+
   void printImpl(std::ostream &os) const {
     left->print(os);
     os << " " << toString(op) << " ";
     right->print(os);
+  }
+
+  Op getOp() const { return op; }
+
+  bool operator==(const Op &op) const {
+    return this->op == op;
   }
 
   static std::string toString(Op op) {
@@ -253,7 +273,7 @@ public:
       case Op::Equal: return "==";
       case Op::NotEqual: return "!=";
       case Op::GreaterThan: return ">";
-      case Op::GreaterThanEqual: return ">=";
+      case Op::GreaterThanOrEqual: return ">=";
       default: return "<unknown>";
     }
   }
@@ -291,7 +311,8 @@ public:
   AssignExpr(std::unique_ptr<ExprBase> target, std::unique_ptr<ExprBase> value, const Location &loc)
       : ExprCRTP(loc), target(std::move(target)), value(std::move(value)) {}
 
-
+  ExprBase* getTarget() const { return target.get(); }
+  ExprBase* getValue() const { return value.get(); }
 
   void printImpl(std::ostream &os) const {
     target->print(os);
@@ -331,6 +352,19 @@ class CallExpr : public ExprCRTP<CallExpr> {
 public:
   CallExpr(std::unique_ptr<ExprBase> callee, std::vector<std::unique_ptr<ExprBase>> arguments, const Location &loc)
       : ExprCRTP(loc), callee(std::move(callee)), arguments(std::move(arguments)) {}
+
+  size_t getArgumentCount() const {
+    return arguments.size();
+  }
+
+  ExprBase* getArgument(size_t index) const {
+    if (index < arguments.size()) {
+      return arguments[index].get();
+    }
+    return nullptr; // or throw an exception
+  }
+
+  ExprBase* getCallee() const { return callee.get(); }
 
   void printImpl(std::ostream &os) const {
     callee->print(os);
@@ -381,6 +415,9 @@ public:
   ParameterExpr(const std::string &name, const std::string &typeAnnotation, const Location &loc)
       : ExprCRTP(loc), name(name), typeAnnotation(typeAnnotation) {}
 
+  std::string getName() const {
+    return name;
+  }
   std::optional<std::string> getTypeAnnotation() const {
     return typeAnnotation;
   }

@@ -21,7 +21,7 @@ public:
 
   std::string getName() const { return name; }
 
-  virtual bool isCompatibleWith(Type* other) {
+  virtual bool isCompatibleWith(const Type* other) const {
     return this == other;
   }
 
@@ -52,11 +52,11 @@ public:
       : Type(name) {};
 
   ClassID getTypeID() const override {
-    return getClassIdOf<Derived>();
+    return ClassID::get<Derived>();
   }
 
   static bool classof(const Type *type) {
-    return type->getTypeID() == getClassIdOf<Derived>();
+    return type->getTypeID() == ClassID::get<Derived>();
   }
 
   void print(std::ostream &os) const override {
@@ -68,9 +68,22 @@ public:
 
 class TypeVariable : public TypeBase<TypeVariable> {
 private:
-  inline static size_t id = 0;
+  static std::vector<std::unique_ptr<TypeVariable>> instances;
+
+  TypeVariable(const std::string& name) : TypeBase(name) {}
 public:
-  TypeVariable() : TypeBase("T" + std::to_string(id++)) {}
+
+  static TypeVariable* create(std::string name = "") {
+    if (name.empty()) {
+      name = "T" + std::to_string(instances.size());
+    }
+
+    auto newVar = std::unique_ptr<TypeVariable>(new TypeVariable(name));
+    TypeVariable* ptr = newVar.get();
+    instances.push_back(std::move(newVar));
+    return ptr;
+  }
+
   ~TypeVariable() override = default;
 
   void printImpl(std::ostream &os) const override {
@@ -91,17 +104,17 @@ public:
 class NilType : public TypeBase<NilType> {
 private:
   // Singleton instance for NilType
-  static std::shared_ptr<NilType> instance;
-  NilType() : TypeBase("nil") {}
+  // static std::unique_ptr<NilType> instance;
 public:
+  NilType() : TypeBase("nil") {}
   ~NilType() override = default;
 
-  static std::shared_ptr<NilType> create() {
-    if (!instance) {
-      instance = std::shared_ptr<NilType>(new NilType());
-    }
-    return instance;
-  }
+  // static NilType* create() {
+  //   if (!instance) {
+  //     instance = std::unique_ptr<NilType>(new NilType());
+  //   }
+  //   return instance.get();
+  // }
 
   // bool isCompatibleWith(Type* other) override {
   //   return other->getTypeID() == getClassIdOf<NilType>();
@@ -125,13 +138,17 @@ public:
   ~ClassType() override = default;
   std::string getName() const { return name; }
 
-  bool isCompatibleWith(Type* other) override {
+  Type* getPropertyType(const std::string &propertyName) const;
+
+  const std::vector<Type*> getPropertyTypes() const;
+
+  bool isCompatibleWith(const Type* other) const override {
     if (this == other) {
       return true;
     }
-    if (auto classType = dyn_cast<ClassType*>(other)) {
+    if (auto classType = dyn_cast<const ClassType>(other)) {
       // Check if this class is a subclass of the other class
-      ClassType* current = this->getSuperClass();
+      const ClassType* current = this->getSuperClass();
       while (current) {
         if (current == classType) {
           return true;
@@ -143,7 +160,7 @@ public:
   }
 
   const ClassType *getSuperClass() const {
-    return superclass.get();
+    return superclass;
   }
 
   void printImpl(std::ostream &os) const override {
@@ -151,14 +168,13 @@ public:
   }
 };
 
-class FunctionType : public std::enable_shared_from_this<MyClass>,
-                      public TypeBase<FunctionType> {
+class FunctionType : public TypeBase<FunctionType> {
 public:
   struct Signature {
     std::vector<Type*> parameters;
     Type* returnType;
 
-    Signature(const std::vector<Type*> parameters,
+    Signature(std::vector<Type*> parameters,
               Type* returnType = nullptr)
         : parameters(std::move(parameters)), returnType(returnType) {}
 
@@ -173,7 +189,14 @@ public:
       return nullptr;
     }
 
-    FunctionType::Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
+    Type *getReturnType() const {
+      return returnType;
+    }
+
+    void setReturnType(Type *type) {
+      assert(returnType == nullptr && "Return type has already been set");
+      returnType = type;
+    }
 
     bool operator==(const Signature &other) const {
       if (this == &other) {
@@ -203,7 +226,7 @@ public:
     }
   };
 private:
-  std::vector<Signature*> overloads;
+  std::vector<const Signature*> overloads;
 public:
   FunctionType(std::string name) : TypeBase(name) {}
   FunctionType(std::string name, const Signature *signature)
@@ -213,7 +236,9 @@ public:
 
   ~FunctionType() override = default;
 
-  bool isCompatibleWith(Type* other) override {
+  const FunctionType::Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
+
+  bool isCompatibleWith(const Type* other) const override {
     assert(false && "Unimplemented FunctionType isCompatibleWith");
     return false;
   }
@@ -245,8 +270,8 @@ public:
       return false;
     }
     return std::equal(overloads.begin(), overloads.end(), other->overloads.begin(),
-                      [](const std::shared_ptr<Signature> &a,
-                         const std::shared_ptr<Signature> &b) { return *a == *b; });
+                      [](const Signature *a,
+                         const Signature *b) { return *a == *b; });
   }
 
   size_t hash() const override {
@@ -258,7 +283,7 @@ public:
     return seed;
   }
 
-  void print(std::ostream &os) const override {
+  void printImpl(std::ostream &os) const override {
     os << "Function " << name << " with ";
     if (overloads.empty()) {
       os << "no overloads";

@@ -3,8 +3,6 @@
 
 namespace lox {
 #define VISIT(name) virtual void visit(name &expr) = 0
-#define INSTENCE_VISIT(name) void visit(name &expr) override
-#define DEFINE_VISIT(klass, name) void lox::klass::visit(name &expr)
 
 class NumberExpr;
 class StringExpr;
@@ -16,6 +14,7 @@ class UnaryExpr;
 class BinaryExpr;
 class AssignExpr;
 class CallExpr;
+class ParameterExpr;
 
 class ExpressionStmt;
 class VarDeclStmt;
@@ -43,6 +42,7 @@ public:
   VISIT(BinaryExpr);
   VISIT(AssignExpr);
   VISIT(CallExpr);
+  VISIT(ParameterExpr);
 
   VISIT(ExpressionStmt);
   VISIT(VarDeclStmt);

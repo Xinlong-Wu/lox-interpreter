@@ -1,58 +1,64 @@
 #ifndef TYPE_INFERENCE_ENGINE_H
 #define TYPE_INFERENCE_ENGINE_H
 
+#include "Compiler/AST/Expr.h"
+#include "Compiler/AST/Stmt.h"
 #include "Compiler/Sema/SymbolTable.h"
 #include "Compiler/Sema/TypeInfer/Constraint.h"
 
-class TypeInferenceEngine {
-private:
-    static std::unique_ptr<PrimitiveType> NumberType;
-    static std::unique_ptr<PrimitiveType> StringType;
-    static std::unique_ptr<PrimitiveType> BoolType;
-    static std::unique_ptr<NilType> NilType;
+namespace lox
+{
+    class TypeInferenceEngine {
+    private:
+        static PrimitiveType *NumberType;
+        static PrimitiveType *StringType;
+        static PrimitiveType *BoolType;
+        static NilType* NilType;
 
-    SymbolTable symbolTable;
-    std::vector<Constraint> constraints;
-    std::unordered_map<TypeVariable *, Type *> substitutions;
+        SymbolTable symbolTable;
+        std::vector<Constraint> constraints;
+        std::unordered_map<const TypeVariable *, Type *> substitutions;
 
-    void collectTypeDeclarations(const std::vector<std::unique_ptr<StmtBase>> &statements);
-    void collectClassDeclarations(ClassDeclStmt *classDecl);
-    void collectFunctionDeclarations(FunctionDeclStmt *funcDecl);
+        void collectTypeDeclarations(const std::vector<std::unique_ptr<StmtBase>> &statements);
+        void collectClassDeclarations(ClassDeclStmt *classDecl);
+        void collectFunctionDeclarations(FunctionDeclStmt *funcDecl);
 
-    void inferStatements(const std::vector<std::unique_ptr<StmtBase>> &statements);
-    void inferStatement(StmtBase *stmt);
-    void inferVarDeclStmt(VarDeclStmt *varDecl);
-    void inferFunctionDeclStmt(FunctionDeclStmt *funcDecl);
-    void inferClassDeclStmt(ClassDeclStmt *classDecl);
-    void inferBlockStmt(BlockStmt *blockStmt);
+        void inferStatements(const std::vector<std::unique_ptr<StmtBase>> &statements);
+        void inferStatement(StmtBase *stmt);
+        void inferVarDeclStmt(VarDeclStmt *varDecl);
+        void inferFunctionDeclStmt(FunctionDeclStmt *funcDecl);
+        void inferClassDeclStmt(ClassDeclStmt *classDecl);
+        void inferBlockStmt(BlockStmt *blockStmt);
 
-    const Type *inferExpr(ExprBase *expr, const Type *expectedType = nullptr);
-    const Type *inferBinaryExpr(BinaryExpr *binaryExpr, const Type *expectedType = nullptr);
-    const Type *inferUnaryExpr(UnaryExpr *unaryExpr, const Type *expectedType = nullptr);
-    const Type *inferCallExpr(CallExpr *callExpr, const Type *expectedType = nullptr);
-    const Type *inferAssignExpr(AssignExpr *assignExpr, const Type *expectedType = nullptr);
-    const Type *inferAccessExpr(AccessExpr *accessExpr, const Type *expectedType = nullptr);
+        Type *inferExpr(ExprBase *expr, Type *expectedType = nullptr);
+        Type *inferBinaryExpr(BinaryExpr *binaryExpr, Type *expectedType = nullptr);
+        Type *inferUnaryExpr(UnaryExpr *unaryExpr, const Type *expectedType = nullptr);
+        Type *inferCallExpr(CallExpr *callExpr, Type *expectedType = nullptr);
+        Type *inferAssignExpr(AssignExpr *assignExpr, Type *expectedType = nullptr);
+        Type *inferAccessExpr(AccessExpr *accessExpr, const Type *expectedType = nullptr);
 
-    bool solveConstraints();
-    bool unify(const Type *left, const Type *right);
-    // check if left is assignable to right
-    bool assinable(const Type *left, const Type *right);
-    // to avoid infinite recursion, we need to check if a type variable occurs in a type
-    // e.g. T occurs in T -> false, T occurs in T -> true
-    bool occursCheck(const TypeVariable *var, const Type *type);
+        bool solveConstraints();
+        bool unify(Type *left, Type *right);
+        // check if left is assignable to right
+        bool assinable(Type *left, Type *right);
+        // to avoid infinite recursion, we need to check if a type variable occurs in a type
+        // e.g. T occurs in T -> false, T occurs in T -> true
+        bool occursCheck(const TypeVariable *var, Type *type);
 
-    const Type *applySubstitutions(const Type *type);
-    void applySubstitution(std::vector<std::unique_ptr<StmtBase>> &statements);
-public:
-    TypeInferenceEngine();
-    ~TypeInferenceEngine() = default;
+        Type *applySubstitution(Type *type);
+        void applySubstitutions(const std::vector<std::unique_ptr<StmtBase>> &statements);
+    public:
+        TypeInferenceEngine();
+        ~TypeInferenceEngine() = default;
 
-    // 添加约束
-    void addConstraint(const Type *left, const Type *right, Constraint::ConstraintType relation) {
-        constraints.emplace_back(left, right, relation);
-    }
+        // 添加约束
+        void addConstraint(Type *left, Type *right, Constraint::ConstraintType relation) {
+            constraints.emplace_back(left, right, relation);
+        }
 
-    void inferProgramTypes(const std::vector<std::unique_ptr<StmtBase>> &statements);
-}
+        void inferProgramTypes(const std::vector<std::unique_ptr<StmtBase>> &statements);
+    };
+} // namespace lox
+
 
 #endif // TYPE_INFERENCE_ENGINE_H

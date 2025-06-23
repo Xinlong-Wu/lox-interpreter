@@ -54,7 +54,7 @@ std::unique_ptr<FunctionDeclStmt> Parser::parseFunctionDecl() {
       this->parse(lox::TokenType::TOKEN_IDENTIFIER);
       Token identifier = this->getPreviousToken();
       parameters.push_back(std::make_unique<ParameterExpr>(
-          identifier.getTokenString(), identifier.getLoction()));
+          std::string(identifier.getTokenString()), identifier.getLoction()));
     } while (this->parseOptional(lox::TokenType::TOKEN_COMMA) &&
              this->hasNext());
     this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);

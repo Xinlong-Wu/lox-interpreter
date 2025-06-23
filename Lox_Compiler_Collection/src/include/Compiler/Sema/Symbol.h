@@ -16,16 +16,16 @@ protected:
 public:
   Symbol(const std::string &name, Type* type = nullptr)
       : name(name), type(std::move(type)) {}
-  Symbol(std::shared_ptr<FunctionType> funcType)
-      : name(funcType->getName()), type(std::move(funcType)) {
+  Symbol(FunctionType* funcType)
+      : name(funcType->getName()), type(funcType) {
     if (type == nullptr) {
       ErrorReporter::reportError("Function type cannot be null for symbol '" +
                                   name + "'.");
     }
     _isDefined = true; // Functions are defined when created
   }
-  Symbol(std::shared_ptr<ClassType> classType)
-      : name(classType->getName()), type(std::move(classType)) {
+  Symbol(ClassType* classType)
+      : name(classType->getName()), type(classType) {
     if (type == nullptr) {
       ErrorReporter::reportError("Class type cannot be null for symbol '" +
                                   name + "'.");
@@ -37,7 +37,7 @@ public:
 
   bool hasType() const { return type != nullptr; }
 
-  const Type* getType() const { return type; }
+  Type* getType() const { return type; }
 
   void setType(Type* t) { type = t; }
 
