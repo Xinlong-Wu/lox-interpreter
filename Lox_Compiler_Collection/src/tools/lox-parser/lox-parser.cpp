@@ -44,6 +44,7 @@ static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
 {
     char *source = readFile(path);
     lox::Parser parser = lox::Parser(source);
+    lox::TypeContext typeContext = lox::TypeContext();
     // lox::Sema sa = lox::Sema();
     parser.advance();
 
@@ -57,7 +58,7 @@ static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
     }
 
     if (enableSema) {
-        lox::TypeInferenceEngine typeInferEngine;
+        lox::TypeInferenceEngine typeInferEngine(&typeContext);
         typeInferEngine.inferProgramTypes(statements);
         // Perform semantic analysis
         // sa.analyze(statements);

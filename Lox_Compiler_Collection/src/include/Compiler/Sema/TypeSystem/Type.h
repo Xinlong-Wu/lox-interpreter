@@ -90,6 +90,11 @@ public:
     return ptr;
   }
 
+  bool isCompatibleWith(const Type* other) const override {
+    // Type variables are compatible with any type
+    return true;
+  }
+
   void printImpl(std::ostream &os) const override {
     os << name;
   }
@@ -288,6 +293,12 @@ public:
            "Signature already has a function type set");
     signature->functionType = this; // Set the function type for the signature
     overloads.push_back(std::move(signature));
+  }
+
+  void addOverload(std::vector<Type*> parameters,
+                   Type* returnType = nullptr) {
+    auto signature = std::make_unique<Signature>(std::move(parameters), returnType);
+    addOverload(std::move(signature));
   }
 
   bool operator==(const FunctionType *other) const {

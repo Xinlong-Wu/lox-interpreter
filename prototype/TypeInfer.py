@@ -837,6 +837,9 @@ class TypeInferenceEngine:
                 if relation == "equal":
                     self._unify(type1, type2)
                 elif relation == "assignable":
+                    if isinstance(type1, TypeVariable) or isinstance(type2, TypeVariable):
+                        # 如果是类型变量，直接统一
+                        self._unify(type1, type2)
                     if not self._check_assignable(type1, type2):
                         return False
             return True
@@ -959,22 +962,27 @@ def test_type_inference():
 
     # 创建测试AST
     statements = [
-        # var x = 42;
-        VarDecl("x", None, LiteralExpr(42, engine.int_type)),
+        # var x;
+        VarDecl("x", None, None),
 
         # var y: string = "hello";
         VarDecl("y", engine.string_type, LiteralExpr("hello", engine.string_type)),
 
-        # function add(a: int, b: int): int { return a + b; }
-        FunctionDecl(
-            "add",
-            [Parameter("a", engine.int_type), Parameter("b", engine.int_type)],
-            engine.int_type,
-            [ReturnStmt(BinaryOpExpr(IdentifierExpr("a"), "+", IdentifierExpr("b")))]
-        ),
+        AssignmentExpr(
+            IdentifierExpr("x"),
+            IdentifierExpr("y")
+        )
 
-        # var z = add(x, 10);
-        VarDecl("z", None, CallExpr(IdentifierExpr("add"), [IdentifierExpr("x"), LiteralExpr(10, engine.int_type)])),
+        # function add(a: int, b: int): int { return a + b; }
+        # FunctionDecl(
+        #     "add",
+        #     [Parameter("a", engine.int_type), Parameter("b", engine.int_type)],
+        #     engine.int_type,
+        #     [ReturnStmt(BinaryOpExpr(IdentifierExpr("a"), "+", IdentifierExpr("b")))]
+        # ),
+
+        # # var z = add(x, 10);
+        # VarDecl("z", None, CallExpr(IdentifierExpr("add"), [IdentifierExpr("x"), LiteralExpr(10, engine.int_type)])),
     ]
 
     # 执行类型推断
@@ -1052,7 +1060,7 @@ def test_class_instances():
             print(f"  {stmt.name}: {stmt.inferred_type}")
 
 if __name__ == "__main__":
-    # test_type_inference()
+    test_type_inference()
     test_class_instances()
 
 # ==================== 高级特性扩展 ====================

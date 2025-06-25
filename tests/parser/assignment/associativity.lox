@@ -10,14 +10,14 @@
 // CHECK-PARSER-NEXT:      print(b);
 // CHECK-PARSER-NEXT:      print(c);
 
-// CHECK-SA-LABEL:         var a: string;
-// CHECK-SA-NEXT:          var b: string = String: ["b"];
-// CHECK-SA-NEXT:          var c: string = String: ["c"];
-// CHECK-SA-NEXT:          Assign: [Variable: [a: string] = Assign: [Variable: [b: string] = Variable: [c: string]]];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](String: ["result"], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [b: string], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [c: string], )];
+// CHECK-SA-LABEL:         var a: String;
+// CHECK-SA-NEXT:          var b: String = "b";
+// CHECK-SA-NEXT:          var c: String = "c";
+// CHECK-SA-NEXT:          a = b = c;
+// CHECK-SA-NEXT:          print("result");
+// CHECK-SA-NEXT:          print(a);
+// CHECK-SA-NEXT:          print(b);
+// CHECK-SA-NEXT:          print(c);
 
 var a;
 var b = "b";

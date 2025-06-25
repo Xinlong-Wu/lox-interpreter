@@ -430,7 +430,8 @@ public:
   void printImpl(std::ostream &os) const {
     os << name;
     if (type) {
-      os << ": " << type;
+      os << ": ";
+      type->print(os);
     }
   }
 

@@ -7,18 +7,8 @@
 using namespace std;
 using namespace lox;
 
-lox::TypeInferenceEngine::TypeInferenceEngine() {
-    // 初始化符号表
-    symbolTable = SymbolTable();
-
-    // 初始化类型上下文
-    typeContext = make_unique<TypeContext>();
-
-    symbolTable.declareType("Number", typeContext->getNumberType());
-    symbolTable.declareType("String", std::move(typeContext->getStringType()));
-    symbolTable.declareType("Bool", std::move(typeContext->getBoolType()));
-    symbolTable.declareType("Nil", std::move(typeContext->getNilType()));
-}
+lox::TypeInferenceEngine::TypeInferenceEngine(TypeContext *typeContext)
+    : typeContext(typeContext), symbolTable(typeContext) {}
 
 void lox::TypeInferenceEngine::inferProgramTypes(const vector<unique_ptr<StmtBase>> &statements) {
     // 收集类型声明
@@ -174,7 +164,10 @@ void lox::TypeInferenceEngine::inferStatement(StmtBase *stmt) {
         inferClassDeclStmt(classDecl);
     } else if (auto blockStmt = dyn_cast<BlockStmt>(stmt)) {
         inferBlockStmt(blockStmt);
-    } else {
+    } else if (auto exprStmt = dyn_cast<ExpressionStmt>(stmt)) {
+        inferExprStmt(exprStmt);
+    }
+    else {
         ErrorReporter::reportError("Unknown statement type in type inference engine");
     }
 }
@@ -287,6 +280,15 @@ void lox::TypeInferenceEngine::inferBlockStmt(BlockStmt *blockStmt) {
     inferStatements(blockStmt->getStatements());
 
     symbolTable.exitScope();
+}
+
+void lox::TypeInferenceEngine::inferExprStmt(ExpressionStmt *exprStmt) {
+    // infer the expression in the statement
+    Type *exprType = inferExpr(exprStmt->getExpression());
+    if (!exprType) {
+        ErrorReporter::reportError("Expression in statement has no type");
+        return;
+    }
 }
 
 Type * lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
@@ -477,7 +479,13 @@ bool lox::TypeInferenceEngine::solveConstraints() {
                 inferSuccess &= unify(leftType, rightType);
                 break;
             case Constraint::ConstraintType::ASSIGNABLE:
-                inferSuccess &= assinable(leftType, rightType);
+                if (isa<TypeVariable>(leftType) || isa<TypeVariable>(rightType)) {
+                    // If either side is a type variable, we can unify them
+                    inferSuccess &= unify(leftType, rightType);
+                } else {
+                    // Otherwise, we check if left is assignable to right
+                    inferSuccess &= assinable(leftType, rightType);
+                }
                 break;
         }
     }
@@ -498,6 +506,7 @@ bool lox::TypeInferenceEngine::unify(Type *left, Type *right) {
             return false;
         }
         substitutions[cast<TypeVariable>(leftType)] = rightType;
+        return true;
     }
 
     if (isa<TypeVariable>(rightType)) {
@@ -506,6 +515,7 @@ bool lox::TypeInferenceEngine::unify(Type *left, Type *right) {
             return false;
         }
         substitutions[cast<TypeVariable>(rightType)] = leftType;
+        return true;
     }
 
     if (isa<FunctionType>(leftType) && isa<FunctionType>(rightType)) {
@@ -561,24 +571,26 @@ bool lox::TypeInferenceEngine::occursCheck(const TypeVariable *var, Type *type) 
     //     }
     // }
 
-    assert_not_reached("Unimplemented occurs check for type");
     return false; // Type variable does not occur in the type
 }
 
 void lox::TypeInferenceEngine::applySubstitutions(const vector<unique_ptr<StmtBase>> &statements) {
     lox::Walker astWalker;
-    astWalker.registerCallback<ExprBase>([this](ExprBase *expr) {
-        // if (auto typeVar = dyn_cast<TypeVariable>(expr->getType())) {
-        //     expr->setType(applySubstitution(typeVar));
-        // }
-    });
-
-    // astWalker.registerCallback<Declaration>([this](Declaration *decl) -> WalkResult {
-    //     if (auto typeVar = dyn_cast<TypeVariable>(decl->getType())) {
-    //         decl->setType(applySubstitution(typeVar));
+    // astWalker.registerCallback<ExprBase>([this](ExprBase *expr) {
+    //     if (auto typeVar = dyn_cast<TypeVariable>(expr->getType())) {
+    //         expr->setType(applySubstitution(typeVar));
     //     }
-    //     return WalkResult::Advance;
     // });
+
+    auto declCallback = [this](Declaration *decl) -> WalkResult {
+        if (auto typeVar = dyn_cast<TypeVariable>(decl->getType())) {
+            decl->setType(applySubstitution(typeVar));
+        }
+        return WalkResult::Advance;
+    };
+    astWalker.registerCallback<FunctionDeclStmt>(declCallback);
+    astWalker.registerCallback<ClassDeclStmt>(declCallback);
+    astWalker.registerCallback<VarDeclStmt>(declCallback);
 
     for (auto &stmt : statements) {
         stmt->walk(astWalker);
@@ -589,10 +601,18 @@ Type *lox::TypeInferenceEngine::applySubstitution(Type *type) {
     if (auto typeVar = dyn_cast<TypeVariable>(type)) {
         auto it = substitutions.find(typeVar);
         if (it != substitutions.end()) {
-            return it->second;
+            return applySubstitution(it->second);
         }
     }
-    ErrorReporter::reportError("Type variable not found in substitutions: " + type->getName());
-    assert_not_reached("Type variable not found in substitutions");
-    return type; // No substitution found, return the original type
+    return type;
+}
+
+void lox::TypeInferenceEngine::printConstraints() const {
+    std::cout << "ID \t Type 1 \t Constraint \t Type 2" << std::endl;
+    for (size_t i = 0; i < constraints.size(); ++i) {
+        const auto &constraint = constraints[i];
+        std::cout << i << "\t";
+        constraint.print(std::cout);
+        std::cout << std::endl;
+    }
 }

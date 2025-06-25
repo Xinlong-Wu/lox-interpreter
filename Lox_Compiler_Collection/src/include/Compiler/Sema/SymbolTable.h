@@ -17,8 +17,8 @@ private:
   // SymbolTable& operator=(SymbolTable&&) = delete;
 
 public:
-  SymbolTable() {
-    globalScope = std::make_shared<GlobalScope>();
+  SymbolTable(TypeContext *typeContext) {
+    globalScope = std::make_shared<GlobalScope>(typeContext);
     scopes.push_back(globalScope);
   }
   ~SymbolTable() = default;

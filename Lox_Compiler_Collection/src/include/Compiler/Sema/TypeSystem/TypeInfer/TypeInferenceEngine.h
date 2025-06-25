@@ -10,7 +10,7 @@ namespace lox
 {
     class TypeInferenceEngine {
     private:
-        std::unique_ptr<TypeContext> typeContext;
+        TypeContext* typeContext;
         SymbolTable symbolTable;
         std::vector<Constraint> constraints;
         std::unordered_map<const TypeVariable *, Type *> substitutions;
@@ -25,6 +25,7 @@ namespace lox
         void inferFunctionDeclStmt(FunctionDeclStmt *funcDecl);
         void inferClassDeclStmt(ClassDeclStmt *classDecl);
         void inferBlockStmt(BlockStmt *blockStmt);
+        void inferExprStmt(ExpressionStmt *exprStmt);
 
         Type *inferExpr(ExprBase *expr, Type *expectedType = nullptr);
         Type *inferBinaryExpr(BinaryExpr *binaryExpr, Type *expectedType = nullptr);
@@ -44,7 +45,7 @@ namespace lox
         Type *applySubstitution(Type *type);
         void applySubstitutions(const std::vector<std::unique_ptr<StmtBase>> &statements);
     public:
-        TypeInferenceEngine();
+        TypeInferenceEngine(TypeContext *typeContext);
         ~TypeInferenceEngine() = default;
 
         // 添加约束
@@ -53,6 +54,8 @@ namespace lox
         }
 
         void inferProgramTypes(const std::vector<std::unique_ptr<StmtBase>> &statements);
+
+        void printConstraints() const;
     };
 } // namespace lox
 

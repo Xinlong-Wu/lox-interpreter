@@ -105,7 +105,11 @@ bool isa(const std::unique_ptr<From>& from) {
 
 template <typename To, typename From>
 To* dyn_cast(From* from) {
-    return isa<To>(from) ? static_cast<To*>(from) : nullptr;
+    if constexpr (std::is_base_of_v<To, From>) {
+        return isa<To>(from) ? static_cast<To*>(from) : nullptr;
+    } else {
+        return dynamic_cast<To*>(from);
+    }
 }
 
 template <typename To, typename From>

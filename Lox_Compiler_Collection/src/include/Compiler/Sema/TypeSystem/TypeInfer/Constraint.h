@@ -25,6 +25,17 @@ public:
     Type* getLeftType() const { return lType; }
     Type* getRightType() const { return rType; }
     ConstraintType getRelation() const { return relation; }
+
+    void print(std::ostream &os) const {
+        os << lType->getName() << "\t"
+           << (relation == ConstraintType::ASSIGNABLE ? "ASSIGNABLE" : "EQUAL") << "\t"
+           << rType->getName();
+    }
+
+    void dump() const {
+        print(std::cout);
+        std::cout << std::endl;
+    }
 };
 } // namespace lox
 

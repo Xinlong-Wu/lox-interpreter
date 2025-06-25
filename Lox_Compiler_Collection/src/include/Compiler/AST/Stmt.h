@@ -117,7 +117,7 @@ protected:
 public:
   Type *getType() const { return type; }
   void setType(Type* newType) {
-    assert(type == nullptr && "Type has already been set");
+    assert((type == nullptr || !isa<TypeVariable>(newType))  && "Type has been set as Variable Type already");
     type = newType;
   }
   // static bool classof(const StmtBase* stmt) {
@@ -159,7 +159,8 @@ public:
     os << "var " << name;
 
     if (type) {
-      os << ": " << type;
+      os << ": ";
+      type->print(os);
     } else if (typeAnnotation) {
       os << ": " << *typeAnnotation;
     }

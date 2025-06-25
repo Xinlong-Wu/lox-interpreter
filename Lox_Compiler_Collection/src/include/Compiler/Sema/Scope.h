@@ -298,7 +298,7 @@ public:
 // 具体的作用域类型实现
 class GlobalScope : public ScopeBase<GlobalScope> {
 public:
-  GlobalScope() : ScopeBase(nullptr, "Global") {}
+  GlobalScope(TypeContext *typeContext);
 };
 
 class ClassScope : public ScopeBase<ClassScope> {
