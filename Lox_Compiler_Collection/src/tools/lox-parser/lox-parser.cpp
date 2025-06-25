@@ -1,6 +1,6 @@
 #include "Compiler/Parser/Parser.h"
 // #include "Compiler/Sema/SymbolTable.h"
-// #include "Compiler/Sema/SemanticAnalyzer.h"
+#include "Compiler/Sema/SemanticAnalyzer.h"
 #include "Compiler/Sema/TypeSystem/TypeInfer/TypeInferenceEngine.h"
 #include "Compiler/ErrorReporter.h"
 
@@ -58,8 +58,7 @@ static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
     }
 
     if (enableSema) {
-        lox::TypeInferenceEngine typeInferEngine(&typeContext);
-        typeInferEngine.inferProgramTypes(statements);
+        lox::Sema::analyze(typeContext, statements);
         // Perform semantic analysis
         // sa.analyze(statements);
     }

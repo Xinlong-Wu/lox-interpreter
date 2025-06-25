@@ -1,83 +1,20 @@
 #ifndef SEMANTICANALYZER_H
 #define SEMANTICANALYZER_H
 
-#include "Compiler/AST/ASTVisitor.h"
-#include "Compiler/ErrorReporter.h"
-#include "Compiler/Sema/SymbolResolver.h"
+#include <vector>
+#include <memory>
+#include "Compiler/AST/Stmt.h"
 
 namespace lox {
 
-class Sema : public ASTVisitor {
+class Sema {
 private:
-  SymbolTable symbolTable;
 
 public:
-  Sema() {
-    // Initialize the global scope with built-in functions
-    inilializeGlobalScope();
-  };
-  ~Sema() override = default;
+  Sema() {};
+  ~Sema() = default;
 
-  void inilializeGlobalScope() {
-    symbolTable.declare(std::make_shared<
-                        Symbol>(std::shared_ptr<FunctionType>(new FunctionType(
-        "print",
-        {std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature(
-             {StringType::getInstance()}, NilType::getInstance())),
-         std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature(
-             {NumberType::getInstance()}, NilType::getInstance())),
-         std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature(
-             {BoolType::getInstance()}, NilType::getInstance()))}))));
-  }
-
-  void enterScope(const std::string &name = "anonymous") {
-    symbolTable.enterScope(name);
-  }
-  void exitScope() { symbolTable.exitScope(); }
-
-  void analyze(std::vector<std::unique_ptr<StmtBase>> &statements) {
-
-    // step 1: Symbol resolution
-    SymbolResolver resolver;
-    resolver.resolve(statements);
-    
-    // setp 2: Type inference
-
-    // step 3: Type checking
-
-
-    // symbolTable.enterScope();
-
-    // for (auto &stmt : statements) {
-    //   stmt->accept(*this);
-    // }
-
-    // symbolTable.exitScope();
-  }
-
-  INSTENCE_VISIT(ThisExpr);
-  INSTENCE_VISIT(SuperExpr);
-  INSTENCE_VISIT(GroupingExpr);
-  INSTENCE_VISIT(CallExpr);
-  INSTENCE_VISIT(VariableExpr);
-  INSTENCE_VISIT(LiteralExpr);
-  INSTENCE_VISIT(NumberExpr);
-  INSTENCE_VISIT(StringExpr);
-  INSTENCE_VISIT(UnaryExpr);
-  INSTENCE_VISIT(BinaryExpr);
-  INSTENCE_VISIT(AccessExpr);
-  INSTENCE_VISIT(AssignExpr);
-
-  INSTENCE_VISIT(ExpressionStmt);
-  INSTENCE_VISIT(DeclarationStmt);
-  INSTENCE_VISIT(VarDeclStmt);
-  INSTENCE_VISIT(BlockStmt);
-  INSTENCE_VISIT(ClassDeclStmt);
-  INSTENCE_VISIT(FunctionDecl);
-  INSTENCE_VISIT(IfStmt);
-  INSTENCE_VISIT(WhileStmt);
-  INSTENCE_VISIT(ForStmt);
-  INSTENCE_VISIT(ReturnStmt);
+  static void analyze(TypeContext &typeContext, const std::vector<std::unique_ptr<lox::StmtBase>>& statements);
 };
 
 } // namespace lox
