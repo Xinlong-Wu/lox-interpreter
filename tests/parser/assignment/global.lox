@@ -8,12 +8,12 @@
 // CHECK-PARSER-NEXT:      print(a = "arg");
 // CHECK-PARSER-NEXT:      print(a);
 
-// CHECK-SA-LABEL:         var a: string = String: ["before"];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
-// CHECK-SA-NEXT:          Assign: [Variable: [a: string] = String: ["after"]];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Assign: [Variable: [a: string] = String: ["arg"]], )];
-// CHECK-SA-NEXT:          Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
+// CHECK-SA-LABEL:         var a: String = "before";
+// CHECK-SA-NEXT:          print(a);
+// CHECK-SA-NEXT:          a = "after";
+// CHECK-SA-NEXT:          print(a);
+// CHECK-SA-NEXT:          print(a = "arg");
+// CHECK-SA-NEXT:          print(a);
 
 var a = "before";
 print (a);

@@ -4,8 +4,8 @@
 // CHECK-PARSER-LABEL:     var a = "a";
 // CHECK-PARSER-NEXT:      a = "value";
 
-// CHECK-SA-LABEL:         var a: string = String: ["a"];
-// CHECK-SA-NEXT:          Assign: [( Variable: [a: string] ) = String: ["value"]];
+// CHECK-SA-LABEL:         var a: String = "a";
+// CHECK-SA-NEXT:          a = "value";
 
 var a = "a";
 (a) = "value";
