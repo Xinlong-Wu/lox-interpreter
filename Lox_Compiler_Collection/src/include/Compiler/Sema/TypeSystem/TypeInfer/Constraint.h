@@ -20,7 +20,7 @@ private:
 public:
     Constraint(Type* left, Type* right, ConstraintType rel)
         : lType(left), rType(right), relation(rel) {}
-    ~Constraint();
+    ~Constraint() {};
 
     Type* getLeftType() const { return lType; }
     Type* getRightType() const { return rType; }

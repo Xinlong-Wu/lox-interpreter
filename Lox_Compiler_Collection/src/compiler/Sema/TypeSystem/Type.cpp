@@ -6,6 +6,8 @@
 using namespace std;
 using namespace lox;
 
+std::vector<std::unique_ptr<TypeVariable>> lox::TypeVariable::instances;
+
 int64_t calculateMatchScore(const vector<Type*> &params, const vector<Type*> &args) {
     int64_t score = 0;
     for (size_t i = 0; i < params.size(); ++i) {
