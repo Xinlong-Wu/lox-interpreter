@@ -20,7 +20,6 @@ void lox::TypeInferenceEngine::inferProgramTypes(const vector<unique_ptr<StmtBas
     // 解决约束
     bool success = solveConstraints();
     if (!success) {
-        ErrorReporter::reportError("Type inference failed due to unsolvable constraints");
         return;
     }
 
@@ -597,7 +596,11 @@ bool lox::TypeInferenceEngine::assinable(Type *left, Type *right) {
     const Type *from = applySubstitution(left);
     const Type *to = applySubstitution(right);
 
-    return from->isCompatibleWith(to);
+    if (!from->isCompatibleWith(to)) {
+        ErrorReporter::reportError("Can not assign type '" + from->getName() + "' to type '" + to->getName() + "'");
+        return false;
+    }
+    return true; // Types are assignable
 }
 
 bool lox::TypeInferenceEngine::occursCheck(const TypeVariable *var, Type *type) {

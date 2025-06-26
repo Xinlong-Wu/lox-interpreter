@@ -120,11 +120,11 @@ public:
   }
 
   std::optional<SymbolOrType> lookupSymbolOrType(const std::string &name) {
-    if (auto sym = lookupLocal(name)) {
-      return SymbolOrType(sym);
-    }
     if (auto type = lookupTypeLocal(name)) {
       return SymbolOrType(type);
+    }
+    if (auto sym = lookupLocal(name)) {
+      return SymbolOrType(sym);
     }
     if (enclosingScope) {
       return enclosingScope->lookupSymbolOrType(name);

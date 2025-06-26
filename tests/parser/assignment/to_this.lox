@@ -3,8 +3,8 @@
 
 // CHECK-PARSER-LABEL:     this = "value";
 
-// CHECK-SEMANTIC-LABEL:     Error: Cannot assign to 'this' or 'super' at
-// CHECK-SEMANTIC:           Call: [Variable: [Foo: () -> instance of Foo]()];
+// CHECK-SEMANTIC-LABEL:     Error: Can not assign type 'String' to type 'Foo'
+// CHECK-SEMANTIC:           Foo();
 
 class Foo {
   fun Foo() {
