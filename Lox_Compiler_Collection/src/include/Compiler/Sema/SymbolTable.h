@@ -61,6 +61,10 @@ public:
     return scopes.back()->lookupTypeLocal(name);
   }
 
+  std::optional<SymbolOrType> lookupSymbolOrType(const std::string &name) {
+    return scopes.back()->lookupSymbolOrType(name);
+  }
+
   void print(std::ostream &os) const {
     for (size_t i = 0; i < scopes.size(); i++) {
       scopes[i]->print(os, i);

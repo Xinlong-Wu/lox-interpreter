@@ -5,9 +5,6 @@ using namespace lox;
 using namespace std;
 
 void Sema::analyze(TypeContext &typeContext, const std::vector<std::unique_ptr<lox::StmtBase>>& statements) {
-  // left value check
-
-
   // TypeInfer
   TypeInferenceEngine typeInferEngine(&typeContext);
   typeInferEngine.inferProgramTypes(statements);

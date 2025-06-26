@@ -6,10 +6,10 @@
 // CHECK-PARSER-NEXT:      print(a);
 // CHECK-PARSER-NEXT:      print(c);
 
-// CHECK-SEMANTIC-LABEL:     var a: string = String: ["before"];
-// CHECK-SEMANTIC-NEXT:      var c: string = Assign: [Variable: [a: string] = String: ["var"]];
-// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
-// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print: (string) -> nil](Variable: [c: string], )];
+// CHECK-SEMANTIC-LABEL:     var a: String = "before";
+// CHECK-SEMANTIC-NEXT:      var c: String = a = "var";
+// CHECK-SEMANTIC-NEXT:      print(a);
+// CHECK-SEMANTIC-NEXT:      print(c);
 
 var a = "before";
 var c = a = "var";

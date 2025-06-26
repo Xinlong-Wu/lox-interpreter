@@ -150,6 +150,14 @@ public:
   IdentifierExpr(std::string_view name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
 
+  bool isThis() const {
+    return name == "this";
+  }
+
+  bool isSuper() const {
+    return name == "super";
+  }
+
   const std::string& getName() const { return name; }
 
   void printImpl(std::ostream &os) const {

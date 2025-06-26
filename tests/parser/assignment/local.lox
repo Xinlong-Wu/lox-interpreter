@@ -10,12 +10,12 @@
 // CHECK-PARSER-NEXT:      print(a);
 // CHECK-PARSER-NEXT:     }
 
-// CHECK-SEMANTIC-LABEL:     var a: string = String: ["before"];
-// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
-// CHECK-SEMANTIC-NEXT:      Assign: [Variable: [a: string] = String: ["after"]];
-// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
-// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print: (string) -> nil](Assign: [Variable: [a: string] = String: ["arg"]], )];
-// CHECK-SEMANTIC-NEXT:      Call: [Variable: [print: (string) -> nil](Variable: [a: string], )];
+// CHECK-SEMANTIC-LABEL:     var a: String = "before";
+// CHECK-SEMANTIC-NEXT:      print(a);
+// CHECK-SEMANTIC-NEXT:      a = "after";
+// CHECK-SEMANTIC-NEXT:      print(a);
+// CHECK-SEMANTIC-NEXT:      print(a = "arg");
+// CHECK-SEMANTIC-NEXT:      print(a);
 
 {
   var a = "before";

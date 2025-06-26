@@ -131,10 +131,10 @@ public:
 
 class ClassType : public TypeBase<ClassType> {
 private:
-  const ClassType* superclass = nullptr;
+  ClassType* superclass = nullptr;
   ClassScope* properties = nullptr;
 protected:
-  ClassType(const std::string &name, const ClassType* superClass)
+  ClassType(const std::string &name, ClassType* superClass)
     : TypeBase(name), superclass(superClass) {}
   ClassType(const std::string &name)
     : TypeBase(name) {}
@@ -146,6 +146,15 @@ public:
   Type* getPropertyType(const std::string &propertyName) const;
 
   const std::vector<Type*> getPropertyTypes() const;
+
+  const ClassScope* getClassScope() const {
+    return cast<ClassScope>(properties);
+  }
+
+  void setClassScope(ClassScope* scope) {
+    assert(properties == nullptr && "Class scope has already been set");
+    properties = scope;
+  }
 
   bool isCompatibleWith(const Type* other) const override {
     if (this == other) {
@@ -164,7 +173,7 @@ public:
     return false;
   }
 
-  const ClassType *getSuperClass() const {
+  ClassType *getSuperClass() const {
     return superclass;
   }
 

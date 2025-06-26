@@ -61,12 +61,15 @@ void lox::TypeInferenceEngine::collectClassDeclarations(ClassDeclStmt *classDecl
     }
 
     string className = classDecl->getName();
-    if (!symbolTable.declareType(className, typeContext->make<ClassType>(className, superClass))) {
+    ClassType *classType = typeContext->make<ClassType>(className, superClass);
+    if (!symbolTable.declareType(className, classType)) {
         ErrorReporter::reportError("Class '" + classDecl->getName() + "' already declared");
         return;
     }
 
     shared_ptr<ClassScope> classScope = make_shared<ClassScope>(symbolTable.currentScope(), className);
+    classType->setClassScope(classScope.get());
+    classDecl->setScope(classScope);
     symbolTable.enterScope(classScope);
 
     for(auto &function : classDecl->getMethods()) {
@@ -305,8 +308,39 @@ Type * lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
         return typeContext->getNilType();
     }
     if (auto varExpr = dyn_cast<IdentifierExpr>(expr)) {
-        Symbol *symbol = symbolTable.lookupLocalSymbol(varExpr->getName());
+        if (varExpr->isThis()) {
+            // 'this' refers to the current instance in a class context
+            if (auto classType = symbolTable.currentScope()->getCurrentClassType()) {
+                return classType;
+            } else {
+                ErrorReporter::reportError("'this' can only be used inside a class method");
+                return nullptr;
+            }
+        }
+
+        if (varExpr->isSuper()) {
+            if (auto classType = symbolTable.currentScope()->getCurrentClassType()) {
+                // 'super' refers to the superclass of the current class
+                ClassType *superClassType = classType->getSuperClass();
+                if (superClassType) {
+                    return superClassType;
+                } else {
+                    ErrorReporter::reportError("'super' can only be used in a subclass");
+                    return nullptr;
+                }
+            } else {
+                ErrorReporter::reportError("'super' can only be used inside a class method");
+                return nullptr;
+            }
+        }
+
+        Symbol *symbol = symbolTable.lookupSymbol(varExpr->getName());
         if (!symbol) {
+            ClassType *classType = dyn_cast<ClassType>(symbolTable.lookupTypeLocal(varExpr->getName()));
+            if (classType) {
+                // If the symbol is a class type, we return it
+                return classType;
+            }
             ErrorReporter::reportError("Variable '" + varExpr->getName() + "' was not declared");
             return nullptr;
         }
@@ -348,6 +382,7 @@ Type *lox::TypeInferenceEngine::inferBinaryExpr(BinaryExpr *binaryExpr, Type *ex
                 addConstraint(leftType, expectedType, Constraint::ConstraintType::EQUAL);
             }
             resultType = leftType;
+            break;
         case BinaryExpr::Op::Or:
         case BinaryExpr::Op::Equal:
         case BinaryExpr::Op::NotEqual:
@@ -355,6 +390,7 @@ Type *lox::TypeInferenceEngine::inferBinaryExpr(BinaryExpr *binaryExpr, Type *ex
         case BinaryExpr::Op::GreaterThanOrEqual:
             addConstraint(leftType, rightType, Constraint::ConstraintType::EQUAL);
             resultType = typeContext->getBoolType();
+            break;
         default:
             ErrorReporter::reportError("Unknown binary operation: " + BinaryExpr::toString(binaryExpr->getOp()));
             return nullptr;
@@ -399,7 +435,7 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr, Type *expected
         argTypes.push_back(argType);
     }
 
-    const Type *calleeType = inferExpr(callExpr->getCallee());
+    Type *calleeType = inferExpr(callExpr->getCallee());
     if (auto functionType = dyn_cast<const FunctionType>(calleeType)) {
         // check if function has a matching signature
         const Signature *bestMatch = functionType->resolveOverload(argTypes);
@@ -417,7 +453,27 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr, Type *expected
         if (expectedType) {
             addConstraint(expectedType, resultType, Constraint::ConstraintType::ASSIGNABLE);
         }
-    } else {
+    }
+    else if (auto classType = dyn_cast<ClassType>(calleeType)) {
+        // if the callee is a class type, we assume it's a constructor call
+        const ClassScope *classScope = classType->getClassScope();
+        const FunctionType *constructorType = cast<const FunctionType>(classScope->getConstructor()->getType());
+        const Signature *bestMatch = constructorType->resolveOverload(argTypes);
+        if (!bestMatch) {
+            ErrorReporter::reportError("No matching constructor overload found for class '" + classType->getName() + "'");
+            return nullptr;
+        }
+        // add constraints for each argument
+        for (size_t i = 0; i < argTypes.size(); ++i) {
+            addConstraint(argTypes[i], bestMatch->getParameterType(i), Constraint::ConstraintType::ASSIGNABLE);
+        }
+        // set the return type of the call expression
+        resultType = classType;
+        if (expectedType) {
+            addConstraint(expectedType, resultType, Constraint::ConstraintType::ASSIGNABLE);
+        }
+    }
+    else {
         ErrorReporter::reportError("Callee is not a function type");
         return nullptr;
     }

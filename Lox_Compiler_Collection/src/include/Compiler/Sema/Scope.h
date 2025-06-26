@@ -54,7 +54,7 @@ public:
 
   // 类型获取
   // virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
-  virtual const ClassType *getCurrentClassType() const = 0;
+  virtual ClassType *getCurrentClassType() const = 0;
   virtual const Signature* getCurrentSignature() const = 0;
 
   // 符号管理
@@ -76,7 +76,8 @@ public:
   }
 
   bool declareType(const std::string &name, Type *type) {
-    if (lookupLocal(name)) {
+    Symbol *localedSymbol = lookupLocal(name);
+    if (localedSymbol && !isa<FunctionType>(localedSymbol->getType())){
         ErrorReporter::reportError("Type '" + name +
                                   "' is conflicting with a symbol in scope '" +
                                   this->getName() + "'");
@@ -108,7 +109,7 @@ public:
       return enclosingScope ? enclosingScope->lookupType(name) : nullptr;
   }
 
-  Symbol* lookupLocal(const std::string &name) {
+  Symbol* lookupLocal(const std::string &name) const {
       auto it = symbols.find(name);
       return (it != symbols.end()) ? it->second.get() : nullptr;
   }
@@ -169,7 +170,7 @@ class ScopeBase : public Scope {
 protected:
   mutable std::optional<bool> _inClassScope = std::nullopt;
   mutable std::optional<bool> _inFunctionScope = std::nullopt;
-  mutable const ClassType *currentClassType = nullptr;
+  mutable ClassType *currentClassType = nullptr;
   mutable const Signature* currentSignature = nullptr;
 
 protected:
@@ -244,7 +245,7 @@ public:
     return nullptr;
   }
 
-  const ClassType *getCurrentClassType() const override {
+  ClassType *getCurrentClassType() const override {
     if (!inClassScope()) {
         return nullptr;
     }
@@ -292,7 +293,7 @@ public:
 
   // 默认实现，派生类可以重写
   virtual const Signature *getCurrentSignatureImpl() const { return nullptr; }
-  virtual const ClassType *getCurrentClassTypeImpl() const { return nullptr; }
+  virtual ClassType *getCurrentClassTypeImpl() const { return nullptr; }
 };
 
 // 具体的作用域类型实现
@@ -313,12 +314,16 @@ public:
     }
 
     this->currentClassType = cast<ClassType>(parent->lookupType(name));
-    if (this->currentClassType) {
+    if (!this->currentClassType) {
       ErrorReporter::reportError("Class '" + name + "' is not defined in enclosing scope");
     }
   }
 
-  const ClassType *getCurrentClassTypeImpl() const override {
+  const Symbol* getConstructor() const {
+    return lookupLocal(this->currentClassType->getName());
+  }
+
+  ClassType *getCurrentClassTypeImpl() const override {
     return currentClassType;
   }
 };
