@@ -8,7 +8,7 @@ class NumberExpr;
 class StringExpr;
 class BoolExpr;
 class NilExpr;
-class VariableExpr;
+class IdentifierExpr;
 class AccessExpr;
 class UnaryExpr;
 class BinaryExpr;
@@ -36,7 +36,7 @@ public:
   VISIT(StringExpr);
   VISIT(BoolExpr);
   VISIT(NilExpr);
-  VISIT(VariableExpr);
+  VISIT(IdentifierExpr);
   VISIT(AccessExpr);
   VISIT(UnaryExpr);
   VISIT(BinaryExpr);

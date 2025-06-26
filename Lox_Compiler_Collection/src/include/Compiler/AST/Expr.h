@@ -36,6 +36,9 @@ public:
   virtual ClassID getClassID() const = 0;
 
   bool isExpression() const override { return true; }
+  virtual bool isLValue() const {
+    return false; // Default implementation, can be overridden by derived classes
+  }
   static bool classof(const ASTNode* node) {
     return node->isExpression();
   }
@@ -65,6 +68,10 @@ public:
 
   void accept(ASTVisitor &visitor) override {
     visitor.visit(static_cast<Derived&>(*this));
+  }
+
+  bool isLValue() const override {
+    return isa<IdentifierExpr, AccessExpr>(this);
   }
 };
 
@@ -135,12 +142,12 @@ public:
 };
 
 // Variable and access expressions
-class VariableExpr : public ExprCRTP<VariableExpr> {
+class IdentifierExpr : public ExprCRTP<IdentifierExpr> {
   std::string name;
 public:
-  VariableExpr(const std::string &name, const Location &loc)
+  IdentifierExpr(const std::string &name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
-  VariableExpr(std::string_view name, const Location &loc)
+  IdentifierExpr(std::string_view name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
 
   const std::string& getName() const { return name; }

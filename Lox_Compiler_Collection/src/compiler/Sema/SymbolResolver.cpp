@@ -43,7 +43,7 @@ DEFINE_VISIT(SymbolResolver, SuperExpr) {
 DEFINE_VISIT(SymbolResolver, GroupingExpr) {
     // Visit the inner expression
     expr.getExpression()->accept(*this);
-    
+
     // Set the type of the grouping expression as the type of the inner expression
     expr.setType(expr.getExpression()->getType());
 }
@@ -51,11 +51,11 @@ DEFINE_VISIT(SymbolResolver, GroupingExpr) {
 DEFINE_VISIT(SymbolResolver, CallExpr) {
     // Visit the callee expression
     expr.getCallee()->accept(*this);
-    
+
     // Check if the callee is a variable or access expression
     ExprBase *callee = expr.getCallee();
     shared_ptr<Type> calleeType = callee->getType();
-    
+
     if (calleeType == nullptr) {
         assert_not_reached("Callee type should not be null");
     }
@@ -64,7 +64,7 @@ DEFINE_VISIT(SymbolResolver, CallExpr) {
     for (auto &arg : expr.getArguments()) {
         arg->accept(*this);
     }
-    
+
     if (auto functionType = dyn_cast<FunctionType>(calleeType)) {
         // If the callee is a function type, set the call expression type as the return type of the function
         expr.setType(functionType->getReturnType());
@@ -94,7 +94,7 @@ DEFINE_VISIT(SymbolResolver, VariableExpr) {
         ErrorReporter::reportError(&expr, "Variable '" + expr.getName() + "' is used before it is defined");
         return;
     }
-    
+
     // Mark the symbol as used
     symbol->markAsUsed();
 }
@@ -102,7 +102,7 @@ DEFINE_VISIT(SymbolResolver, VariableExpr) {
 DEFINE_VISIT(SymbolResolver, LiteralExpr) {
     // Check the value of the literal expression
     const string &value = expr.getValue();
-    
+
     if (value == "true" || value == "false") {
         // If the literal is a boolean, set the type as BoolType
         expr.setType(BoolType::getInstance());
@@ -189,7 +189,7 @@ DEFINE_VISIT(SymbolResolver, AccessExpr) {
             ErrorReporter::reportError(&expr, "Property '" + expr.getProperty() + "' is not defined in class '" + classType->getName() + "'");
             return;
         }
-        
+
         shared_ptr<Type> propertyType = classType->getProperty(expr.getProperty())->getType();
         if (propertyType == nullptr) {
             ErrorReporter::reportError(&expr, "Property '" + expr.getProperty() + "' is not defined in class '" + classType->getName() + "'");
@@ -267,7 +267,7 @@ DEFINE_VISIT(SymbolResolver, VarDeclStmt) {
 
     // Create a new symbol for the variable
     shared_ptr<Symbol> symbol = make_shared<Symbol>(expr.getName(), varType);
-    
+
     // Declare the variable in the symbol table
     if (!symbolTable.declare(symbol)) {
         ErrorReporter::reportError(&expr, "Variable '" + expr.getName() + "' is already defined");
@@ -329,7 +329,7 @@ DEFINE_VISIT(SymbolResolver, ClassDeclStmt) {
     shared_ptr<ClassType> classType = make_shared<ClassType>(expr.getName(), superClassType);
     classSymbol->setType(classType);
     classSymbol->markAsDefined();
-    
+
     // Declare the class in the symbol table
     if (!symbolTable.declare(classSymbol)) {
         ErrorReporter::reportError(&expr, "Class '" + expr.getName() + "' is already defined");
@@ -421,10 +421,10 @@ DEFINE_VISIT(SymbolResolver, FunctionDecl) {
     // Set the symbol for the function declaration
     expr.setSymbol(symbol);
     symbol->markAsDefined();
-    
+
     // Enter a new scope for the function
     symbolTable.enterFunctionScope(functionName, symbol);
-    
+
     // Declare the function parameters in the current scope
     std::vector<shared_ptr<Type>> parameterTypes;
     for (const auto &param : expr.getParameters()) {
@@ -441,12 +441,12 @@ DEFINE_VISIT(SymbolResolver, FunctionDecl) {
         // Add the parameter to the function type
         parameterTypes.push_back(paramSymbol->getType());
     }
-    
+
     // Visit the function body
     for (auto &stmt : expr.getBody()->getStatements()) {
         stmt->accept(*this);
     }
-    
+
     // Set the function's scope
     expr.getBody()->setScope(symbolTable.getCurrentScope());
 
@@ -458,7 +458,7 @@ DEFINE_VISIT(SymbolResolver, FunctionDecl) {
     FunctionType::Signature signature(parameterTypes, returnType);
     // Add the signature to the function type
     funcType->addOverload(signature);
-    
+
     // Exit the function scope
     symbolTable.exitScope();
 }
@@ -466,7 +466,7 @@ DEFINE_VISIT(SymbolResolver, FunctionDecl) {
 DEFINE_VISIT(SymbolResolver, IfStmt) {
     symbolTable.enterScope("if_statement");
     expr.getCondition()->accept(*this);
-    
+
     expr.getThenBranch()->accept(*this);
 
     if (expr.hasElseBranch()) {
@@ -475,7 +475,7 @@ DEFINE_VISIT(SymbolResolver, IfStmt) {
 
     expr.setScope(symbolTable.getCurrentScope());
     symbolTable.exitScope();
-    
+
     // expr.setType(NilType::getInstance()); // For now, we assume the if statement returns nil
 }
 
@@ -488,7 +488,7 @@ DEFINE_VISIT(SymbolResolver, WhileStmt) {
     }
     expr.getBody()->setScope(symbolTable.getCurrentScope());
     symbolTable.exitScope();
-    
+
     // expr.setType(NilType::getInstance()); // For now, we assume the while loop returns nil
 }
 
@@ -507,7 +507,7 @@ DEFINE_VISIT(SymbolResolver, ForStmt) {
     for (auto &stmt : expr.getBody()->getStatements()) {
         stmt->accept(*this);
     }
-    
+
     expr.getBody()->setScope(symbolTable.getCurrentScope());
     symbolTable.exitScope();
 
@@ -532,7 +532,7 @@ DEFINE_VISIT(SymbolResolver, ReturnStmt) {
     if (expr.getValue()) {
         // If there is a return value, visit the expression
         expr.getValue()->accept(*this);
-        
+
         returnType = expr.getValue()->getType();
     }
     else {

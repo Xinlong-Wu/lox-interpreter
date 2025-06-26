@@ -43,7 +43,7 @@ public:
   INSTENCE_VISIT(SuperExpr);
   INSTENCE_VISIT(GroupingExpr);
   INSTENCE_VISIT(CallExpr);
-  INSTENCE_VISIT(VariableExpr);
+  INSTENCE_VISIT(IdentifierExpr);
   INSTENCE_VISIT(LiteralExpr);
   INSTENCE_VISIT(NumberExpr);
   INSTENCE_VISIT(StringExpr);

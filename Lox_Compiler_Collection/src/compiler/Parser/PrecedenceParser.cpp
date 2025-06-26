@@ -114,19 +114,19 @@ PrefixHandler(parseString) {
 }
 
 PrefixHandler(variable) {
-  return std::make_unique<lox::VariableExpr>(
+  return std::make_unique<lox::IdentifierExpr>(
       parser.getPreviousToken().getTokenString(),
       parser.getPreviousToken().getLoction());
 }
 
 PrefixHandler(this_) {
-  return std::make_unique<lox::VariableExpr>(
+  return std::make_unique<lox::IdentifierExpr>(
       parser.getPreviousToken().getTokenString(),
       parser.getPreviousToken().getLoction());
 }
 
 PrefixHandler(super_) {
-  return std::make_unique<lox::VariableExpr>(
+  return std::make_unique<lox::IdentifierExpr>(
       parser.getPreviousToken().getTokenString(),
       parser.getPreviousToken().getLoction());
 }
@@ -180,6 +180,12 @@ InfixHandler(dot) {
 
 InfixHandler(assign) {
   Location loc = parser.getPreviousToken().getLoction();
+
+  if (!left->isLValue()) {
+    parser.parseError("Invalid assignment target. Unable to assign to non-lvalue expression.");
+    return left;
+  }
+
   // Compile the right operand.
   std::unique_ptr<ExprBase> value = parsePrecedence(parser, PREC_ASSIGNMENT);
 
@@ -205,7 +211,7 @@ InfixHandler(call) {
     parser.parse(lox::TokenType::TOKEN_RIGHT_PAREN);
   }
 
-  assert ((isa<VariableExpr, AccessExpr>(left)) &&
+  assert ((isa<IdentifierExpr, AccessExpr>(left)) &&
          "Call expression must have a variable or access expression as the callee");
   // If the callee is not a variable, we cannot create a CallExpr.
   return std::make_unique<lox::CallExpr>(std::move(left), std::move(args),

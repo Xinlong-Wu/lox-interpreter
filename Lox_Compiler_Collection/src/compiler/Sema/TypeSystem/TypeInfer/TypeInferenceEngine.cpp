@@ -304,7 +304,7 @@ Type * lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
     if (isa<NilExpr>(expr)) {
         return typeContext->getNilType();
     }
-    if (auto varExpr = dyn_cast<VariableExpr>(expr)) {
+    if (auto varExpr = dyn_cast<IdentifierExpr>(expr)) {
         Symbol *symbol = symbolTable.lookupLocalSymbol(varExpr->getName());
         if (!symbol) {
             ErrorReporter::reportError("Variable '" + varExpr->getName() + "' was not declared");
