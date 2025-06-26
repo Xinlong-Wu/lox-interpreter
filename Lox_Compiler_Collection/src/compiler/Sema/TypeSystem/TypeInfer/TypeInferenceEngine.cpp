@@ -37,9 +37,9 @@ void lox::TypeInferenceEngine::collectTypeDeclarations(const vector<unique_ptr<S
         }
         else if (auto blockStmt = dyn_cast<BlockStmt>(stmt.get())) {
             // enter a new scope for the block statement
-            shared_ptr<BlockScope> blockScope = make_shared<BlockScope>(symbolTable.currentScope());
-            blockStmt->setScope(blockScope);
-            symbolTable.enterScope(blockScope);
+            unique_ptr<BlockScope> blockScope = make_unique<BlockScope>(symbolTable.currentScope());
+            symbolTable.enterScope(blockScope.get());
+            blockStmt->setScope(move(blockScope));
             // 处理块语句中的声明
             collectTypeDeclarations(blockStmt->getStatements());
 
@@ -67,10 +67,10 @@ void lox::TypeInferenceEngine::collectClassDeclarations(ClassDeclStmt *classDecl
         return;
     }
 
-    shared_ptr<ClassScope> classScope = make_shared<ClassScope>(symbolTable.currentScope(), className);
+    unique_ptr<ClassScope> classScope = make_unique<ClassScope>(symbolTable.currentScope(), className);
     classType->setClassScope(classScope.get());
-    classDecl->setScope(classScope);
-    symbolTable.enterScope(classScope);
+    symbolTable.enterScope(classScope.get());
+    classDecl->setScope(move(classScope));
 
     for(auto &function : classDecl->getMethods()) {
         this->collectFunctionDeclarations(function.second.get());
@@ -132,9 +132,9 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(FunctionDeclStmt *fun
     }
 
     // enter function scope
-    shared_ptr<FunctionScope> funcScope = make_shared<FunctionScope>(symbolTable.currentScope(), funcDecl->getName(), signaturePtr);
-    funcDecl->setScope(funcScope);
-    symbolTable.enterScope(funcScope);
+    unique_ptr<FunctionScope> funcScope = make_unique<FunctionScope>(symbolTable.currentScope(), funcDecl->getName(), signaturePtr);
+    symbolTable.enterScope(funcScope.get());
+    funcDecl->setScope(move(funcScope));
 
     // declare the function's parameters in the function scope
     for (auto paramSymbol = paramSymbols.begin(); paramSymbol != paramSymbols.end(); ++paramSymbol) {
@@ -225,7 +225,7 @@ void lox::TypeInferenceEngine::inferVarDeclStmt(VarDeclStmt *varDecl) {
 
 void lox::TypeInferenceEngine::inferFunctionDeclStmt(FunctionDeclStmt *funcDecl) {
     // restore the function scope to the symbol table
-    shared_ptr<FunctionScope> funcScope = cast<FunctionScope>(funcDecl->getScope());
+    FunctionScope *funcScope = cast<FunctionScope>(funcDecl->getScope());
     if (!funcScope) {
         ErrorReporter::reportError("Function '" + funcDecl->getName() + "' has no scope");
         return;
@@ -258,7 +258,7 @@ void lox::TypeInferenceEngine::inferFunctionDeclStmt(FunctionDeclStmt *funcDecl)
 
 void lox::TypeInferenceEngine::inferClassDeclStmt(ClassDeclStmt *classDecl) {
     // restore the class scope to the symbol table
-    shared_ptr<ClassScope> classScope = cast<ClassScope>(classDecl->getScope());
+    ClassScope *classScope = cast<ClassScope>(classDecl->getScope());
     symbolTable.enterScope(classScope);
 
     // infer the class's fields
@@ -276,7 +276,7 @@ void lox::TypeInferenceEngine::inferClassDeclStmt(ClassDeclStmt *classDecl) {
 
 void lox::TypeInferenceEngine::inferBlockStmt(BlockStmt *blockStmt) {
     // restore the block scope to the symbol table
-    shared_ptr<BlockScope> blockScope = cast<BlockScope>(blockStmt->getScope());
+    BlockScope *blockScope = cast<BlockScope>(blockStmt->getScope());
     symbolTable.enterScope(blockScope);
 
     // infer the block's statements

@@ -38,15 +38,15 @@ protected:
   std::string name;
   std::unordered_map<std::string, std::unique_ptr<Symbol>> symbols;
   std::unordered_map<std::string, Type *> types;
-  std::shared_ptr<Scope> enclosingScope;
+  Scope *enclosingScope;
 public:
-  Scope(std::shared_ptr<Scope> parent, const std::string &name)
+  Scope(Scope *parent, const std::string &name)
       : enclosingScope(parent), name(name) {}
   virtual ~Scope() = default;
 
   // 纯虚接口
   const std::string& getName() const { return name; }
-  std::shared_ptr<Scope> getEnclosingScope() const { return enclosingScope; }
+  Scope * getEnclosingScope() const { return enclosingScope; }
 
   // 作用域检查
   virtual bool inFunctionScope() const = 0;
@@ -179,7 +179,7 @@ protected:
   const Derived& derived() const { return static_cast<const Derived&>(*this); }
 
 public:
-  ScopeBase(std::shared_ptr<Scope> parent, const std::string &name)
+  ScopeBase(Scope *parent, const std::string &name)
         : Scope(parent, name) {}
 
   virtual ~ScopeBase() = default;
@@ -196,7 +196,7 @@ public:
               _inFunctionScope = true;
               return true;
           }
-          current = current->getEnclosingScope().get();
+          current = current->getEnclosingScope();
       }
       _inFunctionScope = false;
       return false;
@@ -213,7 +213,7 @@ public:
               _inClassScope = true;
               return true;
           }
-          current = current->getEnclosingScope().get();
+          current = current->getEnclosingScope();
       }
       _inClassScope = false;
       return false;
@@ -304,9 +304,9 @@ public:
 
 class ClassScope : public ScopeBase<ClassScope> {
 private:
-  std::unordered_map<std::string, std::shared_ptr<Symbol>> staticSymbols;
+  std::unordered_map<std::string, std::unique_ptr<Symbol>> staticSymbols;
 public:
-  ClassScope(std::shared_ptr<Scope> parent, const std::string &name)
+  ClassScope(Scope *parent, const std::string &name)
         : ScopeBase(parent, name) {
     if (!parent) {
       ErrorReporter::reportError("Class scope must have an enclosing scope");
@@ -330,12 +330,12 @@ public:
 
 class FunctionScope : public ScopeBase<FunctionScope> {
 private:
-  std::shared_ptr<Type> returnType = nullptr;
+  Type *returnType = nullptr;
 public:
-  FunctionScope(std::shared_ptr<Scope> parent, const std::string &name)
+  FunctionScope(Scope *parent, const std::string &name)
       : ScopeBase(parent, name) {}
 
-  FunctionScope(std::shared_ptr<Scope> parent, const std::string &name, const Signature *signature)
+  FunctionScope(Scope *parent, const std::string &name, const Signature *signature)
       : ScopeBase(parent, name) {
     this->currentSignature = signature;
   }
@@ -349,9 +349,9 @@ class BlockScope : public ScopeBase<BlockScope> {
 private:
   static size_t anonymousCounter;
 public:
-  BlockScope(std::shared_ptr<Scope> parent, const std::string &name)
+  BlockScope(Scope *parent, const std::string &name)
       : ScopeBase(parent, name) {}
-  BlockScope(std::shared_ptr<Scope> parent)
+  BlockScope(Scope *parent)
       : BlockScope(parent, "Block" + std::to_string(anonymousCounter++)) {}
 };
 }

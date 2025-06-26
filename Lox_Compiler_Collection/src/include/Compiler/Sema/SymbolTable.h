@@ -7,8 +7,8 @@
 namespace lox {
 class SymbolTable {
 private:
-  std::vector<std::shared_ptr<Scope>> scopes;
-  std::shared_ptr<Scope> globalScope;
+  std::vector<Scope*> scopes;
+  std::unique_ptr<Scope> globalScope;
 
   // 禁止复制和赋值
   // SymbolTable(const SymbolTable&) = delete;
@@ -18,12 +18,12 @@ private:
 
 public:
   SymbolTable(TypeContext *typeContext) {
-    globalScope = std::make_shared<GlobalScope>(typeContext);
-    scopes.push_back(globalScope);
+    globalScope = std::make_unique<GlobalScope>(typeContext);
+    scopes.push_back(globalScope.get());
   }
   ~SymbolTable() = default;
 
-  void enterScope(const std::shared_ptr<Scope> &scope) {
+  void enterScope(Scope *scope) {
     scopes.push_back(scope);
   }
 
@@ -35,7 +35,7 @@ public:
     }
   }
 
-  std::shared_ptr<Scope> currentScope() const { return scopes.back(); }
+  Scope *currentScope() const { return scopes.back(); }
 
   bool declare(std::unique_ptr<Symbol> sym) {
     return scopes.back()->declare(std::move(sym));

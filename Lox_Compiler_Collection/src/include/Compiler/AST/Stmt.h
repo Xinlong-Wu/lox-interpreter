@@ -59,11 +59,11 @@ public:
 
 // template<typename Derived>
 class ScopedMixin {
-  std::shared_ptr<Scope> scope = nullptr;
+  std::unique_ptr<Scope> scope = nullptr;
 public:
-  std::shared_ptr<Scope> getScope() const { return scope; }
+  Scope *getScope() const { return scope.get(); }
 
-  void setScope(std::shared_ptr<Scope> newScope) {
+  void setScope(std::unique_ptr<Scope> newScope) {
     assert(scope == nullptr && "Scope has already been set");
     scope = std::move(newScope);
   }
