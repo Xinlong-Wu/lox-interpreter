@@ -22,7 +22,8 @@
         "ninja-build",
         "clang-18",
         "git",
-        "build-essential"
+        "build-essential",
+        "clangd"
       ]
     }
   },

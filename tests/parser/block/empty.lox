@@ -1,29 +1,27 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 // RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
-// CHECK-PARSER-LABEL:     BlockStmt: {
+// CHECK-PARSER-LABEL:     {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER-LABEL:     if (Literal: [true])
-// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-LABEL:     if (true)
+// CHECK-PARSER-NEXT:      {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER-LABEL:     if (Literal: [false])
-// CHECK-PARSER-NEXT:      BlockStmt: {
+// CHECK-PARSER-LABEL:     if (false)
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:      } else {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER-NEXT:      else BlockStmt: {
-// CHECK-PARSER-NEXT:      }
-// CHECK-PARSER-LABEL:      Call: [Variable: [print](String: ["ok"], )];
+// CHECK-PARSER-LABEL:     print("ok");
 
-// CHECK-SEMANTIC-LABEL:     BlockStmt: {
+// CHECK-SEMANTIC-LABEL:     {
 // CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC-LABEL:     if (Literal: [true])
-// CHECK-SEMANTIC-NEXT:      BlockStmt: {
+// CHECK-SEMANTIC-LABEL:     if (true)
+// CHECK-SEMANTIC-NEXT:      {
 // CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC-LABEL:     if (Literal: [false])
-// CHECK-SEMANTIC-NEXT:      BlockStmt: {
+// CHECK-SEMANTIC-LABEL:     if (false)
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:      } else {
 // CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC-NEXT:      else BlockStmt: {
-// CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC-LABEL:     Call: [Variable: [print: (string) -> nil](String: ["ok"], )];
+// CHECK-SEMANTIC-LABEL:     print("ok");
 
 {} // By itself.
 

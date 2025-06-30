@@ -169,9 +169,6 @@ void lox::TypeInferenceEngine::inferStatement(StmtBase *stmt) {
     } else if (auto exprStmt = dyn_cast<ExpressionStmt>(stmt)) {
         inferExprStmt(exprStmt);
     }
-    else {
-        ErrorReporter::reportError("Unknown statement type in type inference engine");
-    }
 }
 
 void lox::TypeInferenceEngine::inferVarDeclStmt(VarDeclStmt *varDecl) {
@@ -340,7 +337,7 @@ Type * lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
                 // If the symbol is a class type, we return it
                 return classType;
             }
-            ErrorReporter::reportError("Variable '" + varExpr->getName() + "' was not declared");
+            ErrorReporter::reportError("Use of undeclared variable '" + varExpr->getName() + "'");
             return nullptr;
         }
         return symbol->getType();
