@@ -55,15 +55,22 @@ lox::ClassType::getPropertyType(const std::string &propertyName) const {
       return prop->getType();
     }
   }
+  if (superclass) {
+    return superclass->getPropertyType(propertyName);
+  }
   return nullptr;
 }
 
-const std::vector<lox::Type *> lox::ClassType::getPropertyTypes() const {
-  std::vector<lox::Type *> types;
-  if (properties) {
-    for (const auto &symbol : properties->getSymbols()) {
-      types.push_back(symbol->getType());
-    }
-  }
-  return types;
-}
+// const std::vector<lox::Type *> lox::ClassType::getPropertyTypes() const {
+//   std::vector<lox::Type *> types;
+//   if (properties) {
+//     for (const auto &symbol : properties->getSymbols()) {
+//       types.push_back(symbol->getType());
+//     }
+//   }
+//   if (superclass) {
+//     auto superTypes = superclass->getPropertyTypes();
+//     types.insert(types.end(), superTypes.begin(), superTypes.end());
+//   }
+//   return types;
+// }

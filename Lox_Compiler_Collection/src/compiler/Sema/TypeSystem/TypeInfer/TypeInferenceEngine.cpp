@@ -1,4 +1,5 @@
 #include "Compiler/Sema/TypeSystem/TypeInfer/TypeInferenceEngine.h"
+#include "Compiler/AST/ASTVisitor.h"
 #include "Compiler/AST/ASTWalker.h"
 #include "Compiler/Sema/TypeSystem/Type.h"
 
@@ -55,11 +56,12 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
   ClassType *superClass = nullptr;
 
   if (classDecl->hasSuperclass()) {
-    superClass =
-        cast<ClassType>(symbolTable.lookupType(classDecl->getSuperclassName()));
+    superClass = dyn_cast<ClassType>(
+        symbolTable.lookupType(classDecl->getSuperclassName()));
     if (!superClass) {
-      ErrorReporter::reportError(
-          "Superclass '" + classDecl->getSuperclassName() + "' not found");
+      ErrorReporter::reportError("Superclass '" +
+                                 classDecl->getSuperclassName() +
+                                 "' is not defined.");
       return;
     }
   }
@@ -74,12 +76,23 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
 
   unique_ptr<ClassScope> classScope =
       make_unique<ClassScope>(symbolTable.currentScope(), className);
-  classType->setClassScope(classScope.get());
-  symbolTable.enterScope(classScope.get());
+  ClassScope *classScopePtr = classScope.get();
   classDecl->setScope(move(classScope));
+  classType->setClassScope(classScopePtr);
+  symbolTable.enterScope(classScopePtr);
 
   for (auto &function : classDecl->getMethods()) {
     this->collectFunctionDeclarations(function.second.get());
+  }
+
+  if (!classScopePtr->getConstructor()) {
+    // If the class does not have a constructor, create a default constructor
+    unique_ptr<Signature> signature =
+        make_unique<Signature>(vector<Type *>(), classType);
+    FunctionType *funcType = typeContext->make<FunctionType>(
+        classDecl->getName(), std::move(signature));
+
+    classScopePtr->declare(std::move(make_unique<Symbol>(funcType)));
   }
 
   symbolTable.exitScope();
@@ -280,6 +293,10 @@ void lox::TypeInferenceEngine::inferFunctionDeclStmt(
 }
 
 void lox::TypeInferenceEngine::inferClassDeclStmt(ClassDeclStmt *classDecl) {
+  // class has a scope means it is failed in Type Collection
+  if (!classDecl->getScope()) {
+    return;
+  }
   // restore the class scope to the symbol table
   ClassScope *classScope = cast<ClassScope>(classDecl->getScope());
   symbolTable.enterScope(classScope);
@@ -490,6 +507,18 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
                     Constraint::ConstraintType::ASSIGNABLE);
     }
   } else if (auto classType = dyn_cast<ClassType>(calleeType)) {
+    IdentifierExpr *calleeId = dyn_cast<IdentifierExpr>(callExpr->getCallee());
+    if (!calleeId) {
+      ErrorReporter::reportError("Callee is not an identifier expression");
+      return nullptr;
+    }
+    Symbol *calleeSymbol = symbolTable.lookupSymbol(calleeId->getName());
+    if (calleeSymbol) {
+      ErrorReporter::reportError("Unable call instance of class '" +
+                                 classType->getName() + "' as a function");
+      return nullptr;
+    }
+
     // if the callee is a class type, we assume it's a constructor call
     const ClassScope *classScope = classType->getClassScope();
     const FunctionType *constructorType =
@@ -662,14 +691,14 @@ bool lox::TypeInferenceEngine::occursCheck(const TypeVariable *var,
     return true; // Type variable occurs in the type
   }
 
-  if (auto classType = dyn_cast<const ClassType>(subStitutedType)) {
-    // Check if the type variable occurs in the class's fields
-    for (auto &propertyType : classType->getPropertyTypes()) {
-      if (occursCheck(var, propertyType)) {
-        return true;
-      }
-    }
-  }
+  // if (auto classType = dyn_cast<const ClassType>(subStitutedType)) {
+  //   // Check if the type variable occurs in the class's fields
+  //   for (auto &propertyType : classType->getPropertyTypes()) {
+  //     if (occursCheck(var, propertyType)) {
+  //       return true;
+  //     }
+  //   }
+  // }
   // else if (auto functionType = dyn_cast<FunctionType>(subStitutedType)) {
   //     // Check if the type variable occurs in the function's parameters or
   //     return type for (const auto &param :

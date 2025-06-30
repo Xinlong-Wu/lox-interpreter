@@ -1,45 +1,40 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 // RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
-// CHECK-PARSER-LABEL:     Call: [Variable: [print](Binary: [Literal: [true] == Literal: [true]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] == Literal: [false]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] == Literal: [true]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] == Literal: [false]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] == Number: [1]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] == Number: [0]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] == String: ["true"]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] == String: ["false"]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] == String: [""]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] != Literal: [true]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] != Literal: [false]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != Literal: [true]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != Literal: [false]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] != Number: [1]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != Number: [0]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [true] != String: ["true"]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != String: ["false"]], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Binary: [Literal: [false] != String: [""]], )];
+// CHECK-PARSER-LABEL:     print(true == true);
+// CHECK-PARSER-NEXT:      print(true == false);
+// CHECK-PARSER-NEXT:      print(false == true);
+// CHECK-PARSER-NEXT:      print(false == false);
+// CHECK-PARSER-NEXT:      print(true == 1);
+// CHECK-PARSER-NEXT:      print(false == 0);
+// CHECK-PARSER-NEXT:      print(true == "true");
+// CHECK-PARSER-NEXT:      print(false == "false");
+// CHECK-PARSER-NEXT:      print(false == "");
+// CHECK-PARSER-NEXT:      print(true != true);
+// CHECK-PARSER-NEXT:      print(true != false);
+// CHECK-PARSER-NEXT:      print(false != true);
+// CHECK-PARSER-NEXT:      print(false != false);
+// CHECK-PARSER-NEXT:      print(true != 1);
+// CHECK-PARSER-NEXT:      print(false != 0);
+// CHECK-PARSER-NEXT:      print(true != "true");
+// CHECK-PARSER-NEXT:      print(false != "false");
+// CHECK-PARSER-NEXT:      print(false != "");
 
-// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
-// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [true] == Number: [1]]
-// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
-// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
-// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [false] == Number: [0]]
-// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
-// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
-// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [true] == String: ["true"]]
-// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
-// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
-// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [false] == String: ["false"]]
-// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
-// CHECK-SEMANTIC-LABEL:   Incompatible types in binary expression at
-// CHECK-SEMANTIC-NEXT:    Binary: [Literal: [false] == String: [""]]
-// CHECK-SEMANTIC-NEXT:    No matching overload for function 'print(unknown(unresolved)) -> nil' at
+// CHECK-SEMANTIC-LABEL:   Cannot unify different types: 'Bool' and 'Number'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'Number'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'String'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'String'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'String'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'Number'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'Number'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'String'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'String'
+// CHECK-SEMANTIC-NEXT:    Cannot unify different types: 'Bool' and 'String'
 
-// CHECK-SEMANTIC-LABEL:   Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [true] == Literal: [true]], )];
-// CHECK-SEMANTIC-NEXT:    Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [true] == Literal: [false]], )];
-// CHECK-SEMANTIC-NEXT:    Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [false] == Literal: [true]], )];
-// CHECK-SEMANTIC-NEXT:    Call: [Variable: [print: (bool) -> nil](Binary: [Literal: [false] == Literal: [false]], )];
+// CHECK-SEMANTIC-LABEL:   print(true == true);
+// CHECK-SEMANTIC-NEXT:    print(true == false);
+// CHECK-SEMANTIC-NEXT:    print(false == true);
+// CHECK-SEMANTIC-NEXT:    print(false == false);
 
 print (true == true);    // expect: true
 print (true == false);   // expect: false

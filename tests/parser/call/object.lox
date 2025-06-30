@@ -3,13 +3,14 @@
 
 // CHECK-PARSER-LABEL:     class Foo {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER:           var foo = Call: [Variable: [Foo]()];
-// CHECK-PARSER-NEXT:      Call: [Variable: [foo]()];
+// CHECK-PARSER:           var foo = Foo();
+// CHECK-PARSER-NEXT:      foo();
 
-// CHECK-SEMANTIC-LABEL:   Callee type should be a function type or class type at
-// CHECK-SEMANTIC-NEXT:    Call: [Variable: [foo]()]
-// CHECK-SEMANTIC-LABEL:   var foo: instance of Foo = Call: [Variable: [Foo: () -> instance of Foo]()];
-// CHECK-SEMANTIC-NEXT:    Call: [Variable: [foo]()];
+// CHECK-SEMANTIC-LABEL:   Unable call instance of class 'Foo' as a function
+// CHECK-SEMANTIC-LABEL:    class Foo {
+// CHECK-SEMANTIC-NEXT:    }
+// CHECK-SEMANTIC-NEXT:    var foo = Foo();
+// CHECK-SEMANTIC-NEXT:    foo();
 
 class Foo {}
 var foo = Foo();

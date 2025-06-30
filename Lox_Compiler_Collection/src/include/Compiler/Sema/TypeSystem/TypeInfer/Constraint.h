@@ -1,6 +1,8 @@
 #ifndef CONSTRAINT_H
 #define CONSTRAINT_H
 
+#include "Compiler/Sema/TypeSystem/Type.h"
+
 namespace lox {
 class Constraint {
 public:

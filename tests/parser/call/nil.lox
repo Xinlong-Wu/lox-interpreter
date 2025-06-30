@@ -1,5 +1,5 @@
 // RUN: not %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
 
-// CHECK-PARSER-LABEL:     Error: Invalid callee at `Literal: [nil]`, before: `(`
+// CHECK-PARSER-LABEL:     Error: Invalid call expression. Expected a variable or access expression. at `)`, before: `;`
 
 nil(); // expect runtime error: Can only call functions and classes.

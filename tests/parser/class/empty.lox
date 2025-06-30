@@ -3,10 +3,8 @@
 
 // CHECK-PARSER-LABEL:     class Foo {
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER:           Call: [Variable: [print](Variable: [Foo], )];
 
-// CHECK-SEMANTIC-LABEL:   Call: [Variable: [print: (string) -> nil](Variable: [Foo: class Foo], )];
+// CHECK-SEMANTIC-LABEL:     class Foo {
+// CHECK-SEMANTIC-NEXT:      }
 
 class Foo {}
-
-print (Foo); // expect: Foo

@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "Compiler/ErrorReporter.h"
 #include "Compiler/Parser/Parser.h"
 #include "Compiler/Scanner/Token.h"
 #include <unordered_map>
@@ -221,9 +222,12 @@ InfixHandler(call) {
     parser.parse(lox::TokenType::TOKEN_RIGHT_PAREN);
   }
 
-  assert((isa<IdentifierExpr, AccessExpr>(left)) &&
-         "Call expression must have a variable or access expression as the "
-         "callee");
+  if (!isa<IdentifierExpr, AccessExpr>(left)) {
+    parser.parseError(
+        "Invalid call expression. Expected a variable or access expression.");
+    return nullptr;
+  }
+
   // If the callee is not a variable, we cannot create a CallExpr.
   return std::make_unique<lox::CallExpr>(std::move(left), std::move(args), loc);
 }
@@ -281,48 +285,48 @@ InfixHandler(binary) {
 }
 
 std::unordered_map<lox::TokenType, ParseRule> rules = {
-    {lox::TokenType::TOKEN_LEFT_PAREN,    {grouping, call,   PREC_CALL}},
-    {lox::TokenType::TOKEN_RIGHT_PAREN,   {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_LEFT_BRACE,    {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_RIGHT_BRACE,   {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_COMMA,         {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_DOT,           {NULL,     dot,    PREC_CALL}},
-    {lox::TokenType::TOKEN_MINUS,         {unary,    binary, PREC_TERM}},
-    {lox::TokenType::TOKEN_PLUS,          {NULL,     binary, PREC_TERM}},
-    {lox::TokenType::TOKEN_SEMICOLON,     {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_SLASH,         {NULL,     binary, PREC_FACTOR}},
-    {lox::TokenType::TOKEN_STAR,          {NULL,     binary, PREC_FACTOR}},
-    {lox::TokenType::TOKEN_BANG,          {unary,    NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_EQUAL,         {NULL,     assign, PREC_ASSIGNMENT}},
-    {lox::TokenType::TOKEN_BANG_EQUAL,    {NULL,     binary, PREC_EQUALITY}},
-    {lox::TokenType::TOKEN_EQUAL_EQUAL,   {NULL,     binary, PREC_EQUALITY}},
-    {lox::TokenType::TOKEN_GREATER,       {NULL,     binary, PREC_COMPARISON}},
-    {lox::TokenType::TOKEN_GREATER_EQUAL, {NULL,     binary, PREC_COMPARISON}},
-    {lox::TokenType::TOKEN_LESS,          {NULL,     binary, PREC_COMPARISON}},
-    {lox::TokenType::TOKEN_LESS_EQUAL,    {NULL,     binary, PREC_COMPARISON}},
-    {lox::TokenType::TOKEN_IDENTIFIER,    {variable, NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_STRING,        {parseString,   NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_NUMBER,        {number,   NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_AND,           {NULL,     and_,   PREC_AND}},
-    {lox::TokenType::TOKEN_CLASS,         {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_ELSE,          {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_FALSE,         {literal,  NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_FOR,           {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_FUN,           {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_IF,            {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_NIL,           {literal,  NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_OR,            {NULL,     or_,    PREC_OR}},
+    {lox::TokenType::TOKEN_LEFT_PAREN, {grouping, call, PREC_CALL}},
+    {lox::TokenType::TOKEN_RIGHT_PAREN, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_LEFT_BRACE, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_RIGHT_BRACE, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_COMMA, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_DOT, {NULL, dot, PREC_CALL}},
+    {lox::TokenType::TOKEN_MINUS, {unary, binary, PREC_TERM}},
+    {lox::TokenType::TOKEN_PLUS, {NULL, binary, PREC_TERM}},
+    {lox::TokenType::TOKEN_SEMICOLON, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_SLASH, {NULL, binary, PREC_FACTOR}},
+    {lox::TokenType::TOKEN_STAR, {NULL, binary, PREC_FACTOR}},
+    {lox::TokenType::TOKEN_BANG, {unary, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_EQUAL, {NULL, assign, PREC_ASSIGNMENT}},
+    {lox::TokenType::TOKEN_BANG_EQUAL, {NULL, binary, PREC_EQUALITY}},
+    {lox::TokenType::TOKEN_EQUAL_EQUAL, {NULL, binary, PREC_EQUALITY}},
+    {lox::TokenType::TOKEN_GREATER, {NULL, binary, PREC_COMPARISON}},
+    {lox::TokenType::TOKEN_GREATER_EQUAL, {NULL, binary, PREC_COMPARISON}},
+    {lox::TokenType::TOKEN_LESS, {NULL, binary, PREC_COMPARISON}},
+    {lox::TokenType::TOKEN_LESS_EQUAL, {NULL, binary, PREC_COMPARISON}},
+    {lox::TokenType::TOKEN_IDENTIFIER, {variable, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_STRING, {parseString, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_NUMBER, {number, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_AND, {NULL, and_, PREC_AND}},
+    {lox::TokenType::TOKEN_CLASS, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_ELSE, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_FALSE, {literal, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_FOR, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_FUN, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_IF, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_NIL, {literal, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_OR, {NULL, or_, PREC_OR}},
     // {lox::TokenType::TOKEN_PRINT,         {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_RETURN,        {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_SUPER,         {super_,   NULL,   PREC_SUPER}},
-    {lox::TokenType::TOKEN_THIS,          {this_,    NULL,   PREC_THIS}},
-    {lox::TokenType::TOKEN_TRUE,          {literal,  NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_VAR,           {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_WHILE,         {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_ERROR,         {NULL,     NULL,   PREC_NONE}},
-    {lox::TokenType::TOKEN_EOF,           {NULL,     NULL,   PREC_NONE}},
+    {lox::TokenType::TOKEN_RETURN, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_SUPER, {super_, NULL, PREC_SUPER}},
+    {lox::TokenType::TOKEN_THIS, {this_, NULL, PREC_THIS}},
+    {lox::TokenType::TOKEN_TRUE, {literal, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_VAR, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_WHILE, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_ERROR, {NULL, NULL, PREC_NONE}},
+    {lox::TokenType::TOKEN_EOF, {NULL, NULL, PREC_NONE}},
 };
-} // namespace
+} // namespace lox
 
 namespace lox {
 std::unique_ptr<ExprBase> Parser::parseExpression() {
