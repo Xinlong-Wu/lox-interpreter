@@ -1,4 +1,5 @@
 #include "Compiler/Sema/TypeSystem/TypeInfer/TypeInferenceEngine.h"
+#include "Common.h"
 #include "Compiler/AST/ASTVisitor.h"
 #include "Compiler/AST/ASTWalker.h"
 #include "Compiler/Sema/TypeSystem/Type.h"
@@ -22,6 +23,9 @@ void lox::TypeInferenceEngine::inferProgramTypes(
   // 解决约束
   bool success = solveConstraints();
   if (!success) {
+    // // 再次推断类型
+    // inferStatements(statements);
+    // solveConstraints();
     return;
   }
 
@@ -482,19 +486,53 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
                                  " has no type");
       return nullptr;
     }
+
+    if (isa<TypeVariable>(argType)) {
+      // Apply substitution to type variables
+      argType = applySubstitution(argType);
+    }
+
     argTypes.push_back(argType);
   }
 
   Type *calleeType = inferExpr(callExpr->getCallee());
-  if (auto functionType = dyn_cast<const FunctionType>(calleeType)) {
-    // check if function has a matching signature
-    const Signature *bestMatch = functionType->resolveOverload(argTypes);
-    if (!bestMatch) {
-      ErrorReporter::reportError(
-          "No matching function overload found for call");
+  vector<const Signature *> bestMatches;
+  const FunctionType *functionType = dyn_cast<const FunctionType>(calleeType);
+
+  if (!functionType) {
+    if (auto classType = dyn_cast<ClassType>(calleeType)) {
+      IdentifierExpr *calleeId =
+          dyn_cast<IdentifierExpr>(callExpr->getCallee());
+      if (!calleeId) {
+        ErrorReporter::reportError("Callee is not an identifier expression");
+        return nullptr;
+      }
+      Symbol *calleeSymbol = symbolTable.lookupSymbol(calleeId->getName());
+      if (calleeSymbol) {
+        ErrorReporter::reportError("Unable call instance of class '" +
+                                   classType->getName() + "' as a function");
+        return nullptr;
+      }
+
+      // if the callee is a class type, we assume it's a constructor call
+      const ClassScope *classScope = classType->getClassScope();
+      functionType =
+          cast<const FunctionType>(classScope->getConstructor()->getType());
+    } else {
+      ErrorReporter::reportError("Callee is not a function type");
       return nullptr;
     }
+  }
 
+  bestMatches = functionType->resolveOverload(argTypes);
+
+  if (bestMatches.empty()) {
+    ErrorReporter::reportError("No matching function overload found for call");
+    return nullptr;
+  }
+
+  if (bestMatches.size() == 1) {
+    const Signature *bestMatch = bestMatches[0];
     // add constraints for each argument
     for (size_t i = 0; i < argTypes.size(); ++i) {
       addConstraint(argTypes[i], bestMatch->getParameterType(i),
@@ -506,47 +544,15 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
       addConstraint(expectedType, resultType,
                     Constraint::ConstraintType::ASSIGNABLE);
     }
-  } else if (auto classType = dyn_cast<ClassType>(calleeType)) {
-    IdentifierExpr *calleeId = dyn_cast<IdentifierExpr>(callExpr->getCallee());
-    if (!calleeId) {
-      ErrorReporter::reportError("Callee is not an identifier expression");
-      return nullptr;
-    }
-    Symbol *calleeSymbol = symbolTable.lookupSymbol(calleeId->getName());
-    if (calleeSymbol) {
-      ErrorReporter::reportError("Unable call instance of class '" +
-                                 classType->getName() + "' as a function");
-      return nullptr;
-    }
-
-    // if the callee is a class type, we assume it's a constructor call
-    const ClassScope *classScope = classType->getClassScope();
-    const FunctionType *constructorType =
-        cast<const FunctionType>(classScope->getConstructor()->getType());
-    const Signature *bestMatch = constructorType->resolveOverload(argTypes);
-    if (!bestMatch) {
-      ErrorReporter::reportError(
-          "No matching constructor overload found for class '" +
-          classType->getName() + "'");
-      return nullptr;
-    }
-    // add constraints for each argument
-    for (size_t i = 0; i < argTypes.size(); ++i) {
-      addConstraint(argTypes[i], bestMatch->getParameterType(i),
-                    Constraint::ConstraintType::ASSIGNABLE);
-    }
-    // set the return type of the call expression
-    resultType = classType;
-    if (expectedType) {
-      addConstraint(expectedType, resultType,
-                    Constraint::ConstraintType::ASSIGNABLE);
-    }
+    callExpr->setResolvedSignature(bestMatch);
+    callExpr->setType(resultType);
   } else {
-    ErrorReporter::reportError("Callee is not a function type");
-    return nullptr;
+
+    // TODO: calculate most generic signature from best matches
+    assert_not_reached(
+        "Unimplemented: multiple best matches for call expression");
   }
 
-  callExpr->setType(resultType);
   return resultType;
 }
 

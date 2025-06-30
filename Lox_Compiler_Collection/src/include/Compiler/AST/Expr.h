@@ -133,6 +133,7 @@ public:
 // Variable and access expressions
 class IdentifierExpr : public ExprCRTP<IdentifierExpr> {
   std::string name;
+
 public:
   IdentifierExpr(const std::string &name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
@@ -400,6 +401,8 @@ class CallExpr : public ExprCRTP<CallExpr> {
   std::unique_ptr<ExprBase> callee;
   std::vector<std::unique_ptr<ExprBase>> arguments;
 
+  const Signature *resolvedSignature = nullptr;
+
 public:
   CallExpr(std::unique_ptr<ExprBase> callee,
            std::vector<std::unique_ptr<ExprBase>> arguments,
@@ -417,6 +420,14 @@ public:
   }
 
   ExprBase *getCallee() const { return callee.get(); }
+
+  const Signature *getResolvedSignature() const { return resolvedSignature; }
+
+  void setResolvedSignature(const Signature *signature) {
+    resolvedSignature = signature;
+  }
+
+  bool isSignatureResolved() const { return resolvedSignature != nullptr; }
 
   void printImpl(std::ostream &os) const {
     callee->print(os);

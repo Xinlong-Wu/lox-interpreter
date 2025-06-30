@@ -263,7 +263,8 @@ protected:
 public:
   ~FunctionType() override = default;
 
-  const Signature *resolveOverload(const std::vector<Type *> &argTypes) const;
+  std::vector<const lox::Signature *>
+  resolveOverload(const std::vector<Type *> &argTypes) const;
 
   bool isCompatibleWith(const Type *other) const override {
     assert(false && "Unimplemented FunctionType isCompatibleWith");

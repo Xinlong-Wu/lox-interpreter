@@ -26,7 +26,7 @@ int64_t calculateMatchScore(const vector<Type *> &params,
   return score;
 }
 
-const lox::Signature *
+std::vector<const lox::Signature *>
 lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes) const {
   priority_queue<pair<int64_t, const Signature *>> candidates;
 
@@ -40,11 +40,18 @@ lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes) const {
     }
   }
 
+  std::vector<const Signature *> bestMatches;
   if (candidates.empty()) {
-    return nullptr; // No matching overload found
+    return bestMatches; // No matching overload found
   }
 
-  return candidates.top().second;
+  int64_t bestScore = candidates.top().first;
+  while (!candidates.empty() && candidates.top().first == bestScore) {
+    bestMatches.push_back(candidates.top().second);
+    candidates.pop();
+  }
+
+  return bestMatches;
 }
 
 lox::Type *
