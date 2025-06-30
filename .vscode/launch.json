@@ -30,7 +30,9 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/lox-parser",
-            "args": [ "--semantic-analyzer","${fileDirname}/${fileBasenameNoExtension}.lox" ],
+            "args": [
+                // "--semantic-analyzer",
+            "${fileDirname}/${fileBasenameNoExtension}.lox" ],
             "stopOnEntry": false,
             "cwd": "${workspaceFolder}",
             "terminal": "integrated"

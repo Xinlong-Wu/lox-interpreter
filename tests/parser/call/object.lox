@@ -7,9 +7,9 @@
 // CHECK-PARSER-NEXT:      foo();
 
 // CHECK-SEMANTIC-LABEL:   Unable call instance of class 'Foo' as a function
-// CHECK-SEMANTIC-LABEL:    class Foo {
+// CHECK-SEMANTIC-LABEL:   class Foo {
 // CHECK-SEMANTIC-NEXT:    }
-// CHECK-SEMANTIC-NEXT:    var foo = Foo();
+// CHECK-SEMANTIC-NEXT:    var foo: Foo = Foo();
 // CHECK-SEMANTIC-NEXT:    foo();
 
 class Foo {}

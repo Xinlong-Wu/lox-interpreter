@@ -168,7 +168,7 @@ public:
 
   ClassType *getSuperClass() const { return superclass; }
 
-  void printImpl(std::ostream &os) const override { os << "class " << name; }
+  void printImpl(std::ostream &os) const override { os << name; }
 
   friend class TypeContext;
 };

@@ -1,7 +1,7 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 // RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SA
 
-// CHECK-PARSER-LABEL:     var a;
+// CHECK-PARSER-LABEL:     var a: String;
 // CHECK-PARSER-NEXT:      var b = "b";
 // CHECK-PARSER-NEXT:      var c = "c";
 // CHECK-PARSER-NEXT:      a = b = c;
@@ -19,7 +19,7 @@
 // CHECK-SA-NEXT:          print(b);
 // CHECK-SA-NEXT:          print(c);
 
-var a;
+var a: String;
 var b = "b";
 var c = "c";
 

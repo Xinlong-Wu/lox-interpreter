@@ -24,24 +24,27 @@ std::unique_ptr<VarDeclStmt> Parser::parseVarDecl() {
   }
   std::string name = std::string(this->getPreviousToken().getTokenString());
   std::optional<std::string> type;
-  if (this->parseOptional(lox::TokenType::TOKEN_COLON)) {
+
+  std::unique_ptr<ExprBase> initializer;
+  if (this->parseOptional(lox::TokenType::TOKEN_EQUAL)) {
+    initializer = this->parseExpression();
+  } else if (this->parseOptional(lox::TokenType::TOKEN_COLON)) {
     this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a type");
     if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
       return nullptr;
     }
     type = std::string(this->getPreviousToken().getTokenString());
+  } else {
+    parseError("Expect `=` or `:` after variable name.");
+    return nullptr;
   }
 
-  std::unique_ptr<ExprBase> initializer;
-  if (this->parseOptional(lox::TokenType::TOKEN_EQUAL)) {
-    initializer = this->parseExpression();
-  }
   this->parse(lox::TokenType::TOKEN_SEMICOLON);
   if (initializer == nullptr) {
-    return std::make_unique<VarDeclStmt>(name,
+    return std::make_unique<VarDeclStmt>(name, type,
                                          this->getPreviousToken().getLoction());
   }
-  return std::make_unique<VarDeclStmt>(name, std::move(initializer));
+  return std::make_unique<VarDeclStmt>(name, type, std::move(initializer));
 }
 
 std::unique_ptr<FunctionDeclStmt> Parser::parseFunctionDecl() {
@@ -53,8 +56,19 @@ std::unique_ptr<FunctionDeclStmt> Parser::parseFunctionDecl() {
     do {
       this->parse(lox::TokenType::TOKEN_IDENTIFIER);
       Token identifier = this->getPreviousToken();
+      std::string typeAnnotation;
+      if (this->parseOptional(TokenType::TOKEN_COLON)) {
+        this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a type");
+        if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
+          this->parseError("Expect a type after `:`.");
+          return nullptr;
+        }
+        typeAnnotation = this->getPreviousToken().getTokenString();
+      }
+
       parameters.push_back(std::make_unique<ParameterExpr>(
-          std::string(identifier.getTokenString()), identifier.getLoction()));
+          std::string(identifier.getTokenString()), typeAnnotation,
+          identifier.getLoction()));
     } while (this->parseOptional(lox::TokenType::TOKEN_COMMA) &&
              this->hasNext());
     this->parse(lox::TokenType::TOKEN_RIGHT_PAREN);
