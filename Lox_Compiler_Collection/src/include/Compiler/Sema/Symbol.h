@@ -1,34 +1,32 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
-#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/ErrorReporter.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 
 namespace lox {
 class Symbol {
 protected:
   std::string name;
-  Type* type;
+  Type *type;
   bool _isDefined = false;
   bool _isUsed = false;
   bool isMutable = true;
 
 public:
-  Symbol(const std::string &name, Type* type = nullptr)
+  Symbol(const std::string &name, Type *type = nullptr)
       : name(name), type(std::move(type)) {}
-  Symbol(FunctionType* funcType)
-      : name(funcType->getName()), type(funcType) {
+  Symbol(FunctionType *funcType) : name(funcType->getName()), type(funcType) {
     if (type == nullptr) {
       ErrorReporter::reportError("Function type cannot be null for symbol '" +
-                                  name + "'.");
+                                 name + "'.");
     }
     _isDefined = true; // Functions are defined when created
   }
-  Symbol(ClassType* classType)
-      : name(classType->getName()), type(classType) {
+  Symbol(ClassType *classType) : name(classType->getName()), type(classType) {
     if (type == nullptr) {
       ErrorReporter::reportError("Class type cannot be null for symbol '" +
-                                  name + "'.");
+                                 name + "'.");
     }
     _isDefined = true; // Classes are defined when created
   }
@@ -37,9 +35,9 @@ public:
 
   bool hasType() const { return type != nullptr; }
 
-  Type* getType() const { return type; }
+  Type *getType() const { return type; }
 
-  void setType(Type* t) { type = t; }
+  void setType(Type *t) { type = t; }
 
   void markAsDefined() { _isDefined = true; }
 

@@ -7,7 +7,7 @@
 namespace lox {
 class SymbolTable {
 private:
-  std::vector<Scope*> scopes;
+  std::vector<Scope *> scopes;
   std::unique_ptr<Scope> globalScope;
 
   // 禁止复制和赋值
@@ -23,9 +23,7 @@ public:
   }
   ~SymbolTable() = default;
 
-  void enterScope(Scope *scope) {
-    scopes.push_back(scope);
-  }
+  void enterScope(Scope *scope) { scopes.push_back(scope); }
 
   void exitScope() {
     if (scopes.size() > 1) {
@@ -45,19 +43,19 @@ public:
     return scopes.back()->declareType(name, type);
   }
 
-  Symbol* lookupSymbol(const std::string &name) {
+  Symbol *lookupSymbol(const std::string &name) {
     return scopes.back()->lookup(name);
   }
 
-  Symbol* lookupLocalSymbol(const std::string &name) {
+  Symbol *lookupLocalSymbol(const std::string &name) {
     return scopes.back()->lookupLocal(name);
   }
 
-  Type* lookupType(const std::string &name) {
+  Type *lookupType(const std::string &name) {
     return scopes.back()->lookupType(name);
   }
 
-  Type* lookupTypeLocal(const std::string &name) {
+  Type *lookupTypeLocal(const std::string &name) {
     return scopes.back()->lookupTypeLocal(name);
   }
 

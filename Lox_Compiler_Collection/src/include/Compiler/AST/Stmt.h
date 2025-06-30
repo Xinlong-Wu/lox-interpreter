@@ -8,9 +8,9 @@
 #include "Common.h"
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/AST/Expr.h"
+#include "Compiler/Location.h"
 #include "Compiler/Sema/Scope.h"
 #include "Compiler/Sema/Symbol.h"
-#include "Compiler/Location.h"
 
 namespace lox {
 class StmtBase : public ASTNode {
@@ -26,9 +26,7 @@ public:
   virtual ClassID getClassID() const = 0;
 
   bool isStatement() const override { return true; }
-  static bool classof(const ASTNode *node) {
-    return node->isStatement();
-  }
+  static bool classof(const ASTNode *node) { return node->isStatement(); }
 
   virtual void print(std::ostream &os) const = 0;
   virtual void dump() const {
@@ -37,10 +35,10 @@ public:
   }
 };
 
-template<typename Derived>
-class StmtCRTP : public StmtBase {
+template <typename Derived> class StmtCRTP : public StmtBase {
 protected:
   StmtCRTP(Location loc) : StmtBase(loc) {}
+
 public:
   ClassID getClassID() const override { return ClassID::get<Derived>(); }
 
@@ -53,13 +51,14 @@ public:
   }
 
   void accept(ASTVisitor &visitor) override {
-    visitor.visit(static_cast<Derived&>(*this));
+    visitor.visit(static_cast<Derived &>(*this));
   }
 };
 
 // template<typename Derived>
 class ScopedMixin {
   std::unique_ptr<Scope> scope = nullptr;
+
 public:
   Scope *getScope() const { return scope.get(); }
 
@@ -79,7 +78,7 @@ private:
   std::unique_ptr<ExprBase> expression;
 
 public:
-  ExpressionStmt(std::unique_ptr< ExprBase> expression)
+  ExpressionStmt(std::unique_ptr<ExprBase> expression)
       : StmtCRTP<ExpressionStmt>(expression->getLoc()),
         expression(std::move(expression)) {}
 
@@ -90,17 +89,20 @@ public:
     os << ";";
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = expression->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
@@ -113,11 +115,13 @@ public:
 // template<typename Derived>
 class Declaration {
 protected:
-  Type* type = nullptr;
+  Type *type = nullptr;
+
 public:
   Type *getType() const { return type; }
-  void setType(Type* newType) {
-    assert((type == nullptr || !isa<TypeVariable>(newType))  && "Type has been set as Variable Type already");
+  void setType(Type *newType) {
+    assert((type == nullptr || !isa<TypeVariable>(newType)) &&
+           "Type has been set as Variable Type already");
     type = newType;
   }
   // static bool classof(const StmtBase* stmt) {
@@ -126,8 +130,7 @@ public:
   // }
 };
 
-class VarDeclStmt : public Declaration,
-                   public StmtCRTP<VarDeclStmt> {
+class VarDeclStmt : public Declaration, public StmtCRTP<VarDeclStmt> {
 private:
   std::string name;
   std::optional<std::string> typeAnnotation = std::nullopt;
@@ -137,10 +140,13 @@ public:
   VarDeclStmt(const std::string &name, std::unique_ptr<ExprBase> initializer)
       : StmtCRTP<VarDeclStmt>(initializer->getLoc()), name(name),
         initializer(std::move(initializer)) {}
-  VarDeclStmt(const std::string &name, const std::optional<std::string> &typeAnnotation, std::unique_ptr<ExprBase> initializer)
+  VarDeclStmt(const std::string &name,
+              const std::optional<std::string> &typeAnnotation,
+              std::unique_ptr<ExprBase> initializer)
       : StmtCRTP<VarDeclStmt>(initializer->getLoc()), name(name),
         typeAnnotation(typeAnnotation), initializer(std::move(initializer)) {}
-  VarDeclStmt(const std::string &name, const std::optional<std::string> &typeAnnotation, Location loc)
+  VarDeclStmt(const std::string &name,
+              const std::optional<std::string> &typeAnnotation, Location loc)
       : StmtCRTP<VarDeclStmt>(std::move(loc)), name(name),
         typeAnnotation(typeAnnotation) {}
   VarDeclStmt(const std::string &name, Location loc)
@@ -149,7 +155,9 @@ public:
 
   const std::string &getName() const { return name; }
 
-  const std::optional<std::string> &getTypeAnnotation() const { return typeAnnotation; }
+  const std::optional<std::string> &getTypeAnnotation() const {
+    return typeAnnotation;
+  }
 
   ExprBase *getInitializer() const {
     return initializer ? initializer.get() : nullptr;
@@ -172,18 +180,21 @@ public:
     os << ";";
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     if (initializer) {
       WalkResult result = initializer->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -195,10 +206,10 @@ public:
   }
 };
 
-class BlockStmt : public ScopedMixin,
-                  public StmtCRTP<BlockStmt> {
+class BlockStmt : public ScopedMixin, public StmtCRTP<BlockStmt> {
 protected:
   std::vector<std::unique_ptr<StmtBase>> statements;
+
 public:
   BlockStmt(std::vector<std::unique_ptr<StmtBase>> statements,
             Location location)
@@ -216,18 +227,21 @@ public:
     os << "}";
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     for (auto &stmt : statements) {
       WalkResult result = stmt->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -240,25 +254,25 @@ public:
 };
 
 class FunctionDeclStmt : public Declaration,
-                          public ScopedMixin,
-                          public StmtCRTP<FunctionDeclStmt> {
+                         public ScopedMixin,
+                         public StmtCRTP<FunctionDeclStmt> {
 private:
   std::string name;
   std::optional<std::string> returnTypeAnnotation = std::nullopt;
   std::vector<std::unique_ptr<ParameterExpr>> parameters;
   std::unique_ptr<BlockStmt> body;
-  Signature* signature = nullptr;
+  Signature *signature = nullptr;
 
 public:
   FunctionDeclStmt(std::string name,
-               std::vector<std::unique_ptr<ParameterExpr>> parameters,
-               std::unique_ptr<BlockStmt> body)
+                   std::vector<std::unique_ptr<ParameterExpr>> parameters,
+                   std::unique_ptr<BlockStmt> body)
       : StmtCRTP<FunctionDeclStmt>(body->getLoc()), name(std::move(name)),
         parameters(std::move(parameters)), body(std::move(body)) {}
   FunctionDeclStmt(std::string name,
-               std::vector<std::unique_ptr<ParameterExpr>> parameters,
-               const std::optional<std::string> &returnTypeAnnotation,
-               std::unique_ptr<BlockStmt> body)
+                   std::vector<std::unique_ptr<ParameterExpr>> parameters,
+                   const std::optional<std::string> &returnTypeAnnotation,
+                   std::unique_ptr<BlockStmt> body)
       : StmtCRTP<FunctionDeclStmt>(body->getLoc()), name(std::move(name)),
         returnTypeAnnotation(returnTypeAnnotation),
         parameters(std::move(parameters)), body(std::move(body)) {}
@@ -270,13 +284,11 @@ public:
     return returnTypeAnnotation;
   }
 
-  void setSignature(Signature* sig) {
+  void setSignature(Signature *sig) {
     assert(signature == nullptr && "Signature has already been set");
     signature = std::move(sig);
   }
-  Signature *getSignature() const {
-    return signature;
-  }
+  Signature *getSignature() const { return signature; }
 
   std::vector<std::unique_ptr<ParameterExpr>> &getParameters() {
     return parameters;
@@ -293,23 +305,27 @@ public:
     body->print(os);
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     for (auto &param : parameters) {
       WalkResult result = param->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (body) {
       WalkResult result = body->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -335,16 +351,20 @@ public:
   ClassDeclStmt(
       std::string name, std::optional<std::string> superclassName,
       std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
-      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods,
+      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>>
+          methods,
       Location loc)
-      : StmtCRTP<ClassDeclStmt>(loc), className(name), superclassName(std::move(superclassName)),
-        fields(std::move(fields)), methods(std::move(methods)) {}
+      : StmtCRTP<ClassDeclStmt>(loc), className(name),
+        superclassName(std::move(superclassName)), fields(std::move(fields)),
+        methods(std::move(methods)) {}
   ClassDeclStmt(
       std::string name,
       std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
-      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods,
+      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>>
+          methods,
       Location loc)
-      : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields), std::move(methods) , loc) {}
+      : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields),
+                      std::move(methods), loc) {}
   ~ClassDeclStmt() override = default;
 
   bool hasSuperclass() const { return superclassName.has_value(); }
@@ -377,23 +397,27 @@ public:
     os << "}";
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     for (const auto &field : fields) {
       WalkResult result = field.second->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     for (const auto &method : methods) {
       WalkResult result = method.second->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -405,8 +429,7 @@ public:
   }
 };
 
-class IfStmt : public ScopedMixin,
-                public StmtCRTP<IfStmt> {
+class IfStmt : public ScopedMixin, public StmtCRTP<IfStmt> {
 private:
   std::unique_ptr<ExprBase> condition;
   std::unique_ptr<BlockStmt> thenBlock;
@@ -436,24 +459,29 @@ public:
     }
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = condition->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     result = thenBlock->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (elseBlock) {
       result = elseBlock->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -472,13 +500,10 @@ private:
 public:
   ReturnStmt(std::unique_ptr<ExprBase> value, Location loc)
       : StmtCRTP<ReturnStmt>(loc), value(std::move(value)) {}
-  ReturnStmt(Location loc)
-      : StmtCRTP<ReturnStmt>(loc), value(nullptr) {}
+  ReturnStmt(Location loc) : StmtCRTP<ReturnStmt>(loc), value(nullptr) {}
   ~ReturnStmt() override = default;
 
-  ExprBase *getValue() {
-    return value.get();
-  }
+  ExprBase *getValue() { return value.get(); }
 
   void printImpl(std::ostream &os) const {
     os << "return";
@@ -489,18 +514,21 @@ public:
     os << ";";
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     if (value) {
       WalkResult result = value->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -512,8 +540,7 @@ public:
   }
 };
 
-class ForStmt : public ScopedMixin,
-                public StmtCRTP<ForStmt> {
+class ForStmt : public ScopedMixin, public StmtCRTP<ForStmt> {
 protected:
   std::unique_ptr<StmtBase> initializer;
   std::unique_ptr<ExprBase> condition;
@@ -523,7 +550,8 @@ protected:
 public:
   ForStmt(std::unique_ptr<StmtBase> initializer,
           std::unique_ptr<ExprBase> condition,
-          std::unique_ptr<ExprBase> increment, std::unique_ptr<BlockStmt> body, Location loc)
+          std::unique_ptr<ExprBase> increment, std::unique_ptr<BlockStmt> body,
+          Location loc)
       : StmtCRTP<ForStmt>(loc), initializer(std::move(initializer)),
         condition(std::move(condition)), increment(std::move(increment)),
         body(std::move(body)) {}
@@ -555,32 +583,38 @@ public:
     body->print(os);
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     if (initializer) {
       WalkResult result = initializer->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (condition) {
       WalkResult result = condition->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (increment) {
       WalkResult result = increment->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     WalkResult result = body->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
@@ -591,11 +625,11 @@ public:
   }
 };
 
-class WhileStmt : public ScopedMixin,
-                  public StmtCRTP<WhileStmt> {
+class WhileStmt : public ScopedMixin, public StmtCRTP<WhileStmt> {
 private:
   std::unique_ptr<ExprBase> condition;
   std::unique_ptr<BlockStmt> body;
+
 public:
   WhileStmt(std::unique_ptr<ExprBase> condition,
             std::unique_ptr<BlockStmt> body, Location loc)
@@ -610,20 +644,24 @@ public:
     body->print(os);
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = condition->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     result = body->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
@@ -639,11 +677,9 @@ public:
   BreakStmt(Location loc) : StmtCRTP<BreakStmt>(loc) {}
   ~BreakStmt() override = default;
 
-  void printImpl(std::ostream &os) const {
-    os << "break;";
-  }
+  void printImpl(std::ostream &os) const { os << "break;"; }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
@@ -654,11 +690,9 @@ public:
   ContinueStmt(Location loc) : StmtCRTP<ContinueStmt>(loc) {}
   ~ContinueStmt() override = default;
 
-  void printImpl(std::ostream &os) const {
-    os << "continue;";
-  }
+  void printImpl(std::ostream &os) const { os << "continue;"; }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }

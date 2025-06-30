@@ -1,8 +1,8 @@
 #include "Compiler/Parser/Parser.h"
 // #include "Compiler/Sema/SymbolTable.h"
+#include "Compiler/ErrorReporter.h"
 #include "Compiler/Sema/SemanticAnalyzer.h"
 #include "Compiler/Sema/TypeSystem/TypeInfer/TypeInferenceEngine.h"
-#include "Compiler/ErrorReporter.h"
 
 #include<iostream>
 #include<cstring>
@@ -40,45 +40,42 @@ static char *readFile(const char *path)
     return buffer;
 }
 
-static int runFile(const char *path, bool enableSema, bool enableSymbolResolver)
-{
-    char *source = readFile(path);
-    lox::Parser parser = lox::Parser(source);
-    lox::TypeContext typeContext = lox::TypeContext();
-    // lox::Sema sa = lox::Sema();
-    parser.advance();
+static int runFile(const char *path, bool enableSema,
+                   bool enableSymbolResolver) {
+  char *source = readFile(path);
+  lox::Parser parser = lox::Parser(source);
+  lox::TypeContext typeContext = lox::TypeContext();
+  // lox::Sema sa = lox::Sema();
+  parser.advance();
 
-    std::vector<std::unique_ptr<lox::StmtBase>> statements;
-    while (parser.hasNext())
-    {
-        std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
-        if (stmt != nullptr){
-            statements.push_back(std::move(stmt));
-        }
+  std::vector<std::unique_ptr<lox::StmtBase>> statements;
+  while (parser.hasNext()) {
+    std::unique_ptr<lox::StmtBase> stmt = parser.parseDeclaration();
+    if (stmt != nullptr) {
+      statements.push_back(std::move(stmt));
     }
+  }
 
-    if (enableSema) {
-        lox::Sema::analyze(typeContext, statements);
-        // Perform semantic analysis
-        // sa.analyze(statements);
-    }
-    else if (enableSymbolResolver) {
-        // Perform symbol resolution
-        // lox::SymbolResolver resolver;
-        // resolver.resolve(statements);
-    }
+  if (enableSema) {
+    lox::Sema::analyze(typeContext, statements);
+    // Perform semantic analysis
+    // sa.analyze(statements);
+  } else if (enableSymbolResolver) {
+    // Perform symbol resolution
+    // lox::SymbolResolver resolver;
+    // resolver.resolve(statements);
+  }
 
-    for (auto &stmt : statements) {
-        stmt->dump();
-    }
+  for (auto &stmt : statements) {
+    stmt->dump();
+  }
 
-    free(source);
+  free(source);
 
-    if (parser.hasError() || lox::ErrorReporter::hasError())
-    {
-        return 65;
-    }
-    return 0;
+  if (parser.hasError() || lox::ErrorReporter::hasError()) {
+    return 65;
+  }
+  return 0;
 }
 
 static void repl()
@@ -106,8 +103,8 @@ static void repl()
         }
 
         if (stmt != nullptr){
-            // stmt->accept(sa);
-            stmt->dump();
+          // stmt->accept(sa);
+          stmt->dump();
         }
         std::cout << std::endl;
     }
@@ -137,14 +134,13 @@ int main(int argc, char const *argv[])
             }
             filePath = argv[2];
             enableSema = true;
-        }
-        else if (strcmp(argv[1], "--symbol-resolver") == 0) {
-            if (argc != 3) {
-                printUsage();
-                exit(64);
-            }
-            filePath = argv[2];
-            enableSymbolResolver = true;
+        } else if (strcmp(argv[1], "--symbol-resolver") == 0) {
+          if (argc != 3) {
+            printUsage();
+            exit(64);
+          }
+          filePath = argv[2];
+          enableSymbolResolver = true;
         }
         return runFile(filePath, enableSema, enableSymbolResolver);
     }

@@ -28,16 +28,14 @@
     static bool classof(const std::shared_ptr<baseClass> ptr) { return className::classof(ptr.get()); } \
     virtual Kind getKind() const override { return Kind::className; }
 
-#define TYPEID_SYSTEM_N(baseClass, thisClass, ...)                                   \
-    static bool classof(const baseClass* ptr) {                                      \
-        return isOneOf(ptr->getKind(), Kind::thisClass, __VA_ARGS__);                \
-    }                                                                                \
-    static bool classof(const std::shared_ptr<baseClass>& ptr) {                     \
-        return classof(ptr.get());                                                   \
-    }                                                                                \
-    virtual Kind getKind() const override {                                          \
-        return Kind::thisClass;                                                      \
-    }
+#define TYPEID_SYSTEM_N(baseClass, thisClass, ...)                             \
+  static bool classof(const baseClass *ptr) {                                  \
+    return isOneOf(ptr->getKind(), Kind::thisClass, __VA_ARGS__);              \
+  }                                                                            \
+  static bool classof(const std::shared_ptr<baseClass> &ptr) {                 \
+    return classof(ptr.get());                                                 \
+  }                                                                            \
+  virtual Kind getKind() const override { return Kind::thisClass; }
 
 namespace lox
 {
@@ -51,25 +49,25 @@ namespace lox
 
 class ClassID {
 private:
-    const uintptr_t id;
+  const uintptr_t id;
+
 public:
-    ClassID() : id(0) {}
-    explicit ClassID(uintptr_t id) : id(id) {}
+  ClassID() : id(0) {}
+  explicit ClassID(uintptr_t id) : id(id) {}
 
-    template<typename T>
-    static ClassID get() {
-        static char dummy;
-        return ClassID(reinterpret_cast<uintptr_t>(&dummy));
-    }
+  template <typename T> static ClassID get() {
+    static char dummy;
+    return ClassID(reinterpret_cast<uintptr_t>(&dummy));
+  }
 
-    operator uintptr_t() const { return id; }
-    bool operator==(const ClassID &other) const { return id == other.id; }
-    bool operator!=(const ClassID &other) const { return id != other.id; }
+  operator uintptr_t() const { return id; }
+  bool operator==(const ClassID &other) const { return id == other.id; }
+  bool operator!=(const ClassID &other) const { return id != other.id; }
 };
 
 template <typename Enum, typename... Enums>
 bool isOneOf(Enum value, Enum first, Enums... rest) {
-    return ((value == first) || ... || (value == rest));
+  return ((value == first) || ... || (value == rest));
 }
 
 template <typename T>
@@ -78,38 +76,39 @@ inline void hash_combine(const T& val, std::size_t& seed) {
 }
 
 template <typename To, typename... Rest, typename From>
-bool isa_raw(const From* from) {
-    if (!from) return false;
+bool isa_raw(const From *from) {
+  if (!from)
+    return false;
 
-    if constexpr (sizeof...(Rest) == 0) {
-        return To::classof(from);
-    } else {
-        return To::classof(from) || isa_raw<Rest...>(from);
-    }
+  if constexpr (sizeof...(Rest) == 0) {
+    return To::classof(from);
+  } else {
+    return To::classof(from) || isa_raw<Rest...>(from);
+  }
 }
 
 template <typename To, typename... Rest, typename From>
-bool isa(const From* from) {
-    return isa_raw<To, Rest...>(from);
+bool isa(const From *from) {
+  return isa_raw<To, Rest...>(from);
 }
 
 template <typename To, typename... Rest, typename From>
-bool isa(const std::shared_ptr<From>& from) {
-    return isa_raw<To, Rest...>(from.get());
+bool isa(const std::shared_ptr<From> &from) {
+  return isa_raw<To, Rest...>(from.get());
 }
 
 template <typename To, typename... Rest, typename From>
 bool isa(const std::unique_ptr<From>& from) {
-    return isa_raw<To, Rest...>(from.get());
+  return isa_raw<To, Rest...>(from.get());
 }
 
 template <typename To, typename From>
 To* dyn_cast(From* from) {
-    if constexpr (std::is_base_of_v<To, From>) {
-        return isa<To>(from) ? static_cast<To*>(from) : nullptr;
-    } else {
-        return dynamic_cast<To*>(from);
-    }
+  if constexpr (std::is_base_of_v<To, From>) {
+    return isa<To>(from) ? static_cast<To *>(from) : nullptr;
+  } else {
+    return dynamic_cast<To *>(from);
+  }
 }
 
 template <typename To, typename From>
@@ -133,9 +132,8 @@ To* cast(From* from) {
     return static_cast<To*>(from);
 }
 
-template <typename To, typename From>
-const To* cast(const From* from) {
-    return static_cast<const To*>(from);
+template <typename To, typename From> const To *cast(const From *from) {
+  return static_cast<const To *>(from);
 }
 
 template <typename To, typename From>

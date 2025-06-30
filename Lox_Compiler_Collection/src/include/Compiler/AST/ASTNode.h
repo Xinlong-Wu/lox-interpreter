@@ -16,27 +16,27 @@ public:
   virtual bool isStatement() const { return false; }
 
   // 新增的walker接口 - 模板版本，直接传入lambda（返回WalkResult）
-  template<typename T>
-  WalkResult walk(WalkCallback<T> callback, WalkOrder order = WalkOrder::PreOrder) {
-      Walker walker(order);
-      walker.registerCallback<T>(callback);
-      return walkInternal(walker);
+  template <typename T>
+  WalkResult walk(WalkCallback<T> callback,
+                  WalkOrder order = WalkOrder::PreOrder) {
+    Walker walker(order);
+    walker.registerCallback<T>(callback);
+    return walkInternal(walker);
   }
 
   // 新增的walker接口 - 模板版本，直接传入lambda（无返回值）
-  template<typename T>
-  WalkResult walk(VoidWalkCallback<T> callback, WalkOrder order = WalkOrder::PreOrder) {
-      Walker walker(order);
-      walker.registerCallback<T>(callback);
-      return walkInternal(walker);
+  template <typename T>
+  WalkResult walk(VoidWalkCallback<T> callback,
+                  WalkOrder order = WalkOrder::PreOrder) {
+    Walker walker(order);
+    walker.registerCallback<T>(callback);
+    return walkInternal(walker);
   }
 
   // 新增的walker接口 - Walker对象版本，可以注册多个类型的回调
-  WalkResult walk(Walker& walker) {
-      return walkInternal(walker);
-  }
+  WalkResult walk(Walker &walker) { return walkInternal(walker); }
 
-  virtual WalkResult walkInternal(Walker& walker) = 0;
+  virtual WalkResult walkInternal(Walker &walker) = 0;
 };
 } // namespace lox
 

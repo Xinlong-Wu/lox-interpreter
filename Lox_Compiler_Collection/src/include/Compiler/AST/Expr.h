@@ -8,8 +8,8 @@
 #include "Common.h"
 #include "Compiler/AST/ASTNode.h"
 #include "Compiler/AST/ASTVisitor.h"
-#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/Scanner/Token.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 // #include "Compiler/Sema/Symbol.h"
 
 namespace lox {
@@ -17,31 +17,29 @@ namespace lox {
 class ExprBase : public ASTNode {
 protected:
   Location loc;
-  Type* type = nullptr;
+  Type *type = nullptr;
+
 public:
   ExprBase(Location loc) : loc(loc) {}
   virtual ~ExprBase() = default;
 
-  const Location& getLoc() const { return loc; }
-  void setType(Type* type) {
+  const Location &getLoc() const { return loc; }
+  void setType(Type *type) {
     if (this->type) {
       ErrorReporter::reportError("Type already set for expression");
     }
     this->type = type;
   }
-  Type* getType() const {
-    return type;
-  }
+  Type *getType() const { return type; }
 
   virtual ClassID getClassID() const = 0;
 
   bool isExpression() const override { return true; }
   virtual bool isLValue() const {
-    return false; // Default implementation, can be overridden by derived classes
+    return false; // Default implementation, can be overridden by derived
+                  // classes
   }
-  static bool classof(const ASTNode* node) {
-    return node->isExpression();
-  }
+  static bool classof(const ASTNode *node) { return node->isExpression(); }
 
   virtual void print(std::ostream &os) const = 0;
   virtual void dump() const {
@@ -50,15 +48,14 @@ public:
   }
 };
 
-template<typename Derived>
-class ExprCRTP : public ExprBase {
+template <typename Derived> class ExprCRTP : public ExprBase {
 protected:
-  ExprCRTP(Location loc)
-      : ExprBase(loc){}
+  ExprCRTP(Location loc) : ExprBase(loc) {}
+
 public:
   ClassID getClassID() const override { return ClassID::get<Derived>(); }
 
-  static bool classof(const ExprBase* expr) {
+  static bool classof(const ExprBase *expr) {
     return expr->getClassID() == ClassID::get<Derived>();
   }
 
@@ -67,7 +64,7 @@ public:
   }
 
   void accept(ASTVisitor &visitor) override {
-    visitor.visit(static_cast<Derived&>(*this));
+    visitor.visit(static_cast<Derived &>(*this));
   }
 
   bool isLValue() const override {
@@ -78,15 +75,13 @@ public:
 // Literal expression
 class NumberExpr : public ExprCRTP<NumberExpr> {
   double value;
+
 public:
-  NumberExpr(double value, const Location &loc)
-      : ExprCRTP(loc), value(value){}
+  NumberExpr(double value, const Location &loc) : ExprCRTP(loc), value(value) {}
 
-  void printImpl(std::ostream &os) const {
-    os << value;
-  }
+  void printImpl(std::ostream &os) const { os << value; }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
@@ -94,17 +89,16 @@ public:
 
 class StringExpr : public ExprCRTP<StringExpr> {
   std::string value;
+
 public:
   StringExpr(const std::string &value, const Location &loc)
-      : ExprCRTP(loc), value(value){}
+      : ExprCRTP(loc), value(value) {}
   StringExpr(std::string_view value, const Location &loc)
       : ExprCRTP(loc), value(value) {}
 
-  void printImpl(std::ostream &os) const {
-    os << '"' << value << '"';
-  }
+  void printImpl(std::ostream &os) const { os << '"' << value << '"'; }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
@@ -112,15 +106,13 @@ public:
 
 class BoolExpr : public ExprCRTP<BoolExpr> {
   bool value;
+
 public:
-  BoolExpr(bool value, const Location &loc)
-      : ExprCRTP(loc), value(value) {}
+  BoolExpr(bool value, const Location &loc) : ExprCRTP(loc), value(value) {}
 
-  void printImpl(std::ostream &os) const {
-    os << (value ? "true" : "false");
-  }
+  void printImpl(std::ostream &os) const { os << (value ? "true" : "false"); }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
@@ -128,14 +120,11 @@ public:
 
 class NilExpr : public ExprCRTP<NilExpr> {
 public:
-  NilExpr(const Location &loc)
-      : ExprCRTP(loc) {}
+  NilExpr(const Location &loc) : ExprCRTP(loc) {}
 
-  void printImpl(std::ostream &os) const {
-    os << "nil";
-  }
+  void printImpl(std::ostream &os) const { os << "nil"; }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
@@ -150,21 +139,15 @@ public:
   IdentifierExpr(std::string_view name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
 
-  bool isThis() const {
-    return name == "this";
-  }
+  bool isThis() const { return name == "this"; }
 
-  bool isSuper() const {
-    return name == "super";
-  }
+  bool isSuper() const { return name == "super"; }
 
-  const std::string& getName() const { return name; }
+  const std::string &getName() const { return name; }
 
-  void printImpl(std::ostream &os) const {
-    os << name;
-  }
+  void printImpl(std::ostream &os) const { os << name; }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }
@@ -173,51 +156,58 @@ public:
 class AccessExpr : public ExprCRTP<AccessExpr> {
   std::unique_ptr<ExprBase> base;
   std::string property;
+
 public:
-  AccessExpr(std::unique_ptr<ExprBase> base, const std::string &property, const Location &loc)
+  AccessExpr(std::unique_ptr<ExprBase> base, const std::string &property,
+             const Location &loc)
       : ExprCRTP(loc), base(std::move(base)), property(property) {}
 
-  ExprBase* getObject() const { return base.get(); }
-  const std::string& getFieldName() const { return property; }
+  ExprBase *getObject() const { return base.get(); }
+  const std::string &getFieldName() const { return property; }
 
   void printImpl(std::ostream &os) const {
     base->print(os);
     os << "." << property;
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = base->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
     }
 
-    return result == WalkResult::Skip ? WalkResult::Advance : result; // Continue with the next node
+    return result == WalkResult::Skip ? WalkResult::Advance
+                                      : result; // Continue with the next node
   }
 };
-
 
 // operation expressions
 class UnaryExpr : public ExprCRTP<UnaryExpr> {
 public:
   enum class Op { Negate, Not };
+
 protected:
   std::unique_ptr<ExprBase> operand;
   Op op;
+
 public:
   UnaryExpr(Op op, std::unique_ptr<ExprBase> operand, const Location &loc)
       : ExprCRTP(loc), operand(std::move(operand)), op(op) {}
 
-  ExprBase* getOperand() const { return operand.get(); }
+  ExprBase *getOperand() const { return operand.get(); }
   Op getOp() const { return op; }
 
   void printImpl(std::ostream &os) const {
@@ -227,23 +217,29 @@ public:
 
   static std::string toString(Op op) {
     switch (op) {
-      case Op::Negate: return "-";
-      case Op::Not: return "!";
-      default: return "<unknown>";
+    case Op::Negate:
+      return "-";
+    case Op::Not:
+      return "!";
+    default:
+      return "<unknown>";
     }
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = operand->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
@@ -258,16 +254,30 @@ public:
 
 class BinaryExpr : public ExprCRTP<BinaryExpr> {
 public:
-  enum class Op { Add, Sub, Mul, Div, Mod, And, Or, Equal, NotEqual, GreaterThan, GreaterThanOrEqual };
+  enum class Op {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    And,
+    Or,
+    Equal,
+    NotEqual,
+    GreaterThan,
+    GreaterThanOrEqual
+  };
   std::unique_ptr<ExprBase> left;
   std::unique_ptr<ExprBase> right;
   Op op;
+
 public:
-  BinaryExpr(Op op, std::unique_ptr<ExprBase> left, std::unique_ptr<ExprBase> right, const Location &loc)
+  BinaryExpr(Op op, std::unique_ptr<ExprBase> left,
+             std::unique_ptr<ExprBase> right, const Location &loc)
       : ExprCRTP(loc), left(std::move(left)), right(std::move(right)), op(op) {}
 
-  ExprBase* getLeft() const { return left.get(); }
-  ExprBase* getRight() const { return right.get(); }
+  ExprBase *getLeft() const { return left.get(); }
+  ExprBase *getRight() const { return right.get(); }
 
   void printImpl(std::ostream &os) const {
     left->print(os);
@@ -277,41 +287,55 @@ public:
 
   Op getOp() const { return op; }
 
-  bool operator==(const Op &op) const {
-    return this->op == op;
-  }
+  bool operator==(const Op &op) const { return this->op == op; }
 
   static std::string toString(Op op) {
     switch (op) {
-      case Op::Add: return "+";
-      case Op::Sub: return "-";
-      case Op::Mul: return "*";
-      case Op::Div: return "/";
-      case Op::Mod: return "%";
-      case Op::And: return "&&";
-      case Op::Or: return "||";
-      case Op::Equal: return "==";
-      case Op::NotEqual: return "!=";
-      case Op::GreaterThan: return ">";
-      case Op::GreaterThanOrEqual: return ">=";
-      default: return "<unknown>";
+    case Op::Add:
+      return "+";
+    case Op::Sub:
+      return "-";
+    case Op::Mul:
+      return "*";
+    case Op::Div:
+      return "/";
+    case Op::Mod:
+      return "%";
+    case Op::And:
+      return "&&";
+    case Op::Or:
+      return "||";
+    case Op::Equal:
+      return "==";
+    case Op::NotEqual:
+      return "!=";
+    case Op::GreaterThan:
+      return ">";
+    case Op::GreaterThanOrEqual:
+      return ">=";
+    default:
+      return "<unknown>";
     }
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = left->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     result = right->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
@@ -327,12 +351,14 @@ public:
 class AssignExpr : public ExprCRTP<AssignExpr> {
   std::unique_ptr<ExprBase> target;
   std::unique_ptr<ExprBase> value;
+
 public:
-  AssignExpr(std::unique_ptr<ExprBase> target, std::unique_ptr<ExprBase> value, const Location &loc)
+  AssignExpr(std::unique_ptr<ExprBase> target, std::unique_ptr<ExprBase> value,
+             const Location &loc)
       : ExprCRTP(loc), target(std::move(target)), value(std::move(value)) {}
 
-  ExprBase* getTarget() const { return target.get(); }
-  ExprBase* getValue() const { return value.get(); }
+  ExprBase *getTarget() const { return target.get(); }
+  ExprBase *getValue() const { return value.get(); }
 
   void printImpl(std::ostream &os) const {
     target->print(os);
@@ -340,20 +366,24 @@ public:
     value->print(os);
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = target->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     result = value->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     if (order == WalkOrder::PostOrder) {
       result = walker.executeCallback(this);
@@ -369,48 +399,55 @@ public:
 class CallExpr : public ExprCRTP<CallExpr> {
   std::unique_ptr<ExprBase> callee;
   std::vector<std::unique_ptr<ExprBase>> arguments;
+
 public:
-  CallExpr(std::unique_ptr<ExprBase> callee, std::vector<std::unique_ptr<ExprBase>> arguments, const Location &loc)
-      : ExprCRTP(loc), callee(std::move(callee)), arguments(std::move(arguments)) {}
+  CallExpr(std::unique_ptr<ExprBase> callee,
+           std::vector<std::unique_ptr<ExprBase>> arguments,
+           const Location &loc)
+      : ExprCRTP(loc), callee(std::move(callee)),
+        arguments(std::move(arguments)) {}
 
-  size_t getArgumentCount() const {
-    return arguments.size();
-  }
+  size_t getArgumentCount() const { return arguments.size(); }
 
-  ExprBase* getArgument(size_t index) const {
+  ExprBase *getArgument(size_t index) const {
     if (index < arguments.size()) {
       return arguments[index].get();
     }
     return nullptr; // or throw an exception
   }
 
-  ExprBase* getCallee() const { return callee.get(); }
+  ExprBase *getCallee() const { return callee.get(); }
 
   void printImpl(std::ostream &os) const {
     callee->print(os);
     os << "(";
     for (size_t i = 0; i < arguments.size(); ++i) {
-      if (i > 0) os << ", ";
+      if (i > 0)
+        os << ", ";
       arguments[i]->print(os);
     }
     os << ")";
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkOrder order = walker.getOrder();
 
     if (order == WalkOrder::PreOrder) {
       WalkResult result = walker.executeCallback(this);
-      if (result == WalkResult::Skip) return WalkResult::Advance;
-      if (result == WalkResult::Interrupt) return result; // Interrupt the walk
+      if (result == WalkResult::Skip)
+        return WalkResult::Advance;
+      if (result == WalkResult::Interrupt)
+        return result; // Interrupt the walk
     }
 
     WalkResult result = callee->walkInternal(walker);
-    if (result == WalkResult::Interrupt) return result;
+    if (result == WalkResult::Interrupt)
+      return result;
 
     for (const auto &arg : arguments) {
       result = arg->walkInternal(walker);
-      if (result == WalkResult::Interrupt) return result;
+      if (result == WalkResult::Interrupt)
+        return result;
     }
 
     if (order == WalkOrder::PostOrder) {
@@ -431,13 +468,12 @@ protected:
   // std::unique_ptr<ExprBase> defaultValue;
 public:
   ParameterExpr(const std::string &name, const Location &loc)
-      : ExprCRTP(loc), name(name){}
-  ParameterExpr(const std::string &name, const std::string &typeAnnotation, const Location &loc)
+      : ExprCRTP(loc), name(name) {}
+  ParameterExpr(const std::string &name, const std::string &typeAnnotation,
+                const Location &loc)
       : ExprCRTP(loc), name(name), typeAnnotation(typeAnnotation) {}
 
-  std::string getName() const {
-    return name;
-  }
+  std::string getName() const { return name; }
   std::optional<std::string> getTypeAnnotation() const {
     return typeAnnotation;
   }
@@ -450,7 +486,7 @@ public:
     }
   }
 
-  WalkResult walkInternal(Walker& walker) override {
+  WalkResult walkInternal(Walker &walker) override {
     WalkResult result = walker.executeCallback(this);
     return result == WalkResult::Skip ? WalkResult::Advance : result;
   }

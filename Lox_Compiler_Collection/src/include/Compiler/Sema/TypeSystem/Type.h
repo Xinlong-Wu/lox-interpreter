@@ -18,17 +18,16 @@ protected:
   std::string name;
 
   Type(const std::string &name) : name(name) {}
+
 public:
   virtual ~Type() = default;
   std::string getName() const { return name; }
 
-  virtual bool isCompatibleWith(const Type* other) const {
+  virtual bool isCompatibleWith(const Type *other) const {
     return this == other;
   }
 
-  virtual bool operator==(const Type &other) const{
-    return &other == this;
-  }
+  virtual bool operator==(const Type &other) const { return &other == this; }
   virtual bool operator!=(const Type &other) const { return !(*this == other); }
 
   virtual void print(std::ostream &os) const = 0;
@@ -46,19 +45,16 @@ public:
   virtual ClassID getTypeID() const = 0;
 };
 
-template<typename Derived>
-class TypeBase : public Type {
+template <typename Derived> class TypeBase : public Type {
 protected:
-    TypeBase(const std::string &name)
-        : Type(name) {};
-    TypeBase& operator=(const TypeBase&) = delete;
+  TypeBase(const std::string &name) : Type(name){};
+  TypeBase &operator=(const TypeBase &) = delete;
 
-    TypeBase(TypeBase&&) = default;
-    TypeBase& operator=(TypeBase&&) = default;
+  TypeBase(TypeBase &&) = default;
+  TypeBase &operator=(TypeBase &&) = default;
+
 public:
-    ClassID getTypeID() const override {
-      return ClassID::get<Derived>();
-    }
+  ClassID getTypeID() const override { return ClassID::get<Derived>(); }
 
   static bool classof(const Type *type) {
     return type->getTypeID() == ClassID::get<Derived>();
@@ -75,29 +71,28 @@ class TypeVariable : public TypeBase<TypeVariable> {
 protected:
   static std::vector<std::unique_ptr<TypeVariable>> instances;
 
-  TypeVariable(const std::string& name) : TypeBase(name) {}
+  TypeVariable(const std::string &name) : TypeBase(name) {}
+
 public:
   ~TypeVariable() override = default;
 
-  static TypeVariable* create(std::string name = "") {
+  static TypeVariable *create(std::string name = "") {
     if (name.empty()) {
       name = "T" + std::to_string(instances.size());
     }
 
     auto newVar = std::unique_ptr<TypeVariable>(new TypeVariable(name));
-    TypeVariable* ptr = newVar.get();
+    TypeVariable *ptr = newVar.get();
     instances.push_back(std::move(newVar));
     return ptr;
   }
 
-  bool isCompatibleWith(const Type* other) const override {
+  bool isCompatibleWith(const Type *other) const override {
     // Type variables are compatible with any type
     return true;
   }
 
-  void printImpl(std::ostream &os) const override {
-    os << name;
-  }
+  void printImpl(std::ostream &os) const override { os << name; }
 
   friend class TypeContext;
 };
@@ -105,11 +100,10 @@ public:
 class PrimitiveType : public TypeBase<PrimitiveType> {
 protected:
   PrimitiveType(std::string name) : TypeBase(std::move(name)) {}
+
 public:
   ~PrimitiveType() override = default;
-  void printImpl(std::ostream &os) const override {
-    os << name;
-  }
+  void printImpl(std::ostream &os) const override { os << name; }
 
   friend class TypeContext;
 };
@@ -120,49 +114,48 @@ private:
   // static std::unique_ptr<NilType> instance;
 protected:
   NilType() : TypeBase("nil") {}
+
 public:
   ~NilType() override = default;
-  void printImpl(std::ostream &os) const override {
-    os << "nil";
-  }
+  void printImpl(std::ostream &os) const override { os << "nil"; }
 
   friend class TypeContext;
 };
 
 class ClassType : public TypeBase<ClassType> {
 private:
-  ClassType* superclass = nullptr;
-  ClassScope* properties = nullptr;
+  ClassType *superclass = nullptr;
+  ClassScope *properties = nullptr;
+
 protected:
-  ClassType(const std::string &name, ClassType* superClass)
-    : TypeBase(name), superclass(superClass) {}
-  ClassType(const std::string &name)
-    : TypeBase(name) {}
+  ClassType(const std::string &name, ClassType *superClass)
+      : TypeBase(name), superclass(superClass) {}
+  ClassType(const std::string &name) : TypeBase(name) {}
 
 public:
   ~ClassType() override = default;
   std::string getName() const { return name; }
 
-  Type* getPropertyType(const std::string &propertyName) const;
+  Type *getPropertyType(const std::string &propertyName) const;
 
-  const std::vector<Type*> getPropertyTypes() const;
+  const std::vector<Type *> getPropertyTypes() const;
 
-  const ClassScope* getClassScope() const {
+  const ClassScope *getClassScope() const {
     return cast<ClassScope>(properties);
   }
 
-  void setClassScope(ClassScope* scope) {
+  void setClassScope(ClassScope *scope) {
     assert(properties == nullptr && "Class scope has already been set");
     properties = scope;
   }
 
-  bool isCompatibleWith(const Type* other) const override {
+  bool isCompatibleWith(const Type *other) const override {
     if (this == other) {
       return true;
     }
     if (auto classType = dyn_cast<const ClassType>(other)) {
       // Check if this class is a subclass of the other class
-      const ClassType* current = this->getSuperClass();
+      const ClassType *current = this->getSuperClass();
       while (current) {
         if (current == classType) {
           return true;
@@ -173,13 +166,9 @@ public:
     return false;
   }
 
-  ClassType *getSuperClass() const {
-    return superclass;
-  }
+  ClassType *getSuperClass() const { return superclass; }
 
-  void printImpl(std::ostream &os) const override {
-    os << "class " << name;
-  }
+  void printImpl(std::ostream &os) const override { os << "class " << name; }
 
   friend class TypeContext;
 };
@@ -187,18 +176,19 @@ public:
 class FunctionType;
 class Signature : public TypeBase<Signature> {
 protected:
-  std::vector<Type*> parameters;
-  Type* returnType;
+  std::vector<Type *> parameters;
+  Type *returnType;
 
   FunctionType *functionType = nullptr;
 
 public:
-  Signature(std::vector<Type*> parameters,
-            Type* returnType = nullptr)
-      : TypeBase("Signature"), parameters(std::move(parameters)), returnType(returnType) {}
+  Signature(std::vector<Type *> parameters, Type *returnType = nullptr)
+      : TypeBase("Signature"), parameters(std::move(parameters)),
+        returnType(returnType) {}
 
   Signature(const Signature &other)
-      : TypeBase("Signature"), parameters(other.parameters), returnType(other.returnType) {}
+      : TypeBase("Signature"), parameters(other.parameters),
+        returnType(other.returnType) {}
 
   Type *getParameterType(size_t index) const {
     assert(index < parameters.size() && "Index out of bounds");
@@ -208,9 +198,7 @@ public:
     return nullptr;
   }
 
-  Type *getReturnType() const {
-    return returnType;
-  }
+  Type *getReturnType() const { return returnType; }
 
   void setReturnType(Type *type) {
     assert(returnType == nullptr && "Return type has already been set");
@@ -275,9 +263,9 @@ protected:
 public:
   ~FunctionType() override = default;
 
-  const Signature *resolveOverload(const std::vector<Type*> &argTypes) const;
+  const Signature *resolveOverload(const std::vector<Type *> &argTypes) const;
 
-  bool isCompatibleWith(const Type* other) const override {
+  bool isCompatibleWith(const Type *other) const override {
     assert(false && "Unimplemented FunctionType isCompatibleWith");
     return false;
   }
@@ -287,26 +275,26 @@ public:
   bool hasOverload(const Signature *signature) const {
     return std::any_of(overloads.begin(), overloads.end(),
                        [&signature](const std::unique_ptr<Signature> &s) {
-                        return *s.get() == *signature;
+                         return *s.get() == *signature;
                        });
   }
 
   void addOverload(std::unique_ptr<Signature> signature) {
     if (hasOverload(signature.get())) {
-      ErrorReporter::reportError(
-          "Function '" + name + "' already has an overload with the same "
-                             "signature.");
+      ErrorReporter::reportError("Function '" + name +
+                                 "' already has an overload with the same "
+                                 "signature.");
       return;
     }
-    assert (signature->functionType == nullptr &&
+    assert(signature->functionType == nullptr &&
            "Signature already has a function type set");
     signature->functionType = this; // Set the function type for the signature
     overloads.push_back(std::move(signature));
   }
 
-  void addOverload(std::vector<Type*> parameters,
-                   Type* returnType = nullptr) {
-    auto signature = std::make_unique<Signature>(std::move(parameters), returnType);
+  void addOverload(std::vector<Type *> parameters, Type *returnType = nullptr) {
+    auto signature =
+        std::make_unique<Signature>(std::move(parameters), returnType);
     addOverload(std::move(signature));
   }
 

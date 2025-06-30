@@ -61,8 +61,8 @@ std::unique_ptr<FunctionDeclStmt> Parser::parseFunctionDecl() {
   }
   this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
   std::unique_ptr<BlockStmt> body = this->parseBlockStmt();
-  return std::make_unique<FunctionDeclStmt>(std::move(name), std::move(parameters),
-                                        std::move(body));
+  return std::make_unique<FunctionDeclStmt>(
+      std::move(name), std::move(parameters), std::move(body));
 }
 
 std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
@@ -84,13 +84,12 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
   while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) &&
          this->hasNext()) {
     if (this->parseOptional(lox::TokenType::TOKEN_VAR)) {
-        std::unique_ptr<VarDeclStmt> field = this->parseVarDecl();
-        fields.insert({field->getName(), std::move(field)});
-    } else
-    if (this->parseOptional(lox::TokenType::TOKEN_FUN) ||
-        (this->match(TokenType::TOKEN_IDENTIFIER) &&
-        //  this->getCurrentToken() == "init")) {
-        this->getCurrentToken() == name)) {
+      std::unique_ptr<VarDeclStmt> field = this->parseVarDecl();
+      fields.insert({field->getName(), std::move(field)});
+    } else if (this->parseOptional(lox::TokenType::TOKEN_FUN) ||
+               (this->match(TokenType::TOKEN_IDENTIFIER) &&
+                //  this->getCurrentToken() == "init")) {
+                this->getCurrentToken() == name)) {
       std::unique_ptr<FunctionDeclStmt> method = this->parseFunctionDecl();
       methods.insert({method->getName(), std::move(method)});
     } else {
@@ -242,8 +241,7 @@ std::unique_ptr<ForStmt> Parser::parseForStmt() {
   }
 
   return std::make_unique<ForStmt>(std::move(initializer), std::move(condition),
-                                   std::move(increment), std::move(body),
-                                   loc);
+                                   std::move(increment), std::move(body), loc);
 }
 
 std::unique_ptr<WhileStmt> Parser::parseWhileStmt() {

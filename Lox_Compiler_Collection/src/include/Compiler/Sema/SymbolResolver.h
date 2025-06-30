@@ -22,6 +22,7 @@ private:
          std::shared_ptr<FunctionType::Signature>(new FunctionType::Signature(
              {BoolType::getInstance()}, NilType::getInstance()))}))));
   }
+
 public:
   SymbolResolver() {
     // Initialize the global scope with built-in functions

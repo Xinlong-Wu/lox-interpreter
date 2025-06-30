@@ -4,7 +4,9 @@
 using namespace lox;
 using namespace std;
 
-void Sema::analyze(TypeContext &typeContext, const std::vector<std::unique_ptr<lox::StmtBase>>& statements) {
+void Sema::analyze(
+    TypeContext &typeContext,
+    const std::vector<std::unique_ptr<lox::StmtBase>> &statements) {
   // TypeInfer
   TypeInferenceEngine typeInferEngine(&typeContext);
   typeInferEngine.inferProgramTypes(statements);

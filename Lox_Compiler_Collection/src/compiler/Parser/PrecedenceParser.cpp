@@ -76,11 +76,13 @@ PrefixHandler(unary) {
   // Emit the operator instruction.
   switch (operatorType) {
   case lox::TokenType::TOKEN_BANG:
-    return std::make_unique<lox::UnaryExpr>(lox::UnaryExpr::Op::Not, std::move(right),
-                                            parser.getPreviousToken().getLoction());
+    return std::make_unique<lox::UnaryExpr>(
+        lox::UnaryExpr::Op::Not, std::move(right),
+        parser.getPreviousToken().getLoction());
   case lox::TokenType::TOKEN_MINUS:
-    return std::make_unique<lox::UnaryExpr>(lox::UnaryExpr::Op::Negate, std::move(right),
-                                            parser.getPreviousToken().getLoction());
+    return std::make_unique<lox::UnaryExpr>(
+        lox::UnaryExpr::Op::Negate, std::move(right),
+        parser.getPreviousToken().getLoction());
   default:
     parser.parseError("Invalid unary operator.");
     return nullptr;
@@ -88,18 +90,22 @@ PrefixHandler(unary) {
 }
 
 PrefixHandler(number) {
-  return std::make_unique<lox::NumberExpr>(std::stod(std::string(parser.getPreviousToken().getTokenString())),
-                                           parser.getPreviousToken().getLoction());
+  return std::make_unique<lox::NumberExpr>(
+      std::stod(std::string(parser.getPreviousToken().getTokenString())),
+      parser.getPreviousToken().getLoction());
 }
 
 PrefixHandler(literal) {
   switch (parser.getPreviousToken().getType()) {
   case lox::TokenType::TOKEN_FALSE:
-    return std::make_unique<lox::BoolExpr>(false, parser.getPreviousToken().getLoction());
+    return std::make_unique<lox::BoolExpr>(
+        false, parser.getPreviousToken().getLoction());
   case lox::TokenType::TOKEN_TRUE:
-    return std::make_unique<lox::BoolExpr>(true, parser.getPreviousToken().getLoction());
+    return std::make_unique<lox::BoolExpr>(
+        true, parser.getPreviousToken().getLoction());
   case lox::TokenType::TOKEN_NIL:
-    return std::make_unique<lox::NilExpr>(parser.getPreviousToken().getLoction());
+    return std::make_unique<lox::NilExpr>(
+        parser.getPreviousToken().getLoction());
   default:
     parser.parseError("Invalid literal.");
     return nullptr;
@@ -108,8 +114,9 @@ PrefixHandler(literal) {
 
 PrefixHandler(parseString) {
   return std::make_unique<lox::StringExpr>(
-      parser.getPreviousToken().getTokenString().substr(1, // Skip the opening quote
-                                              parser.getPreviousToken().getTokenString().size() - 2),
+      parser.getPreviousToken().getTokenString().substr(
+          1, // Skip the opening quote
+          parser.getPreviousToken().getTokenString().size() - 2),
       parser.getPreviousToken().getLoction());
 }
 
@@ -148,8 +155,8 @@ InfixHandler(or_) {
   std::unique_ptr<ExprBase> right = parsePrecedence(parser, PREC_OR);
 
   // Emit the operator instruction.
-  return std::make_unique<lox::BinaryExpr>(lox::BinaryExpr::Op::Or,
-                                           std::move(left), std::move(right), loc);
+  return std::make_unique<lox::BinaryExpr>(
+      lox::BinaryExpr::Op::Or, std::move(left), std::move(right), loc);
 }
 
 InfixHandler(and_) {
@@ -160,8 +167,8 @@ InfixHandler(and_) {
   std::unique_ptr<ExprBase> right = parsePrecedence(parser, PREC_AND);
 
   // Emit the operator instruction.
-  return std::make_unique<lox::BinaryExpr>(lox::BinaryExpr::Op::And,
-                                           std::move(left), std::move(right), loc);
+  return std::make_unique<lox::BinaryExpr>(
+      lox::BinaryExpr::Op::And, std::move(left), std::move(right), loc);
 }
 
 InfixHandler(dot) {
@@ -173,7 +180,8 @@ InfixHandler(dot) {
   }
 
   // uint8_t name = parser.identifierConstant(parser.getPreviousToken());
-  std::string propertyName = std::string(parser.getPreviousToken().getTokenString());
+  std::string propertyName =
+      std::string(parser.getPreviousToken().getTokenString());
 
   return std::make_unique<lox::AccessExpr>(std::move(left), propertyName, loc);
 }
@@ -182,7 +190,8 @@ InfixHandler(assign) {
   Location loc = parser.getPreviousToken().getLoction();
 
   if (!left->isLValue()) {
-    parser.parseError("Invalid assignment target. Unable to assign to non-lvalue expression.");
+    parser.parseError("Invalid assignment target. Unable to assign to "
+                      "non-lvalue expression.");
     return left;
   }
 
@@ -190,7 +199,8 @@ InfixHandler(assign) {
   std::unique_ptr<ExprBase> value = parsePrecedence(parser, PREC_ASSIGNMENT);
 
   // Emit the operator instruction.
-  return std::make_unique<lox::AssignExpr>(std::move(left), std::move(value), loc);
+  return std::make_unique<lox::AssignExpr>(std::move(left), std::move(value),
+                                           loc);
 }
 
 std::vector<std::unique_ptr<ExprBase>> argumentList(Parser &parser) {
@@ -211,11 +221,11 @@ InfixHandler(call) {
     parser.parse(lox::TokenType::TOKEN_RIGHT_PAREN);
   }
 
-  assert ((isa<IdentifierExpr, AccessExpr>(left)) &&
-         "Call expression must have a variable or access expression as the callee");
+  assert((isa<IdentifierExpr, AccessExpr>(left)) &&
+         "Call expression must have a variable or access expression as the "
+         "callee");
   // If the callee is not a variable, we cannot create a CallExpr.
-  return std::make_unique<lox::CallExpr>(std::move(left), std::move(args),
-                                         loc);
+  return std::make_unique<lox::CallExpr>(std::move(left), std::move(args), loc);
 }
 
 InfixHandler(binary) {
@@ -237,17 +247,21 @@ InfixHandler(binary) {
     return std::make_unique<lox::BinaryExpr>(
         lox::BinaryExpr::Op::Equal, std::move(left), std::move(right), loc);
   case lox::TokenType::TOKEN_GREATER:
-    return std::make_unique<lox::BinaryExpr>(
-        lox::BinaryExpr::Op::GreaterThan, std::move(left), std::move(right), loc);
+    return std::make_unique<lox::BinaryExpr>(lox::BinaryExpr::Op::GreaterThan,
+                                             std::move(left), std::move(right),
+                                             loc);
   case lox::TokenType::TOKEN_GREATER_EQUAL:
     return std::make_unique<lox::BinaryExpr>(
-        lox::BinaryExpr::Op::GreaterThanOrEqual, std::move(left), std::move(right), loc);
+        lox::BinaryExpr::Op::GreaterThanOrEqual, std::move(left),
+        std::move(right), loc);
   case lox::TokenType::TOKEN_LESS:
     return std::make_unique<lox::BinaryExpr>(
-        lox::BinaryExpr::Op::GreaterThanOrEqual, std::move(right), std::move(left), loc);
+        lox::BinaryExpr::Op::GreaterThanOrEqual, std::move(right),
+        std::move(left), loc);
   case lox::TokenType::TOKEN_LESS_EQUAL:
-    return std::make_unique<lox::BinaryExpr>(
-        lox::BinaryExpr::Op::GreaterThan, std::move(right), std::move(left), loc);
+    return std::make_unique<lox::BinaryExpr>(lox::BinaryExpr::Op::GreaterThan,
+                                             std::move(right), std::move(left),
+                                             loc);
   case lox::TokenType::TOKEN_PLUS:
     return std::make_unique<lox::BinaryExpr>(
         lox::BinaryExpr::Op::Add, std::move(left), std::move(right), loc);

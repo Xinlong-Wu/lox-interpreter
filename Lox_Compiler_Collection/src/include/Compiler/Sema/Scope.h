@@ -11,27 +11,26 @@ class FunctionScope;
 class ClassScope;
 
 struct SymbolOrType {
-  std::variant<Symbol*, Type*> value;
-  SymbolOrType(Symbol* sym) : value(sym) {}
-  SymbolOrType(Type* type) : value(type) {}
+  std::variant<Symbol *, Type *> value;
+  SymbolOrType(Symbol *sym) : value(sym) {}
+  SymbolOrType(Type *type) : value(type) {}
 
-  bool isSymbol() const { return std::holds_alternative<Symbol*>(value); }
-  bool isType() const { return std::holds_alternative<Type*>(value); }
+  bool isSymbol() const { return std::holds_alternative<Symbol *>(value); }
+  bool isType() const { return std::holds_alternative<Type *>(value); }
 
-  Symbol* getSymbol() const {
+  Symbol *getSymbol() const {
     if (isSymbol()) {
-      return std::get<Symbol*>(value);
+      return std::get<Symbol *>(value);
     }
     return nullptr;
   }
-  Type* getType() const {
+  Type *getType() const {
     if (isType()) {
-      return std::get<Type*>(value);
+      return std::get<Type *>(value);
     }
     return nullptr;
   }
 };
-
 
 class Scope {
 protected:
@@ -39,14 +38,15 @@ protected:
   std::unordered_map<std::string, std::unique_ptr<Symbol>> symbols;
   std::unordered_map<std::string, Type *> types;
   Scope *enclosingScope;
+
 public:
   Scope(Scope *parent, const std::string &name)
       : enclosingScope(parent), name(name) {}
   virtual ~Scope() = default;
 
   // 纯虚接口
-  const std::string& getName() const { return name; }
-  Scope * getEnclosingScope() const { return enclosingScope; }
+  const std::string &getName() const { return name; }
+  Scope *getEnclosingScope() const { return enclosingScope; }
 
   // 作用域检查
   virtual bool inFunctionScope() const = 0;
@@ -55,21 +55,21 @@ public:
   // 类型获取
   // virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
   virtual ClassType *getCurrentClassType() const = 0;
-  virtual const Signature* getCurrentSignature() const = 0;
+  virtual const Signature *getCurrentSignature() const = 0;
 
   // 符号管理
   bool declare(std::unique_ptr<Symbol> symbol) {
     if (lookupLocal(symbol->getName())) {
-        ErrorReporter::reportError("Symbol '" + symbol->getName() +
-                                  "' is already declared in scope '" +
-                                  this->getName() + "'");
-        return false;
+      ErrorReporter::reportError("Symbol '" + symbol->getName() +
+                                 "' is already declared in scope '" +
+                                 this->getName() + "'");
+      return false;
     }
     if (lookupTypeLocal(symbol->getName())) {
-        ErrorReporter::reportError("Symbol '" + symbol->getName() +
-                                  "' is conflicting with a type in scope '" +
-                                  this->getName() + "'");
-        return false;
+      ErrorReporter::reportError("Symbol '" + symbol->getName() +
+                                 "' is conflicting with a type in scope '" +
+                                 this->getName() + "'");
+      return false;
     }
     symbols[symbol->getName()] = std::move(symbol);
     return true;
@@ -77,44 +77,44 @@ public:
 
   bool declareType(const std::string &name, Type *type) {
     Symbol *localedSymbol = lookupLocal(name);
-    if (localedSymbol && !isa<FunctionType>(localedSymbol->getType())){
-        ErrorReporter::reportError("Type '" + name +
-                                  "' is conflicting with a symbol in scope '" +
-                                  this->getName() + "'");
-        return false;
+    if (localedSymbol && !isa<FunctionType>(localedSymbol->getType())) {
+      ErrorReporter::reportError("Type '" + name +
+                                 "' is conflicting with a symbol in scope '" +
+                                 this->getName() + "'");
+      return false;
     }
     if (lookupTypeLocal(name)) {
-        ErrorReporter::reportError("Type '" + name +
-                                  "' is already declared in scope '" +
-                                  this->getName() + "'");
-        return false;
+      ErrorReporter::reportError("Type '" + name +
+                                 "' is already declared in scope '" +
+                                 this->getName() + "'");
+      return false;
     }
     types[name] = type;
     return true;
   }
 
-  Symbol* lookup(const std::string &name) {
-      auto it = symbols.find(name);
-      if (it != symbols.end()) {
-          return it->second.get();
-      }
-      return enclosingScope ? enclosingScope->lookup(name) : nullptr;
+  Symbol *lookup(const std::string &name) {
+    auto it = symbols.find(name);
+    if (it != symbols.end()) {
+      return it->second.get();
+    }
+    return enclosingScope ? enclosingScope->lookup(name) : nullptr;
   }
 
-  Type* lookupType(const std::string &name) {
-      auto it = types.find(name);
-      if (it != types.end()) {
-          return it->second;
-      }
-      return enclosingScope ? enclosingScope->lookupType(name) : nullptr;
+  Type *lookupType(const std::string &name) {
+    auto it = types.find(name);
+    if (it != types.end()) {
+      return it->second;
+    }
+    return enclosingScope ? enclosingScope->lookupType(name) : nullptr;
   }
 
-  Symbol* lookupLocal(const std::string &name) const {
-      auto it = symbols.find(name);
-      return (it != symbols.end()) ? it->second.get() : nullptr;
+  Symbol *lookupLocal(const std::string &name) const {
+    auto it = symbols.find(name);
+    return (it != symbols.end()) ? it->second.get() : nullptr;
   }
 
-  Type* lookupTypeLocal(const std::string &name) {
+  Type *lookupTypeLocal(const std::string &name) {
     auto it = types.find(name);
     return (it != types.end()) ? it->second : nullptr;
   }
@@ -132,8 +132,8 @@ public:
     return std::nullopt;
   }
 
-  std::vector<Symbol*> getSymbols() const {
-    std::vector<Symbol*> result;
+  std::vector<Symbol *> getSymbols() const {
+    std::vector<Symbol *> result;
     for (const auto &[name, symbol] : symbols) {
       result.push_back(symbol.get());
     }
@@ -163,119 +163,114 @@ public:
   };
 };
 
-
 // CRTP基类模板，同时实现接口
-template<typename Derived>
-class ScopeBase : public Scope {
+template <typename Derived> class ScopeBase : public Scope {
 protected:
   mutable std::optional<bool> _inClassScope = std::nullopt;
   mutable std::optional<bool> _inFunctionScope = std::nullopt;
   mutable ClassType *currentClassType = nullptr;
-  mutable const Signature* currentSignature = nullptr;
+  mutable const Signature *currentSignature = nullptr;
 
 protected:
   // CRTP辅助函数
-  Derived& derived() { return static_cast<Derived&>(*this); }
-  const Derived& derived() const { return static_cast<const Derived&>(*this); }
+  Derived &derived() { return static_cast<Derived &>(*this); }
+  const Derived &derived() const { return static_cast<const Derived &>(*this); }
 
 public:
-  ScopeBase(Scope *parent, const std::string &name)
-        : Scope(parent, name) {}
+  ScopeBase(Scope *parent, const std::string &name) : Scope(parent, name) {}
 
   virtual ~ScopeBase() = default;
 
   // 实现复杂的缓存逻辑
   bool inFunctionScope() const override {
-      if (_inFunctionScope.has_value()) {
-          return _inFunctionScope.value();
-      }
+    if (_inFunctionScope.has_value()) {
+      return _inFunctionScope.value();
+    }
 
-      const Scope* current = this;
-      while (current != nullptr) {
-          if (isa<FunctionScope>(current)) {
-              _inFunctionScope = true;
-              return true;
-          }
-          current = current->getEnclosingScope();
+    const Scope *current = this;
+    while (current != nullptr) {
+      if (isa<FunctionScope>(current)) {
+        _inFunctionScope = true;
+        return true;
       }
-      _inFunctionScope = false;
-      return false;
+      current = current->getEnclosingScope();
+    }
+    _inFunctionScope = false;
+    return false;
   }
 
   bool inClassScope() const override {
-      if (_inClassScope.has_value()) {
-          return _inClassScope.value();
-      }
+    if (_inClassScope.has_value()) {
+      return _inClassScope.value();
+    }
 
-      const Scope* current = this;
-      while (current != nullptr) {
-          if (isa<ClassScope>(current)) {
-              _inClassScope = true;
-              return true;
-          }
-          current = current->getEnclosingScope();
+    const Scope *current = this;
+    while (current != nullptr) {
+      if (isa<ClassScope>(current)) {
+        _inClassScope = true;
+        return true;
       }
-      _inClassScope = false;
-      return false;
+      current = current->getEnclosingScope();
+    }
+    _inClassScope = false;
+    return false;
   }
 
-  const Signature* getCurrentSignature() const override {
+  const Signature *getCurrentSignature() const override {
     if (!inFunctionScope()) {
-        return nullptr;
+      return nullptr;
     }
 
     if (currentSignature != nullptr) {
-        return currentSignature;
+      return currentSignature;
     }
 
     // 让派生类提供具体实现
     if (auto signature = derived().getCurrentSignatureImpl()) {
-        currentSignature = signature;
-        return signature;
+      currentSignature = signature;
+      return signature;
     }
 
     // 向外层作用域查找
     if (enclosingScope) {
-        auto signature = enclosingScope->getCurrentSignature();
-        if (signature) {
-          currentSignature = signature;
-        }
-        return signature;
+      auto signature = enclosingScope->getCurrentSignature();
+      if (signature) {
+        currentSignature = signature;
+      }
+      return signature;
     }
     return nullptr;
   }
 
   ClassType *getCurrentClassType() const override {
     if (!inClassScope()) {
-        return nullptr;
+      return nullptr;
     }
 
     if (currentClassType != nullptr) {
-        return currentClassType;
+      return currentClassType;
     }
 
     // 让派生类提供具体实现
     if (auto classType = derived().getCurrentClassTypeImpl()) {
-        currentClassType = classType;
-        return classType;
+      currentClassType = classType;
+      return classType;
     }
 
     // 向外层作用域查找
     if (enclosingScope) {
-        auto classType = enclosingScope->getCurrentClassType();
-        if (classType) {
-            currentClassType = classType;
-        }
-        return classType;
+      auto classType = enclosingScope->getCurrentClassType();
+      if (classType) {
+        currentClassType = classType;
+      }
+      return classType;
     }
     return nullptr;
   }
 
-  ClassID getClassID() const override {
-    return ClassID::get<Derived>();
-  }
+  ClassID getClassID() const override { return ClassID::get<Derived>(); }
 
-  static bool classof(const Scope* expr) {
+  static bool classof(const Scope *expr) {
     return expr->getClassID() == ClassID::get<Derived>();
   }
 
@@ -305,9 +300,9 @@ public:
 class ClassScope : public ScopeBase<ClassScope> {
 private:
   std::unordered_map<std::string, std::unique_ptr<Symbol>> staticSymbols;
+
 public:
-  ClassScope(Scope *parent, const std::string &name)
-        : ScopeBase(parent, name) {
+  ClassScope(Scope *parent, const std::string &name) : ScopeBase(parent, name) {
     if (!parent) {
       ErrorReporter::reportError("Class scope must have an enclosing scope");
       return;
@@ -315,11 +310,12 @@ public:
 
     this->currentClassType = cast<ClassType>(parent->lookupType(name));
     if (!this->currentClassType) {
-      ErrorReporter::reportError("Class '" + name + "' is not defined in enclosing scope");
+      ErrorReporter::reportError("Class '" + name +
+                                 "' is not defined in enclosing scope");
     }
   }
 
-  const Symbol* getConstructor() const {
+  const Symbol *getConstructor() const {
     return lookupLocal(this->currentClassType->getName());
   }
 
@@ -331,16 +327,18 @@ public:
 class FunctionScope : public ScopeBase<FunctionScope> {
 private:
   Type *returnType = nullptr;
+
 public:
   FunctionScope(Scope *parent, const std::string &name)
       : ScopeBase(parent, name) {}
 
-  FunctionScope(Scope *parent, const std::string &name, const Signature *signature)
+  FunctionScope(Scope *parent, const std::string &name,
+                const Signature *signature)
       : ScopeBase(parent, name) {
     this->currentSignature = signature;
   }
 
-  const Signature* getCurrentSignatureImpl() const override {
+  const Signature *getCurrentSignatureImpl() const override {
     return currentSignature;
   }
 };
@@ -348,11 +346,12 @@ public:
 class BlockScope : public ScopeBase<BlockScope> {
 private:
   static size_t anonymousCounter;
+
 public:
   BlockScope(Scope *parent, const std::string &name)
       : ScopeBase(parent, name) {}
   BlockScope(Scope *parent)
       : BlockScope(parent, "Block" + std::to_string(anonymousCounter++)) {}
 };
-}
+} // namespace lox
 #endif // SCOPE_H
