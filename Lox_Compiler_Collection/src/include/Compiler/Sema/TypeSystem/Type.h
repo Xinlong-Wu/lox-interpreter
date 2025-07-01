@@ -138,7 +138,7 @@ public:
   ~ClassType() override = default;
   std::string getName() const { return name; }
 
-  Type *getPropertyType(const std::string &propertyName) const;
+  Type *getStaticPropertyType(const std::string &propertyName) const;
 
   // const std::vector<Type *> getPropertyTypes() const;
 
@@ -189,6 +189,8 @@ public:
   ~InstenceType() override = default;
 
   ClassType *getClassType() const { return classType; }
+
+  Type *getPropertyType(const std::string &propertyName) const;
 
   void printImpl(std::ostream &os) const override { os << getName(); }
 
@@ -286,7 +288,8 @@ public:
   ~FunctionType() override = default;
 
   std::vector<const lox::Signature *>
-  resolveOverload(const std::vector<Type *> &argTypes) const;
+  resolveOverload(const std::vector<Type *> &argTypes,
+                  const TypeContext *typeContext) const;
 
   bool isCompatibleWith(const Type *other) const override {
     assert(false && "Unimplemented FunctionType isCompatibleWith");

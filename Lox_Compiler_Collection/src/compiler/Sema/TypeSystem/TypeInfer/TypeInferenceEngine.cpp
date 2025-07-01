@@ -534,7 +534,7 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
     }
   }
 
-  bestMatches = functionType->resolveOverload(argTypes);
+  bestMatches = functionType->resolveOverload(argTypes, typeContext);
 
   if (bestMatches.empty()) {
     ErrorReporter::reportError("No matching function overload found for call");
@@ -589,18 +589,13 @@ Type *lox::TypeInferenceEngine::inferAccessExpr(AccessExpr *accessExpr,
     objectType = applySubstitution(objectType);
   }
 
-  if (auto classType = dyn_cast<const ClassType>(objectType)) {
+  const string &fieldName = accessExpr->getFieldName();
+  Type *fieldType = nullptr;
+  if (auto instenceType = dyn_cast<const InstenceType>(objectType)) {
     // check if the field exists in the class
-    const string &fieldName = accessExpr->getFieldName();
-    Type *fieldType = classType->getPropertyType(fieldName);
-    if (!fieldType) {
-      ErrorReporter::reportError("Field '" + fieldName +
-                                 "' not found in class '" +
-                                 classType->getName() + "'");
-      return nullptr;
-    }
-    accessExpr->setType(fieldType);
-    return fieldType;
+    fieldType = instenceType->getPropertyType(fieldName);
+  } else if (auto classType = dyn_cast<const ClassType>(objectType)) {
+    fieldType = classType->getStaticPropertyType(fieldName);
   } else {
     ostringstream ss;
     ss << "Unable to infer access expression '";
@@ -608,6 +603,14 @@ Type *lox::TypeInferenceEngine::inferAccessExpr(AccessExpr *accessExpr,
     ErrorReporter::reportError(ss.str());
     return nullptr;
   }
+
+  if (!fieldType) {
+    ErrorReporter::reportError("Field '" + fieldName + "' not found in '" +
+                               objectType->getName() + "'");
+    return nullptr;
+  }
+  accessExpr->setType(fieldType);
+  return fieldType;
 }
 
 bool lox::TypeInferenceEngine::solveConstraint(
@@ -694,6 +697,10 @@ bool lox::TypeInferenceEngine::unify(Type *left, Type *right) {
 bool lox::TypeInferenceEngine::assinable(Type *left, Type *right) {
   const Type *from = applySubstitution(left);
   const Type *to = applySubstitution(right);
+
+  if (to == typeContext->getStringType() && isa<ClassType>(from)) {
+    return true; // Any type can be assigned to any type
+  }
 
   if (!from->isCompatibleWith(to)) {
     ErrorReporter::reportError("Can not assign type '" + from->getName() +

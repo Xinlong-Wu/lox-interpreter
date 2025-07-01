@@ -1,5 +1,6 @@
 #include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/Sema/Scope.h"
+#include "Compiler/Sema/TypeSystem/TypeInfer/TypeInferenceEngine.h"
 
 #include <memory>
 #include <queue>
@@ -10,7 +11,8 @@ using namespace lox;
 std::vector<std::unique_ptr<TypeVariable>> lox::TypeVariable::instances;
 
 int64_t calculateMatchScore(const vector<Type *> &params,
-                            const vector<Type *> &args) {
+                            const vector<Type *> &args,
+                            const TypeContext *typeContext) {
   int64_t score = 0;
   for (size_t i = 0; i < params.size(); ++i) {
     if (i >= args.size()) {
@@ -20,22 +22,25 @@ int64_t calculateMatchScore(const vector<Type *> &params,
       score += 10; // Exact match
     } else if (args[i]->isCompatibleWith(params[i])) {
       score += 5; // Compatible types
-    } else {
-      return -1; // Incompatible types
+    } else if (isa<ClassType>(args[i]) &&
+               params[i] == typeContext->getStringType()) {
+      score += 3; // Class type can be treated as string
     }
   }
   return score;
 }
 
 std::vector<const lox::Signature *>
-lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes) const {
+lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes,
+                                   const TypeContext *typeContext) const {
   priority_queue<pair<int64_t, const Signature *>> candidates;
 
   for (const auto &overload : overloads) {
     if (overload->parameters.size() != argTypes.size()) {
       continue; // Skip if parameter count doesn't match
     }
-    int64_t score = calculateMatchScore(overload->parameters, argTypes);
+    int64_t score =
+        calculateMatchScore(overload->parameters, argTypes, typeContext);
     if (score >= 0) {
       candidates.push(make_pair(score, overload.get()));
     }
@@ -65,21 +70,35 @@ lox::ClassType::ClassType(const std::string &name) : TypeBase(name) {
 }
 
 lox::Type *
-lox::ClassType::getPropertyType(const std::string &propertyName) const {
+lox::ClassType::getStaticPropertyType(const std::string &propertyName) const {
   if (properties) {
-    auto prop = properties->lookupLocal(propertyName);
+    auto prop = properties->lookupStatic(propertyName);
     if (prop) {
       return prop->getType();
     }
   }
   if (superclass) {
-    return superclass->getPropertyType(propertyName);
+    return superclass->getStaticPropertyType(propertyName);
   }
   return nullptr;
 }
 
 InstenceType *lox::ClassType::getInstanceType() const {
   return instanceType.get();
+}
+
+Type *
+lox::InstenceType::getPropertyType(const std::string &propertyName) const {
+  Symbol *prop = classType->getClassScope()->lookupLocal(propertyName);
+  if (prop) {
+    return prop->getType();
+  }
+
+  if (classType->getSuperClass()) {
+    return classType->getSuperClass()->getInstanceType()->getPropertyType(
+        propertyName);
+  }
+  return nullptr;
 }
 
 // const std::vector<lox::Type *> lox::ClassType::getPropertyTypes() const {
