@@ -138,6 +138,11 @@ public:
   ~ClassType() override = default;
   std::string getName() const { return name; }
 
+  std::string getConstructorName() const {
+    return "init";
+    // return name;
+  }
+
   Type *getStaticPropertyType(const std::string &propertyName) const;
 
   // const std::vector<Type *> getPropertyTypes() const;

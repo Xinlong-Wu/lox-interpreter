@@ -66,7 +66,7 @@ public:
                                  this->getName() + "'");
       return false;
     }
-    if (lookupTypeLocal(symbol->getName())) {
+    if (lookupTypeLocal(symbol->getName()) == symbol->getType()) {
       ErrorReporter::reportError("Symbol '" + symbol->getName() +
                                  "' is conflicting with a type in scope '" +
                                  this->getName() + "'");
@@ -78,7 +78,8 @@ public:
 
   bool declareType(const std::string &name, Type *type) {
     Symbol *localedSymbol = lookupLocal(name);
-    if (localedSymbol && !isa<FunctionType>(localedSymbol->getType())) {
+    if (localedSymbol && !isa<FunctionType>(localedSymbol->getType()) &&
+        type != localedSymbol->getType()) {
       ErrorReporter::reportError("Type '" + name +
                                  "' is conflicting with a symbol in scope '" +
                                  this->getName() + "'");
@@ -325,7 +326,8 @@ public:
   }
 
   const Symbol *getConstructor() const {
-    return lookupLocal(this->currentClassType->getName());
+    // return lookupLocal(this->currentClassType->getName());
+    return lookupLocal(this->currentClassType->getConstructorName());
   }
 
   ClassType *getCurrentClassTypeImpl() const override {

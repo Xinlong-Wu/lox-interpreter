@@ -21,7 +21,7 @@
 // CHECK-PARSER-NEXT:      baz.inBar();
 // CHECK-PARSER-NEXT:      baz.inBaz();
 
-// CHECK-SEMANTIC-LABEL:   var baz: Baz = Baz();
+// CHECK-SEMANTIC-LABEL:   var baz: Instance of Baz  = Baz();
 // CHECK-SEMANTIC-NEXT:    baz.inFoo();
 // CHECK-SEMANTIC-NEXT:    baz.inBar();
 // CHECK-SEMANTIC-NEXT:    baz.inBaz();

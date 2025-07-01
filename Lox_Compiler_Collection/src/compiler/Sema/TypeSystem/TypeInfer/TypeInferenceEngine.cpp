@@ -72,11 +72,16 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
 
   string className = classDecl->getName();
   ClassType *classType = typeContext->make<ClassType>(className, superClass);
-  if (!symbolTable.declareType(className, classType)) {
+
+  if (symbolTable.lookupTypeLocal(className) ||
+      symbolTable.lookupLocalSymbol(className)) {
     ErrorReporter::reportError("Class '" + classDecl->getName() +
                                "' already declared");
     return;
   }
+
+  symbolTable.declare(make_unique<Symbol>(className, classType));
+  symbolTable.declareType(className, classType);
 
   unique_ptr<ClassScope> classScope =
       make_unique<ClassScope>(symbolTable.currentScope(), className);
@@ -96,7 +101,7 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
     unique_ptr<Signature> signature =
         make_unique<Signature>(vector<Type *>(), classType->getInstanceType());
     FunctionType *funcType = typeContext->make<FunctionType>(
-        classDecl->getName(), std::move(signature));
+        classType->getConstructorName(), std::move(signature));
 
     classScopePtr->declare(std::move(make_unique<Symbol>(funcType)));
   }
@@ -131,7 +136,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   Type *returnType = TypeVariable::create();
   // check function is a constructor
   ClassType *classTy = symbolTable.currentScope()->getCurrentClassType();
-  if (classTy && funcDecl->getName() == classTy->getName()) {
+  if (classTy && funcDecl->getName() == classTy->getConstructorName()) {
     // if the function is a constructor, the return type is the instance type
     returnType = classTy->getInstanceType();
   }
@@ -404,17 +409,17 @@ Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
     }
 
     Symbol *symbol = symbolTable.lookupSymbol(varExpr->getName());
-    if (!symbol) {
-      ClassType *classType =
-          dyn_cast<ClassType>(symbolTable.lookupTypeLocal(varExpr->getName()));
-      if (classType) {
-        // If the symbol is a class type, we return it
-        return classType;
-      }
-      ErrorReporter::reportError("Use of undeclared variable '" +
-                                 varExpr->getName() + "'");
-      return nullptr;
-    }
+    // if (!symbol) {
+    //   ClassType *classType =
+    //       dyn_cast<ClassType>(symbolTable.lookupTypeLocal(varExpr->getName()));
+    //   if (classType) {
+    //     // If the symbol is a class type, we return it
+    //     return classType;
+    //   }
+    //   ErrorReporter::reportError("Use of undeclared variable '" +
+    //                              varExpr->getName() + "'");
+    //   return nullptr;
+    // }
     return symbol->getType();
   }
   if (auto binaryExpr = dyn_cast<BinaryExpr>(expr)) {

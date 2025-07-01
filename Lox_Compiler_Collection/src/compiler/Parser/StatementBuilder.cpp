@@ -102,8 +102,8 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
       fields.insert({field->getName(), std::move(field)});
     } else if (this->parseOptional(lox::TokenType::TOKEN_FUN) ||
                (this->match(TokenType::TOKEN_IDENTIFIER) &&
-                //  this->getCurrentToken() == "init")) {
-                this->getCurrentToken() == name)) {
+                this->getCurrentToken() == "init")) {
+      // this->getCurrentToken() == name)) {
       std::unique_ptr<FunctionDeclStmt> method = this->parseFunctionDecl();
       methods.insert({method->getName(), std::move(method)});
     } else {

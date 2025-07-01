@@ -1,21 +1,25 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
 // RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
-// CHECK-PARSER:         BlockStmt: {
+// CHECK-PARSER:         {
 // CHECK-PARSER-NEXT:      class Foo {
-// CHECK-PARSER-NEXT:        function returnSelf()
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:          return Variable: [Foo];
+// CHECK-PARSER-NEXT:        fun returnSelf()
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:          return Foo;
 // CHECK-PARSER-NEXT:        }
 // CHECK-PARSER:           }
+// CHECK-PARSER-NEXT:      print(Foo().returnSelf());
+// CHECK-PARSER-NEXT:     }
 
-// CHECK-SEMANTIC:       BlockStmt: {
+// CHECK-SEMANTIC:       {
 // CHECK-SEMANTIC-NEXT:    class Foo {
-// CHECK-SEMANTIC-NEXT:      function returnSelf()
-// CHECK-SEMANTIC-NEXT:      BlockStmt: {
-// CHECK-SEMANTIC-NEXT:        return Variable: [Foo: class Foo];
+// CHECK-SEMANTIC-NEXT:      fun returnSelf()
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:        return Foo;
 // CHECK-SEMANTIC-NEXT:      }
-// CHECK-SEMANTIC:       Call: [Variable: [print: (string) -> nil](Call: [Access: [Call: [Variable: [Foo: () -> instance of Foo]()].returnSelf: () -> class Foo]()], )];
+// CHECK-SEMANTIC-NEXT:    }
+// CHECK-SEMANTIC:         print(Foo().returnSelf());
+// CHECK-SEMANTIC-NEXT:  }
 
 {
   class Foo {
