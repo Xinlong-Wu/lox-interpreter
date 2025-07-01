@@ -354,7 +354,7 @@ public:
       os << "no overloads";
       return;
     }
-    os << overloads.size() << " overloads ";
+    os << overloads.size() << " overloads";
   }
 
   friend class TypeContext;

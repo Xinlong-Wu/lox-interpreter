@@ -367,6 +367,7 @@ void lox::TypeInferenceEngine::inferExprStmt(ExpressionStmt *exprStmt) {
 }
 
 Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
+  Type *inferredType = nullptr;
   if (isa<NumberExpr>(expr)) {
     return typeContext->getNumberType();
   }
@@ -414,24 +415,30 @@ Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
                                  varExpr->getName() + "'");
       return nullptr;
     }
-    return symbol->getType();
+
+    inferredType = symbol->getType();
   }
   if (auto binaryExpr = dyn_cast<BinaryExpr>(expr)) {
-    return inferBinaryExpr(binaryExpr, expectedType);
+    inferredType = inferBinaryExpr(binaryExpr, expectedType);
   }
   if (auto unaryExpr = dyn_cast<UnaryExpr>(expr)) {
-    return inferUnaryExpr(unaryExpr, expectedType);
+    inferredType = inferUnaryExpr(unaryExpr, expectedType);
   }
   if (auto callExpr = dyn_cast<CallExpr>(expr)) {
-    return inferCallExpr(callExpr, expectedType);
+    inferredType = inferCallExpr(callExpr, expectedType);
   }
   if (auto assignExpr = dyn_cast<AssignExpr>(expr)) {
-    return inferAssignExpr(assignExpr, expectedType);
+    inferredType = inferAssignExpr(assignExpr, expectedType);
   }
   if (auto accessExpr = dyn_cast<AccessExpr>(expr)) {
-    return inferAccessExpr(accessExpr, expectedType);
+    inferredType = inferAccessExpr(accessExpr, expectedType);
   }
-  assert_not_reached("Unknown expression type in type inference engine");
+
+  if (isa<TypeVariable>(inferredType)) {
+    // Apply substitution to type variables
+    inferredType = applySubstitution(inferredType);
+  }
+  return inferredType;
 }
 
 Type *lox::TypeInferenceEngine::inferBinaryExpr(BinaryExpr *binaryExpr,
@@ -518,6 +525,7 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
   }
 
   Type *calleeType = inferExpr(callExpr->getCallee());
+
   vector<const Signature *> bestMatches;
   const FunctionType *functionType = dyn_cast<const FunctionType>(calleeType);
 
