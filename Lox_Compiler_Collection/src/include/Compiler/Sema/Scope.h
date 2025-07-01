@@ -2,6 +2,7 @@
 #define SCOPE_H
 
 #include "Common.h"
+#include "Compiler/AST/ASTVisitor.h"
 #include "Compiler/Sema/Symbol.h"
 
 #include <variant>
@@ -55,7 +56,7 @@ public:
   // 类型获取
   // virtual std::shared_ptr<FunctionType> getCurrentFunctionType() const = 0;
   virtual ClassType *getCurrentClassType() const = 0;
-  virtual const Signature *getCurrentSignature() const = 0;
+  virtual FunctionScope *getCurrentFunctionScope() const = 0;
 
   // 符号管理
   bool declare(std::unique_ptr<Symbol> symbol) {
@@ -169,7 +170,7 @@ protected:
   mutable std::optional<bool> _inClassScope = std::nullopt;
   mutable std::optional<bool> _inFunctionScope = std::nullopt;
   mutable ClassType *currentClassType = nullptr;
-  mutable const Signature *currentSignature = nullptr;
+  mutable FunctionScope *currentFunctionScope = nullptr;
 
 protected:
   // CRTP辅助函数
@@ -216,28 +217,28 @@ public:
     return false;
   }
 
-  const Signature *getCurrentSignature() const override {
+  FunctionScope *getCurrentFunctionScope() const override {
     if (!inFunctionScope()) {
       return nullptr;
     }
 
-    if (currentSignature != nullptr) {
-      return currentSignature;
+    if (currentFunctionScope != nullptr) {
+      return currentFunctionScope;
     }
 
     // 让派生类提供具体实现
-    if (auto signature = derived().getCurrentSignatureImpl()) {
-      currentSignature = signature;
-      return signature;
+    if (auto funcScope = derived().getCurrentFunctionScopeImpl()) {
+      currentFunctionScope = funcScope;
+      return funcScope;
     }
 
     // 向外层作用域查找
     if (enclosingScope) {
-      auto signature = enclosingScope->getCurrentSignature();
-      if (signature) {
-        currentSignature = signature;
+      auto funcScope = enclosingScope->getCurrentFunctionScope();
+      if (funcScope) {
+        currentFunctionScope = funcScope;
       }
-      return signature;
+      return funcScope;
     }
     return nullptr;
   }
@@ -287,7 +288,7 @@ public:
   }
 
   // 默认实现，派生类可以重写
-  virtual const Signature *getCurrentSignatureImpl() const { return nullptr; }
+  virtual FunctionScope *getCurrentFunctionScopeImpl() const { return nullptr; }
   virtual ClassType *getCurrentClassTypeImpl() const { return nullptr; }
 };
 
@@ -315,6 +316,14 @@ public:
     }
   }
 
+  Symbol *lookupStatic(const std::string &name) const {
+    auto it = staticSymbols.find(name);
+    if (it != staticSymbols.end()) {
+      return it->second.get();
+    }
+    return nullptr;
+  }
+
   const Symbol *getConstructor() const {
     return lookupLocal(this->currentClassType->getName());
   }
@@ -326,7 +335,7 @@ public:
 
 class FunctionScope : public ScopeBase<FunctionScope> {
 private:
-  Type *returnType = nullptr;
+  const Signature *currentSignature = nullptr;
 
 public:
   FunctionScope(Scope *parent, const std::string &name)
@@ -338,8 +347,10 @@ public:
     this->currentSignature = signature;
   }
 
-  const Signature *getCurrentSignatureImpl() const override {
-    return currentSignature;
+  const Signature *getSignature() const { return currentSignature; }
+
+  FunctionScope *getCurrentFunctionScopeImpl() const override {
+    return const_cast<FunctionScope *>(this);
   }
 };
 

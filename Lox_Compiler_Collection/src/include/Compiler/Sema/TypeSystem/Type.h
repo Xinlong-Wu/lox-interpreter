@@ -122,15 +122,17 @@ public:
   friend class TypeContext;
 };
 
+class InstenceType;
 class ClassType : public TypeBase<ClassType> {
 private:
   ClassType *superclass = nullptr;
   ClassScope *properties = nullptr;
 
+  std::unique_ptr<InstenceType> instanceType = nullptr;
+
 protected:
-  ClassType(const std::string &name, ClassType *superClass)
-      : TypeBase(name), superclass(superClass) {}
-  ClassType(const std::string &name) : TypeBase(name) {}
+  ClassType(const std::string &name, ClassType *superClass);
+  ClassType(const std::string &name);
 
 public:
   ~ClassType() override = default;
@@ -143,6 +145,8 @@ public:
   const ClassScope *getClassScope() const {
     return cast<ClassScope>(properties);
   }
+
+  InstenceType *getInstanceType() const;
 
   void setClassScope(ClassScope *scope) {
     assert(properties == nullptr && "Class scope has already been set");
@@ -171,6 +175,24 @@ public:
   void printImpl(std::ostream &os) const override { os << name; }
 
   friend class TypeContext;
+};
+
+class InstenceType : public TypeBase<InstenceType> {
+private:
+  ClassType *classType = nullptr;
+
+protected:
+  InstenceType(ClassType *classType)
+      : TypeBase("Instance of " + classType->getName()), classType(classType) {}
+
+public:
+  ~InstenceType() override = default;
+
+  ClassType *getClassType() const { return classType; }
+
+  void printImpl(std::ostream &os) const override { os << getName(); }
+
+  friend class ClassType;
 };
 
 class FunctionType;

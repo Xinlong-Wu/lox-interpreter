@@ -2,29 +2,29 @@
 // RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:     class Foo {
-// CHECK-PARSER-NEXT:         function inFoo()
-// CHECK-PARSER-NEXT:         BlockStmt: {
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["in foo"], )];
+// CHECK-PARSER-NEXT:         fun inFoo()
+// CHECK-PARSER-NEXT:         {
+// CHECK-PARSER-NEXT:           print("in foo");
 // CHECK-PARSER-NEXT:         }
 // CHECK-PARSER-LABEL:     class Bar < Foo {
-// CHECK-PARSER-NEXT:         function inBar()
-// CHECK-PARSER-NEXT:         BlockStmt: {
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["in bar"], )];
+// CHECK-PARSER-NEXT:         fun inBar()
+// CHECK-PARSER-NEXT:         {
+// CHECK-PARSER-NEXT:           print("in bar");
 // CHECK-PARSER-NEXT:         }
 // CHECK-PARSER-LABEL:     class Baz < Bar {
-// CHECK-PARSER-NEXT:         function inBaz()
-// CHECK-PARSER-NEXT:         BlockStmt: {
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["in baz"], )];
+// CHECK-PARSER-NEXT:         fun inBaz()
+// CHECK-PARSER-NEXT:         {
+// CHECK-PARSER-NEXT:           print("in baz");
 // CHECK-PARSER-NEXT:         }
-// CHECK-PARSER:           var baz = Call: [Variable: [Baz]()];
-// CHECK-PARSER-NEXT:      Call: [Access: [Variable: [baz].inFoo]()];
-// CHECK-PARSER-NEXT:      Call: [Access: [Variable: [baz].inBar]()];
-// CHECK-PARSER-NEXT:      Call: [Access: [Variable: [baz].inBaz]()];
+// CHECK-PARSER:           var baz = Baz();
+// CHECK-PARSER-NEXT:      baz.inFoo();
+// CHECK-PARSER-NEXT:      baz.inBar();
+// CHECK-PARSER-NEXT:      baz.inBaz();
 
-// CHECK-SEMANTIC-LABEL:   var baz: instance of Baz = Call: [Variable: [Baz: () -> instance of Baz]()];
-// CHECK-SEMANTIC-NEXT:    Call: [Access: [Variable: [baz: instance of Baz].inFoo: () -> nil]()];
-// CHECK-SEMANTIC-NEXT:    Call: [Access: [Variable: [baz: instance of Baz].inBar: () -> nil]()];
-// CHECK-SEMANTIC-NEXT:    Call: [Access: [Variable: [baz: instance of Baz].inBaz: () -> nil]()];
+// CHECK-SEMANTIC-LABEL:   var baz: Baz = Baz();
+// CHECK-SEMANTIC-NEXT:    baz.inFoo();
+// CHECK-SEMANTIC-NEXT:    baz.inBar();
+// CHECK-SEMANTIC-NEXT:    baz.inBaz();
 
 class Foo {
   fun inFoo() {

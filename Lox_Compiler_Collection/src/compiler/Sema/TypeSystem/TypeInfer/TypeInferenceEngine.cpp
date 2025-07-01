@@ -89,10 +89,12 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
     this->collectFunctionDeclarations(function.second.get());
   }
 
-  if (!classScopePtr->getConstructor()) {
+  const Symbol *constructorSymbol = classScopePtr->getConstructor();
+
+  if (!constructorSymbol) {
     // If the class does not have a constructor, create a default constructor
     unique_ptr<Signature> signature =
-        make_unique<Signature>(vector<Type *>(), classType);
+        make_unique<Signature>(vector<Type *>(), classType->getInstanceType());
     FunctionType *funcType = typeContext->make<FunctionType>(
         classDecl->getName(), std::move(signature));
 
@@ -127,6 +129,13 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
 
   // collect the function's return type
   Type *returnType = TypeVariable::create();
+  // check function is a constructor
+  ClassType *classTy = symbolTable.currentScope()->getCurrentClassType();
+  if (classTy && funcDecl->getName() == classTy->getName()) {
+    // if the function is a constructor, the return type is the instance type
+    returnType = classTy->getInstanceType();
+  }
+
   unique_ptr<Signature> signature =
       make_unique<Signature>(std::move(paramTypes), returnType);
   Signature *signaturePtr = signature.get();
@@ -205,6 +214,8 @@ void lox::TypeInferenceEngine::inferStatement(StmtBase *stmt) {
     inferBlockStmt(blockStmt);
   } else if (auto exprStmt = dyn_cast<ExpressionStmt>(stmt)) {
     inferExprStmt(exprStmt);
+  } else if (auto retureStmt = dyn_cast<ReturnStmt>(stmt)) {
+    inferReturnStmt(retureStmt);
   }
 }
 
@@ -272,26 +283,6 @@ void lox::TypeInferenceEngine::inferFunctionDeclStmt(
   symbolTable.enterScope(funcScope);
 
   inferStatements(funcDecl->getBody()->getStatements());
-  // funcDecl->getBody()->walk([&](ReturnStmt *returnStmt) -> void {
-  //     Type *returnType = nullptr;
-  //     if (returnStmt->getValue()) {
-  //         returnType = returnStmt->getValue()->getType();
-  //         if (!returnType) {
-  //             ErrorReporter::reportError("Return statement has no type");
-  //             return;
-  //         }
-  //     }
-  //     else {
-  //         returnType = TypeInferenceEngine::NilType;
-  //     }
-  //     Signature *signature = funcDecl->getSignature();
-  //     if (signature->getReturnType() == nullptr) {
-  //         signature->setReturnType(returnType);
-  //     } else {
-  //         addConstraint(returnType, signature->getReturnType(),
-  //         Constraint::ConstraintType::ASSIGNABLE);
-  //     }
-  // });
 
   symbolTable.exitScope();
 }
@@ -316,6 +307,38 @@ void lox::TypeInferenceEngine::inferClassDeclStmt(ClassDeclStmt *classDecl) {
   }
 
   symbolTable.exitScope();
+}
+
+void lox::TypeInferenceEngine::inferReturnStmt(ReturnStmt *returnStmt) {
+  // check if the return statement is in a function scope
+  if (!symbolTable.currentScope()->inFunctionScope()) {
+    ErrorReporter::reportError(
+        "Return statement chouldn't outside of function scope");
+    return;
+  }
+
+  // infer the return expression type
+  Type *returnType = nullptr;
+  if (returnStmt->getValue()) {
+    returnType = inferExpr(returnStmt->getValue());
+    if (!returnType) {
+      ErrorReporter::reportError("Return expression has no type");
+      return;
+    }
+  }
+
+  // get the current function's signature
+  FunctionScope *funcScope = cast<FunctionScope>(
+      symbolTable.currentScope()->getCurrentFunctionScope());
+  const Signature *signature = funcScope->getSignature();
+  if (!signature) {
+    ErrorReporter::reportError("No current function signature found");
+    return;
+  }
+
+  // add a constraint between the return type and the function's return type
+  addConstraint(returnType, signature->getReturnType(),
+                Constraint::ConstraintType::ASSIGNABLE);
 }
 
 void lox::TypeInferenceEngine::inferBlockStmt(BlockStmt *blockStmt) {
@@ -501,19 +524,6 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
 
   if (!functionType) {
     if (auto classType = dyn_cast<ClassType>(calleeType)) {
-      IdentifierExpr *calleeId =
-          dyn_cast<IdentifierExpr>(callExpr->getCallee());
-      if (!calleeId) {
-        ErrorReporter::reportError("Callee is not an identifier expression");
-        return nullptr;
-      }
-      Symbol *calleeSymbol = symbolTable.lookupSymbol(calleeId->getName());
-      if (calleeSymbol) {
-        ErrorReporter::reportError("Unable call instance of class '" +
-                                   classType->getName() + "' as a function");
-        return nullptr;
-      }
-
       // if the callee is a class type, we assume it's a constructor call
       const ClassScope *classScope = classType->getClassScope();
       functionType =
@@ -600,28 +610,32 @@ Type *lox::TypeInferenceEngine::inferAccessExpr(AccessExpr *accessExpr,
   }
 }
 
+bool lox::TypeInferenceEngine::solveConstraint(
+    Type *left, Type *right, Constraint::ConstraintType relation) {
+  switch (relation) {
+  case Constraint::ConstraintType::EQUAL:
+    return unify(left, right);
+  case Constraint::ConstraintType::ASSIGNABLE:
+    if (isa<TypeVariable>(left) || isa<TypeVariable>(right)) {
+      // If either side is a type variable, we can unify them
+      return unify(left, right);
+    }
+    // Otherwise, we check if left is assignable to right
+    return assinable(left, right);
+  default:
+    ErrorReporter::reportError("Unknown constraint relation");
+    return false;
+  }
+  assert_not_reached("Unreachable code in solveConstraint");
+  return false;
+}
+
 bool lox::TypeInferenceEngine::solveConstraints() {
   bool inferSuccess = true;
   for (const auto &constraint : constraints) {
-    Type *leftType = constraint.getLeftType();
-    Type *rightType = constraint.getRightType();
-    Constraint::ConstraintType relation = constraint.getRelation();
-
-    // Apply the constraint based on its type
-    switch (relation) {
-    case Constraint::ConstraintType::EQUAL:
-      inferSuccess &= unify(leftType, rightType);
-      break;
-    case Constraint::ConstraintType::ASSIGNABLE:
-      if (isa<TypeVariable>(leftType) || isa<TypeVariable>(rightType)) {
-        // If either side is a type variable, we can unify them
-        inferSuccess &= unify(leftType, rightType);
-      } else {
-        // Otherwise, we check if left is assignable to right
-        inferSuccess &= assinable(leftType, rightType);
-      }
-      break;
-    }
+    inferSuccess &=
+        solveConstraint(constraint.getLeftType(), constraint.getRightType(),
+                        constraint.getRelation());
   }
   return inferSuccess;
 }
@@ -713,7 +727,8 @@ bool lox::TypeInferenceEngine::occursCheck(const TypeVariable *var,
   //             return true;
   //         }
   //     }
-  //     if (occursCheck(var, functionType->getSignature()->getReturnType())) {
+  //     if (occursCheck(var, functionType->getSignature()->getReturnType()))
+  //     {
   //         return true;
   //     }
   // }

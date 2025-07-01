@@ -31,7 +31,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/lox-parser",
             "args": [
-                // "--semantic-analyzer",
+                "--semantic-analyzer",
             "${fileDirname}/${fileBasenameNoExtension}.lox" ],
             "stopOnEntry": false,
             "cwd": "${workspaceFolder}",

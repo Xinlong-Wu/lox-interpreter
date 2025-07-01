@@ -4,6 +4,7 @@
 #include "Compiler/AST/Expr.h"
 #include "Compiler/AST/Stmt.h"
 #include "Compiler/Sema/SymbolTable.h"
+#include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/Sema/TypeSystem/TypeInfer/Constraint.h"
 
 namespace lox {
@@ -24,6 +25,7 @@ private:
   void inferStatement(StmtBase *stmt);
   void inferVarDeclStmt(VarDeclStmt *varDecl);
   void inferFunctionDeclStmt(FunctionDeclStmt *funcDecl);
+  void inferReturnStmt(ReturnStmt *returnStmt);
   void inferClassDeclStmt(ClassDeclStmt *classDecl);
   void inferBlockStmt(BlockStmt *blockStmt);
   void inferExprStmt(ExpressionStmt *exprStmt);
@@ -38,6 +40,8 @@ private:
                         const Type *expectedType = nullptr);
 
   bool solveConstraints();
+  bool solveConstraint(Type *left, Type *right,
+                       Constraint::ConstraintType relation);
   bool unify(Type *left, Type *right);
   // check if left is assignable to right
   bool assinable(Type *left, Type *right);
@@ -57,6 +61,7 @@ public:
   void addConstraint(Type *left, Type *right,
                      Constraint::ConstraintType relation) {
     constraints.emplace_back(left, right, relation);
+    solveConstraint(left, right, relation);
   }
 
   void

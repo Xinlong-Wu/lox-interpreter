@@ -1,6 +1,7 @@
 #include "Compiler/Sema/TypeSystem/Type.h"
 #include "Compiler/Sema/Scope.h"
 
+#include <memory>
 #include <queue>
 
 using namespace std;
@@ -54,6 +55,15 @@ lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes) const {
   return bestMatches;
 }
 
+lox::ClassType::ClassType(const std::string &name, ClassType *superclass)
+    : TypeBase(name), superclass(superclass) {
+  instanceType = std::unique_ptr<InstenceType>(new InstenceType(this));
+}
+
+lox::ClassType::ClassType(const std::string &name) : TypeBase(name) {
+  instanceType = std::unique_ptr<InstenceType>(new InstenceType(this));
+}
+
 lox::Type *
 lox::ClassType::getPropertyType(const std::string &propertyName) const {
   if (properties) {
@@ -66,6 +76,10 @@ lox::ClassType::getPropertyType(const std::string &propertyName) const {
     return superclass->getPropertyType(propertyName);
   }
   return nullptr;
+}
+
+InstenceType *lox::ClassType::getInstanceType() const {
+  return instanceType.get();
 }
 
 // const std::vector<lox::Type *> lox::ClassType::getPropertyTypes() const {
