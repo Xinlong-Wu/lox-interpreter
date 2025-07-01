@@ -2,9 +2,11 @@
 #include "Common.h"
 #include "Compiler/AST/ASTVisitor.h"
 #include "Compiler/AST/ASTWalker.h"
+#include "Compiler/Sema/Scope.h"
 #include "Compiler/Sema/TypeSystem/Type.h"
 
 #include <iostream>
+#include <optional>
 
 using namespace std;
 using namespace lox;
@@ -116,7 +118,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   vector<unique_ptr<Symbol>> paramSymbols;
   for (const auto &param : funcDecl->getParameters()) {
     Type *paramType;
-    if (param->getTypeAnnotation()) {
+    if (param->getTypeAnnotation() != std::nullopt) {
       auto type = symbolTable.lookupType(*param->getTypeAnnotation());
       if (!type) {
         ErrorReporter::reportError("Type '" + *param->getTypeAnnotation() +
@@ -128,6 +130,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
     } else {
       paramType = TypeVariable::create();
     }
+    param->setType(paramType);
     paramTypes.push_back(paramType);
     paramSymbols.push_back(make_unique<Symbol>(param->getName(), paramType));
   }
@@ -181,12 +184,13 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   unique_ptr<FunctionScope> funcScope = make_unique<FunctionScope>(
       symbolTable.currentScope(), funcDecl->getName(), signaturePtr);
   symbolTable.enterScope(funcScope.get());
+  FunctionScope *funcScopePtr = funcScope.get();
   funcDecl->setScope(move(funcScope));
 
   // declare the function's parameters in the function scope
   for (auto paramSymbol = paramSymbols.begin();
        paramSymbol != paramSymbols.end(); ++paramSymbol) {
-    if (!funcScope->declare(std::move(*paramSymbol))) {
+    if (!funcScopePtr->declare(std::move(*paramSymbol))) {
       ErrorReporter::reportError("Parameter '" + (*paramSymbol)->getName() +
                                  "' already declared in function '" +
                                  funcDecl->getName() + "'");

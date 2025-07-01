@@ -297,9 +297,10 @@ public:
 
   void printImpl(std::ostream &os) const {
     os << "fun " << name << "(";
-    for (const auto &param : parameters) {
-      param->print(os);
-      os << ", ";
+    for (size_t i = 0; i < parameters.size(); ++i) {
+      if (i > 0)
+        os << ", ";
+      parameters[i]->print(os);
     }
     os << ") " << std::endl;
     body->print(os);

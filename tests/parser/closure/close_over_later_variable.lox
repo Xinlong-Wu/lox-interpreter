@@ -1,21 +1,36 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
+
 // This is a regression test. There was a bug where if an upvalue for an
 // earlier local (here "a") was captured *after* a later one ("b"), then it
 // would crash because it walked to the end of the upvalue list (correct), but
 // then didn't handle not finding the variable.
 
-// CHECK-PARSER:             function f()
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:          var a = String: ["a"];
-// CHECK-PARSER-NEXT:          var b = String: ["b"];
-// CHECK-PARSER-NEXT:          function g()
-// CHECK-PARSER-NEXT:          BlockStmt: {
-// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [b], )];
-// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [a], )];
+// CHECK-PARSER:             fun f()
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:          var a = "a";
+// CHECK-PARSER-NEXT:          var b = "b";
+// CHECK-PARSER-NEXT:          fun g()
+// CHECK-PARSER-NEXT:          {
+// CHECK-PARSER-NEXT:            print(b);
+// CHECK-PARSER-NEXT:            print(a);
 // CHECK-PARSER-NEXT:          }
-// CHECK-PARSER:               Call: [Variable: [g]()];
+// CHECK-PARSER:               g();
 // CHECK-PARSER-NEXT:          }
-// CHECK-PARSER:             Call: [Variable: [f]()];
+// CHECK-PARSER:             f();
+
+// CHECK-SEMANTIC:           fun f()
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:        var a: String = "a";
+// CHECK-SEMANTIC-NEXT:        var b: String = "b";
+// CHECK-SEMANTIC-NEXT:        fun g()
+// CHECK-SEMANTIC-NEXT:        {
+// CHECK-SEMANTIC-NEXT:          print(b);
+// CHECK-SEMANTIC-NEXT:          print(a);
+// CHECK-SEMANTIC-NEXT:        }
+// CHECK-SEMANTIC:             g();
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC:           f();
 
 fun f() {
   var a = "a";

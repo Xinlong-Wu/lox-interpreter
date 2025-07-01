@@ -1,23 +1,38 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:           var f;
 // CHECK-PARSER-NEXT:      class Foo {
-// CHECK-PARSER-NEXT:        function method(Variable: [param], )
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:          function f_()
-// CHECK-PARSER-NEXT:          BlockStmt: {
-// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [param], )];
+// CHECK-PARSER-NEXT:        fun method(param: String)
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:          fun f_()
+// CHECK-PARSER-NEXT:          {
+// CHECK-PARSER-NEXT:            print(param);
 // CHECK-PARSER-NEXT:          }
-// CHECK-PARSER:               Assign: [Variable: [f] = Variable: [f_]];
+// CHECK-PARSER:               f = f_;
 // CHECK-PARSER-NEXT:        }
+// CHECK-PARSER:           }
+// CHECK-PARSER-NEXT:      Foo().method("param");
+// CHECK-PARSER-NEXT:      f();
 
-// CHECK-PARSER:           Call: [Access: [ Call: [Variable: [Foo]()].method ](String: ["param"], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [f]()];
+// CHECK-SEMANTIC:			  var f: Function f_ with 1 overloads;
+// CHECK-SEMANTIC-NEXT:		class Foo {
+// CHECK-SEMANTIC-NEXT:			fun method(param: String)
+// CHECK-SEMANTIC-NEXT:			{
+// CHECK-SEMANTIC-NEXT:				fun f_()
+// CHECK-SEMANTIC-NEXT:				{
+// CHECK-SEMANTIC-NEXT:					print(param);
+// CHECK-SEMANTIC-NEXT:				}
+// CHECK-SEMANTIC:			      f = f_;
+// CHECK-SEMANTIC-NEXT:			}
+// CHECK-SEMANTIC:			  }
+// CHECK-SEMANTIC-NEXT:		Foo().method("param");
+// CHECK-SEMANTIC-NEXT:		f();
 
 var f;
 
 class Foo {
-  fun method(param) {
+  fun method(param: String) {
     fun f_() {
       print (param);
     }

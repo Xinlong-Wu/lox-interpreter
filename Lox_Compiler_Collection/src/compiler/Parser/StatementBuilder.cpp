@@ -62,14 +62,13 @@ std::unique_ptr<FunctionDeclStmt> Parser::parseFunctionDecl() {
       this->parse(lox::TokenType::TOKEN_IDENTIFIER);
       Token identifier = this->getPreviousToken();
       std::string typeAnnotation;
-      if (this->parseOptional(TokenType::TOKEN_COLON)) {
-        this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a type");
-        if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
-          this->parseError("Expect a type after `:`.");
-          return nullptr;
-        }
-        typeAnnotation = this->getPreviousToken().getTokenString();
+      this->parse(TokenType::TOKEN_COLON, "Expect a type after `:`.");
+      this->parse(lox::TokenType::TOKEN_IDENTIFIER, "Expect a type");
+      if (this->getPreviousToken() != lox::TokenType::TOKEN_IDENTIFIER) {
+        this->parseError("Expect a type after `:`.");
+        return nullptr;
       }
+      typeAnnotation = this->getPreviousToken().getTokenString();
 
       parameters.push_back(std::make_unique<ParameterExpr>(
           std::string(identifier.getTokenString()), typeAnnotation,

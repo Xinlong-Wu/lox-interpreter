@@ -480,7 +480,7 @@ protected:
 public:
   ParameterExpr(const std::string &name, const Location &loc)
       : ExprCRTP(loc), name(name) {}
-  ParameterExpr(const std::string &name, const std::string &typeAnnotation,
+  ParameterExpr(const std::string &name, std::string &typeAnnotation,
                 const Location &loc)
       : ExprCRTP(loc), name(name), typeAnnotation(typeAnnotation) {}
 
@@ -494,6 +494,8 @@ public:
     if (type) {
       os << ": ";
       type->print(os);
+    } else if (typeAnnotation) {
+      os << ": " << *typeAnnotation;
     }
   }
 

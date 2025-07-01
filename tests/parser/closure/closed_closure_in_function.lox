@@ -1,15 +1,27 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:           var f;
-// CHECK-PARSER-NEXT:      BlockStmt: {
-// CHECK-PARSER-NEXT:        var local = String: ["local"];
-// CHECK-PARSER-NEXT:        function f_()
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:          Call: [Variable: [print](Variable: [local], )];
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:        var local = "local";
+// CHECK-PARSER-NEXT:        fun f_()
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:          print(local);
 // CHECK-PARSER-NEXT:        }
-// CHECK-PARSER:             Assign: [Variable: [f] = Variable: [f_]];
+// CHECK-PARSER:             f = f_;
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER:           Call: [Variable: [f]()];
+// CHECK-PARSER:           f();
+
+// CHECK-SEMANTIC:			  var f: Function f_ with 1 overloads;
+// CHECK-SEMANTIC-NEXT:		{
+// CHECK-SEMANTIC-NEXT:			var local: String = "local";
+// CHECK-SEMANTIC-NEXT:			fun f_()
+// CHECK-SEMANTIC-NEXT:			{
+// CHECK-SEMANTIC-NEXT:				print(local);
+// CHECK-SEMANTIC-NEXT:			}
+// CHECK-SEMANTIC:			    f = f_;
+// CHECK-SEMANTIC-NEXT:		}
+// CHECK-SEMANTIC:			  f();
 
 var f;
 
