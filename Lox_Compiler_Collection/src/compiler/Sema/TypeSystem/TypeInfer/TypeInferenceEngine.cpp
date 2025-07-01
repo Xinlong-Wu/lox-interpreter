@@ -409,17 +409,11 @@ Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
     }
 
     Symbol *symbol = symbolTable.lookupSymbol(varExpr->getName());
-    // if (!symbol) {
-    //   ClassType *classType =
-    //       dyn_cast<ClassType>(symbolTable.lookupTypeLocal(varExpr->getName()));
-    //   if (classType) {
-    //     // If the symbol is a class type, we return it
-    //     return classType;
-    //   }
-    //   ErrorReporter::reportError("Use of undeclared variable '" +
-    //                              varExpr->getName() + "'");
-    //   return nullptr;
-    // }
+    if (!symbol) {
+      ErrorReporter::reportError("Use of undeclared variable '" +
+                                 varExpr->getName() + "'");
+      return nullptr;
+    }
     return symbol->getType();
   }
   if (auto binaryExpr = dyn_cast<BinaryExpr>(expr)) {
@@ -533,6 +527,10 @@ Type *lox::TypeInferenceEngine::inferCallExpr(CallExpr *callExpr,
       const ClassScope *classScope = classType->getClassScope();
       functionType =
           cast<const FunctionType>(classScope->getConstructor()->getType());
+    } else if (isa<InstenceType>(calleeType)) {
+      ErrorReporter::reportError("Unable call '" + calleeType->getName() +
+                                 "' as a function");
+      return nullptr;
     } else {
       ErrorReporter::reportError("Callee is not a function type");
       return nullptr;
@@ -619,17 +617,39 @@ Type *lox::TypeInferenceEngine::inferAccessExpr(AccessExpr *accessExpr,
 }
 
 bool lox::TypeInferenceEngine::solveConstraint(
-    Type *left, Type *right, Constraint::ConstraintType relation) {
+    Type *left, Type *right, Constraint::ConstraintType relation,
+    bool reportError) {
   switch (relation) {
-  case Constraint::ConstraintType::EQUAL:
-    return unify(left, right);
-  case Constraint::ConstraintType::ASSIGNABLE:
+  case Constraint::ConstraintType::EQUAL: {
+    bool success = false;
+    success = unify(left, right);
+    if (!success && reportError) {
+      ErrorReporter::reportError("Cannot unify different types: '" +
+                                 left->getName() + "' and '" +
+                                 right->getName() + "'");
+    }
+    return success;
+  }
+  case Constraint::ConstraintType::ASSIGNABLE: {
+    bool success = false;
     if (isa<TypeVariable>(left) || isa<TypeVariable>(right)) {
       // If either side is a type variable, we can unify them
-      return unify(left, right);
+      success = unify(left, right);
+      if (!success && reportError) {
+        ErrorReporter::reportError("Cannot unify different class types: '" +
+                                   left->getName() + "' and '" +
+                                   right->getName() + "'");
+      }
+      return success;
     }
     // Otherwise, we check if left is assignable to right
-    return assinable(left, right);
+    success = assinable(left, right);
+    if (!success && reportError) {
+      ErrorReporter::reportError("Cannot assign type '" + left->getName() +
+                                 "' to type '" + right->getName() + "'");
+    }
+    return success;
+  }
   default:
     ErrorReporter::reportError("Unknown constraint relation");
     return false;
@@ -643,7 +663,7 @@ bool lox::TypeInferenceEngine::solveConstraints() {
   for (const auto &constraint : constraints) {
     inferSuccess &=
         solveConstraint(constraint.getLeftType(), constraint.getRightType(),
-                        constraint.getRelation());
+                        constraint.getRelation(), true);
   }
   return inferSuccess;
 }
@@ -685,17 +705,10 @@ bool lox::TypeInferenceEngine::unify(Type *left, Type *right) {
     const ClassType *rightClass = cast<ClassType>(rightType);
 
     if (leftClass != rightClass) {
-      ErrorReporter::reportError("Cannot unify different class types: '" +
-                                 leftClass->getName() + "' and '" +
-                                 rightClass->getName() + "'");
       return false;
     }
     return true;
   }
-
-  ErrorReporter::reportError("Cannot unify different types: '" +
-                             leftType->getName() + "' and '" +
-                             rightType->getName() + "'");
   return false;
 }
 
@@ -708,8 +721,6 @@ bool lox::TypeInferenceEngine::assinable(Type *left, Type *right) {
   }
 
   if (!from->isCompatibleWith(to)) {
-    ErrorReporter::reportError("Can not assign type '" + from->getName() +
-                               "' to type '" + to->getName() + "'");
     return false;
   }
   return true; // Types are assignable
