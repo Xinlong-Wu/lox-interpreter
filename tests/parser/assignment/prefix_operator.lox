@@ -7,7 +7,7 @@
 
 // CHECK-SEMANTIC-LABEL:   Error: Invalid assignment target. Unable to assign to non-lvalue expression. at `=`, before: `"value"`
 // CHECK-SEMANTIC-NEXT:    Error: Cannot unify different types: 'String' and 'Bool'
-// CHECK-SEMANTIC-NEXT:    var a: String = "a";
+// CHECK-SEMANTIC:         var a: String = "a";
 // CHECK-SEMANTIC-NEXT:    !a;
 var a = "a";
 !a = "value";

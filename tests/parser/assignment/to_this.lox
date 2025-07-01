@@ -3,7 +3,7 @@
 
 // CHECK-PARSER-LABEL:     this = "value";
 
-// CHECK-SEMANTIC-LABEL:     Error: Can not assign type 'String' to type 'Foo'
+// CHECK-SEMANTIC-LABEL:     Error: Cannot assign type 'String' to type 'Foo'
 // CHECK-SEMANTIC:           Foo();
 
 class Foo {

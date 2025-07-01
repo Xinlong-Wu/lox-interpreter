@@ -41,7 +41,8 @@ private:
 
   bool solveConstraints();
   bool solveConstraint(Type *left, Type *right,
-                       Constraint::ConstraintType relation);
+                       Constraint::ConstraintType relation,
+                       bool reportError = false);
   bool unify(Type *left, Type *right);
   // check if left is assignable to right
   bool assinable(Type *left, Type *right);
