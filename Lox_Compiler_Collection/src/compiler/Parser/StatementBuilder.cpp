@@ -34,10 +34,15 @@ std::unique_ptr<VarDeclStmt> Parser::parseVarDecl() {
       return nullptr;
     }
     type = std::string(this->getPreviousToken().getTokenString());
-  } else {
-    parseError("Expect `=` or `:` after variable name.");
-    return nullptr;
+
+    if (this->parseOptional(lox::TokenType::TOKEN_EQUAL)) {
+      initializer = this->parseExpression();
+    }
   }
+  // else {
+  //   parseError("Expect `=` or `:` after variable name.");
+  //   return nullptr;
+  // }
 
   this->parse(lox::TokenType::TOKEN_SEMICOLON);
   if (initializer == nullptr) {
