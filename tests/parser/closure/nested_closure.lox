@@ -1,29 +1,55 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:         var f;
-// CHECK-PARSER-NEXT:    function f1()
-// CHECK-PARSER-NEXT:    BlockStmt: {
-// CHECK-PARSER-NEXT:      var a = String: ["a"];
-// CHECK-PARSER-NEXT:      function f2()
-// CHECK-PARSER-NEXT:      BlockStmt: {
-// CHECK-PARSER-NEXT:        var b = String: ["b"];
-// CHECK-PARSER-NEXT:        function f3()
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:          var c = String: ["c"];
-// CHECK-PARSER-NEXT:          function f4()
-// CHECK-PARSER-NEXT:          BlockStmt: {
-// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [a], )];
-// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [b], )];
-// CHECK-PARSER-NEXT:            Call: [Variable: [print](Variable: [c], )];
+// CHECK-PARSER-NEXT:    fun f1()
+// CHECK-PARSER-NEXT:    {
+// CHECK-PARSER-NEXT:      var a = "a";
+// CHECK-PARSER-NEXT:      fun f2()
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:        var b = "b";
+// CHECK-PARSER-NEXT:        fun f3()
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:          var c = "c";
+// CHECK-PARSER-NEXT:          fun f4()
+// CHECK-PARSER-NEXT:          {
+// CHECK-PARSER-NEXT:            print(a);
+// CHECK-PARSER-NEXT:            print(b);
+// CHECK-PARSER-NEXT:            print(c);
 // CHECK-PARSER-NEXT:          }
-// CHECK-PARSER:               Assign: [Variable: [f] = Variable: [f4]];
+// CHECK-PARSER:               f = f4;
 // CHECK-PARSER-NEXT:        }
-// CHECK-PARSER:             Call: [Variable: [f3]()];
+// CHECK-PARSER:             f3();
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER:           Call: [Variable: [f2]()];
+// CHECK-PARSER:           f2();
 // CHECK-PARSER-NEXT:    }
-// CHECK-PARSER:         Call: [Variable: [f1]()];
-// CHECK-PARSER-NEXT:    Call: [Variable: [f]()];
+// CHECK-PARSER:         f1();
+// CHECK-PARSER-NEXT:    f();
+
+// CHECK-SEMANTIC:          var f: Function f4 with 1 overloads;
+// CHECK-SEMANTIC-NEXT:     fun f1()
+// CHECK-SEMANTIC-NEXT:     {
+// CHECK-SEMANTIC-NEXT:       var a: String = "a";
+// CHECK-SEMANTIC-NEXT:       fun f2()
+// CHECK-SEMANTIC-NEXT:       {
+// CHECK-SEMANTIC-NEXT:         var b: String = "b";
+// CHECK-SEMANTIC-NEXT:         fun f3()
+// CHECK-SEMANTIC-NEXT:         {
+// CHECK-SEMANTIC-NEXT:           var c: String = "c";
+// CHECK-SEMANTIC-NEXT:           fun f4()
+// CHECK-SEMANTIC-NEXT:           {
+// CHECK-SEMANTIC-NEXT:             print(a);
+// CHECK-SEMANTIC-NEXT:             print(b);
+// CHECK-SEMANTIC-NEXT:             print(c);
+// CHECK-SEMANTIC-NEXT:           }
+// CHECK-SEMANTIC:                f = f4;
+// CHECK-SEMANTIC-NEXT:         }
+// CHECK-SEMANTIC:              f3();
+// CHECK-SEMANTIC-NEXT:       }
+// CHECK-SEMANTIC:            f2();
+// CHECK-SEMANTIC-NEXT:     }
+// CHECK-SEMANTIC:          f1();
+// CHECK-SEMANTIC-NEXT:     f();
 
 var f;
 

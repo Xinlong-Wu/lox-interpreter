@@ -1,4 +1,5 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // This is a regression test. When closing upvalues for discarded locals, it
 // wouldn't make sure it discarded the upvalue for the correct stack slot.
@@ -7,23 +8,47 @@
 // actually is. When "b" goes out of scope, we need to make sure we don't
 // prematurely close "a".
 
-// CHECK-PARSER:         var closure;
-// CHECK-PARSER-NEXT:      BlockStmt: {
-// CHECK-PARSER-NEXT:        var a = String: ["a"];
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:          var b = String: ["b"];
-// CHECK-PARSER-NEXT:          function returnA()
-// CHECK-PARSER-NEXT:          BlockStmt: {
-// CHECK-PARSER-NEXT:             return Variable: [a];
+// CHECK-PARSER:           var closure;
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:        var a = "a";
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:          var b = "b";
+// CHECK-PARSER-NEXT:          fun returnA()
+// CHECK-PARSER-NEXT:          {
+// CHECK-PARSER-NEXT:             return a;
 // CHECK-PARSER-NEXT:          }
-// CHECK-PARSER:               Assign: [Variable: [closure] = Variable: [returnA]];
-// CHECK-PARSER-NEXT:          if (Literal: [false])
-// CHECK-PARSER-NEXT:          BlockStmt: {
-// CHECK-PARSER-NEXT:            function returnB()
-// CHECK-PARSER-NEXT:            BlockStmt: {
-// CHECK-PARSER-NEXT:               return Variable: [b];
+// CHECK-PARSER:               closure = returnA;
+// CHECK-PARSER-NEXT:          if (false)
+// CHECK-PARSER-NEXT:          {
+// CHECK-PARSER-NEXT:            fun returnB()
+// CHECK-PARSER-NEXT:            {
+// CHECK-PARSER-NEXT:               return b;
 // CHECK-PARSER-NEXT:            }
-// CHECK-PARSER:           Call: [Variable: [print](Call: [Variable: [closure]()], )];
+// CHECK-PARSER-NEXT:          }
+// CHECK-PARSER-NEXT:        }
+// CHECK-PARSER-NEXT:        print(closure());
+// CHECK-PARSER-NEXT:      }
+
+// CHECK-SEMANTIC:            var closure: Function returnA with 1 overloads;
+// CHECK-SEMANTIC-NEXT:       {
+// CHECK-SEMANTIC-NEXT:         var a: String = "a";
+// CHECK-SEMANTIC-NEXT:         {
+// CHECK-SEMANTIC-NEXT:           var b: String = "b";
+// CHECK-SEMANTIC-NEXT:           fun returnA()
+// CHECK-SEMANTIC-NEXT:           {
+// CHECK-SEMANTIC-NEXT:              return a;
+// CHECK-SEMANTIC-NEXT:           }
+// CHECK-SEMANTIC:                closure = returnA;
+// CHECK-SEMANTIC-NEXT:         if (false)
+// CHECK-SEMANTIC-NEXT:         {
+// CHECK-SEMANTIC-NEXT:           fun returnB()
+// CHECK-SEMANTIC-NEXT:           {
+// CHECK-SEMANTIC-NEXT:              return b;
+// CHECK-SEMANTIC-NEXT:           }
+// CHECK-SEMANTIC-NEXT:         }
+// CHECK-SEMANTIC-NEXT:       }
+// CHECK-SEMANTIC-NEXT:       print(closure());
+// CHECK-SEMANTIC-NEXT:     }
 
 var closure;
 

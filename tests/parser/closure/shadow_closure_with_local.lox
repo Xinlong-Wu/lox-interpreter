@@ -1,18 +1,34 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
-// CHECK-PARSER:         BlockStmt: {
-// CHECK-PARSER-NEXT:      var foo = String: ["closure"];
-// CHECK-PARSER-NEXT:      function f()
-// CHECK-PARSER-NEXT:      BlockStmt: {
-// CHECK-PARSER-NEXT:         BlockStmt: {
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](Variable: [foo], )];
-// CHECK-PARSER-NEXT:           var foo = String: ["shadow"];
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](Variable: [foo], )];
+// CHECK-PARSER:         {
+// CHECK-PARSER-NEXT:      var foo = "closure";
+// CHECK-PARSER-NEXT:      fun f()
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:         {
+// CHECK-PARSER-NEXT:           print(foo);
+// CHECK-PARSER-NEXT:           var foo = "shadow";
+// CHECK-PARSER-NEXT:           print(foo);
 // CHECK-PARSER-NEXT:         }
-// CHECK-PARSER:              Call: [Variable: [print](Variable: [foo], )];
+// CHECK-PARSER:              print(foo);
 // CHECK-PARSER-NEXT:      }
-// CHECK-PARSER:           Call: [Variable: [f]()];
+// CHECK-PARSER:           f();
 // CHECK-PARSER-NEXT:    }
+
+// CHECK-SEMANTIC:         {
+// CHECK-SEMANTIC-NEXT:      var foo: String = "closure";
+// CHECK-SEMANTIC-NEXT:      fun f()
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:        {
+// CHECK-SEMANTIC-NEXT:          print(foo);
+// CHECK-SEMANTIC-NEXT:          var foo: String = "shadow";
+// CHECK-SEMANTIC-NEXT:          print(foo);
+// CHECK-SEMANTIC-NEXT:        }
+// CHECK-SEMANTIC:             print(foo);
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC:           f();
+// CHECK-SEMANTIC-NEXT:    }
+
 
 {
   var foo = "closure";
