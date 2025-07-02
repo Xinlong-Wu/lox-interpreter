@@ -388,7 +388,7 @@ Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
     if (varExpr->isThis()) {
       // 'this' refers to the current instance in a class context
       if (auto classType = symbolTable.currentScope()->getCurrentClassType()) {
-        return classType;
+        return classType->getInstanceType();
       } else {
         ErrorReporter::reportError(
             "'this' can only be used inside a class method");
@@ -401,7 +401,7 @@ Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
         // 'super' refers to the superclass of the current class
         ClassType *superClassType = classType->getSuperClass();
         if (superClassType) {
-          return superClassType;
+          return superClassType->getInstanceType();
         } else {
           ErrorReporter::reportError("'super' can only be used in a subclass");
           return nullptr;

@@ -1,19 +1,39 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:         class Foo {
-// CHECK-PARSER-NEXT:      function Foo(Variable: [a], Variable: [b], )
-// CHECK-PARSER-NEXT:      BlockStmt: {
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](String: ["init"], )];
-// CHECK-PARSER-NEXT:           Assign: [Access: [ this.a ] = Variable: [a]];
-// CHECK-PARSER-NEXT:           Assign: [Access: [ this.b ] = Variable: [b]];
-// CHECK-PARSER-NEXT:         }
+// CHECK-PARSER-NEXT:      var b;
+// CHECK-PARSER-NEXT:      var a;
+// CHECK-PARSER-NEXT:      fun init(a: Number, b: Number)
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:           print("init");
+// CHECK-PARSER-NEXT:           this.a = a;
+// CHECK-PARSER-NEXT:           this.b = b;
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER-NEXT:     var foo = Foo(1, 2);
+// CHECK-PARSER-NEXT:     print(foo.a);
+// CHECK-PARSER-NEXT:     print(foo.b);
 
-// CHECK-PARSER:         var foo = Call: [Variable: [Foo](Number: [1], Number: [2], )];
+// CHECK-SEMANTIC:         class Foo {
+// CHECK-SEMANTIC-NEXT:      var b: Number;
+// CHECK-SEMANTIC-NEXT:      var a: Number;
+// CHECK-SEMANTIC-NEXT:      fun init(a: Number, b: Number)
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:           print("init");
+// CHECK-SEMANTIC-NEXT:           this.a = a;
+// CHECK-SEMANTIC-NEXT:           this.b = b;
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC-NEXT:     }
+// CHECK-SEMANTIC-NEXT:     var foo: Instance of Foo = Foo(1, 2);
+// CHECK-SEMANTIC-NEXT:     print(foo.a);
+// CHECK-SEMANTIC-NEXT:     print(foo.b);
+
 
 class Foo {
   var a;
   var b;
-  Foo(a, b) {
+  init(a: Number, b: Number) {
     print ("init"); // expect: init
     this.a = a;
     this.b = b;

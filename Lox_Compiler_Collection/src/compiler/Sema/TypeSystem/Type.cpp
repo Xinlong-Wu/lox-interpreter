@@ -25,6 +25,8 @@ int64_t calculateMatchScore(const vector<Type *> &params,
     } else if (isa<ClassType>(args[i]) &&
                params[i] == typeContext->getStringType()) {
       score += 3; // Class type can be treated as string
+    } else {
+      return -1; // Incompatible types
     }
   }
   return score;
@@ -41,7 +43,7 @@ lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes,
     }
     int64_t score =
         calculateMatchScore(overload->parameters, argTypes, typeContext);
-    if (score >= 0) {
+    if (score > 0) {
       candidates.push(make_pair(score, overload.get()));
     }
   }
