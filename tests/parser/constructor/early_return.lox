@@ -11,7 +11,7 @@
 // CHECK-PARSER-NEXT:    Call: [Variable: [print](Variable: [foo], )];
 
 class Foo {
-  Foo() {
+  init() {
     print ("init");
     return;
     print ("nope");

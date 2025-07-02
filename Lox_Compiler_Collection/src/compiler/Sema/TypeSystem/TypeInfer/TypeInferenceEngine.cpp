@@ -342,12 +342,6 @@ void lox::TypeInferenceEngine::inferReturnStmt(ReturnStmt *returnStmt) {
     return;
   }
 
-  if (signature->getFunctionType()->isConstructor()) {
-    // if the function is a constructor, the return type is not allowed
-    ErrorReporter::reportError("Cannot return a value from a constructor");
-    return;
-  }
-
   // infer the return expression type
   Type *returnType = nullptr;
   if (returnStmt->getValue()) {
@@ -356,6 +350,18 @@ void lox::TypeInferenceEngine::inferReturnStmt(ReturnStmt *returnStmt) {
       ErrorReporter::reportError("Return expression has no type");
       return;
     }
+  }
+
+  if (signature->getFunctionType()->isConstructor()) {
+    if (returnType != nullptr) {
+      // if the function is a constructor, the return type is not allowed
+      ErrorReporter::reportError("Cannot return a value from a constructor");
+      return;
+    }
+    // if the function is a constructor, we assume the return type is the
+    // instance type of the class
+    returnType =
+        symbolTable.currentScope()->getCurrentClassType()->getInstanceType();
   }
 
   if (!returnType) {
