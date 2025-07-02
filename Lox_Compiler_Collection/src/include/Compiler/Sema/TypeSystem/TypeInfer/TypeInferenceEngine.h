@@ -61,6 +61,7 @@ public:
   // 添加约束
   void addConstraint(Type *left, Type *right,
                      Constraint::ConstraintType relation) {
+    assert(left && right && "Cannot add constraint with null type");
     constraints.emplace_back(left, right, relation);
     solveConstraint(left, right, relation);
   }

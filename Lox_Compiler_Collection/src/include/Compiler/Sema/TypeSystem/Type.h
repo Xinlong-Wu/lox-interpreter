@@ -276,16 +276,20 @@ public:
     }
   }
 
+  FunctionType *getFunctionType() const { return functionType; }
+
   friend class FunctionType;
 };
 
 class FunctionType : public TypeBase<FunctionType> {
 protected:
   std::vector<std::unique_ptr<Signature>> overloads;
+  bool _isConstructor = false;
 
   FunctionType(std::string name) : TypeBase(name) {}
-  FunctionType(std::string name, std::unique_ptr<Signature> signature)
-      : TypeBase(name) {
+  FunctionType(std::string name, std::unique_ptr<Signature> signature,
+               bool _isConstructor = false)
+      : TypeBase(name), _isConstructor(_isConstructor) {
     addOverload(std::move(signature));
   }
 
@@ -329,6 +333,8 @@ public:
     addOverload(std::move(signature));
   }
 
+  bool isConstructor() const { return _isConstructor; }
+
   bool operator==(const FunctionType *other) const {
     if (other == this) {
       return true;
@@ -358,6 +364,21 @@ public:
   }
 
   friend class TypeContext;
+};
+
+class ConstructorType : public FunctionType {
+public:
+  ConstructorType(const std::string &name, std::unique_ptr<Signature> signature)
+      : FunctionType(name, std::move(signature), true) {}
+
+  void printImpl(std::ostream &os) const override {
+    os << "Constructor " << name;
+    if (overloads.empty()) {
+      os << "no overloads";
+      return;
+    }
+    os << overloads.size() << " overloads";
+  }
 };
 } // namespace lox
 

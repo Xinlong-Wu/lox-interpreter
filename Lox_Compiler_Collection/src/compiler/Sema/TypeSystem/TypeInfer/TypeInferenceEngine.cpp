@@ -139,9 +139,11 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   Type *returnType = TypeVariable::create();
   // check function is a constructor
   ClassType *classTy = symbolTable.currentScope()->getCurrentClassType();
+  bool isConstructor = false;
   if (classTy && funcDecl->getName() == classTy->getConstructorName()) {
     // if the function is a constructor, the return type is the instance type
     returnType = classTy->getInstanceType();
+    isConstructor = true;
   }
 
   unique_ptr<Signature> signature =
@@ -164,8 +166,13 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
     funcDecl->setType(existingFuncTypePtr);
   } else {
     // create a new function type and declare it
-    funcType = typeContext->make<FunctionType>(funcDecl->getName(),
-                                               std::move(signature));
+    if (isConstructor) {
+      funcType = typeContext->make<ConstructorType>(funcDecl->getName(),
+                                                    std::move(signature));
+    } else {
+      funcType = typeContext->make<FunctionType>(funcDecl->getName(),
+                                                 std::move(signature));
+    }
     if (!symbolTable.declare(std::move(make_unique<Symbol>(funcType)))) {
       ErrorReporter::reportError("Function '" + funcDecl->getName() +
                                  "' already declared");
@@ -326,6 +333,21 @@ void lox::TypeInferenceEngine::inferReturnStmt(ReturnStmt *returnStmt) {
     return;
   }
 
+  // get the current function's signature
+  FunctionScope *funcScope = cast<FunctionScope>(
+      symbolTable.currentScope()->getCurrentFunctionScope());
+  const Signature *signature = funcScope->getSignature();
+  if (!signature) {
+    ErrorReporter::reportError("No current function signature found");
+    return;
+  }
+
+  if (signature->getFunctionType()->isConstructor()) {
+    // if the function is a constructor, the return type is not allowed
+    ErrorReporter::reportError("Cannot return a value from a constructor");
+    return;
+  }
+
   // infer the return expression type
   Type *returnType = nullptr;
   if (returnStmt->getValue()) {
@@ -336,13 +358,9 @@ void lox::TypeInferenceEngine::inferReturnStmt(ReturnStmt *returnStmt) {
     }
   }
 
-  // get the current function's signature
-  FunctionScope *funcScope = cast<FunctionScope>(
-      symbolTable.currentScope()->getCurrentFunctionScope());
-  const Signature *signature = funcScope->getSignature();
-  if (!signature) {
-    ErrorReporter::reportError("No current function signature found");
-    return;
+  if (!returnType) {
+    // if no return expression, we assume the return type is void
+    returnType = typeContext->getNilType();
   }
 
   // add a constraint between the return type and the function's return type
