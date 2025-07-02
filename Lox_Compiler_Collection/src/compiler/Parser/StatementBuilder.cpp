@@ -144,6 +144,11 @@ std::unique_ptr<StmtBase> Parser::parseStatement() {
 
 std::unique_ptr<BlockStmt> Parser::parseBlockStmt() {
   std::vector<std::unique_ptr<StmtBase>> statements;
+  if (this->previousToken != lox::TokenType::TOKEN_LEFT_BRACE) {
+    this->parseError("Expect `{` to start a block statement.");
+    return nullptr;
+  }
+
   while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) &&
          this->hasNext()) {
     std::unique_ptr<StmtBase> stmt = this->parseDeclaration();

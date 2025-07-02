@@ -1,12 +1,23 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:   class Foo {
-// CHECK-PARSER-NEXT:     function init()
-// CHECK-PARSER-NEXT:     BlockStmt: {
-// CHECK-PARSER-NEXT:       return String: ["result"];
+// CHECK-PARSER-NEXT:     fun init()
+// CHECK-PARSER-NEXT:     {
+// CHECK-PARSER-NEXT:       return "result";
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER-NEXT:   }
+
+// CHECK-SEMANTIC-LABEL:   Error: Cannot return a value from a constructor
+// CHECK-SEMANTIC-NEXT:   class Foo {
+// CHECK-SEMANTIC-NEXT:     fun init()
+// CHECK-SEMANTIC-NEXT:     {
+// CHECK-SEMANTIC-NEXT:       return "result";
+// CHECK-SEMANTIC-NEXT:     }
+// CHECK-SEMANTIC-NEXT:   }
 
 class Foo {
-  Foo() {
+  init() {
     return "result"; // Error at 'return': Can't return a value from an initializer.
   }
 }

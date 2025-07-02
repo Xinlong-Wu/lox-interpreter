@@ -138,12 +138,15 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   // collect the function's return type
   Type *returnType = TypeVariable::create();
   // check function is a constructor
-  ClassType *classTy = symbolTable.currentScope()->getCurrentClassType();
+  ClassScope *clasScope = dyn_cast<ClassScope>(symbolTable.currentScope());
   bool isConstructor = false;
-  if (classTy && funcDecl->getName() == classTy->getConstructorName()) {
-    // if the function is a constructor, the return type is the instance type
-    returnType = classTy->getInstanceType();
-    isConstructor = true;
+  if (clasScope != nullptr) {
+    ClassType *classTy = clasScope->getCurrentClassTypeImpl();
+    if (classTy && funcDecl->getName() == classTy->getConstructorName()) {
+      // if the function is a constructor, the return type is the instance type
+      isConstructor = true;
+      returnType = classTy->getInstanceType();
+    }
   }
 
   unique_ptr<Signature> signature =
@@ -445,20 +448,15 @@ Type *lox::TypeInferenceEngine::inferExpr(ExprBase *expr, Type *expectedType) {
     }
 
     inferredType = symbol->getType();
-  }
-  if (auto binaryExpr = dyn_cast<BinaryExpr>(expr)) {
+  } else if (auto binaryExpr = dyn_cast<BinaryExpr>(expr)) {
     inferredType = inferBinaryExpr(binaryExpr, expectedType);
-  }
-  if (auto unaryExpr = dyn_cast<UnaryExpr>(expr)) {
+  } else if (auto unaryExpr = dyn_cast<UnaryExpr>(expr)) {
     inferredType = inferUnaryExpr(unaryExpr, expectedType);
-  }
-  if (auto callExpr = dyn_cast<CallExpr>(expr)) {
+  } else if (auto callExpr = dyn_cast<CallExpr>(expr)) {
     inferredType = inferCallExpr(callExpr, expectedType);
-  }
-  if (auto assignExpr = dyn_cast<AssignExpr>(expr)) {
+  } else if (auto assignExpr = dyn_cast<AssignExpr>(expr)) {
     inferredType = inferAssignExpr(assignExpr, expectedType);
-  }
-  if (auto accessExpr = dyn_cast<AccessExpr>(expr)) {
+  } else if (auto accessExpr = dyn_cast<AccessExpr>(expr)) {
     inferredType = inferAccessExpr(accessExpr, expectedType);
   }
 

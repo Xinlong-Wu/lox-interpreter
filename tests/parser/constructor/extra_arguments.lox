@@ -1,18 +1,33 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:         class Foo {
-// CHECK-PARSER:           function init(Variable: [a], Variable: [b], )
-// CHECK-PARSER-NEXT:      BlockStmt: {
-// CHECK-PARSER-NEXT:          Assign: [Access: [ this.a ] = Variable: [a]];
-// CHECK-PARSER-NEXT:          Assign: [Access: [ this.b ] = Variable: [b]];
+// CHECK-PARSER:           var b;
+// CHECK-PARSER:           var a;
+// CHECK-PARSER-NEXT:      fun init(a: Number, b: Number)
+// CHECK-PARSER-NEXT:      {
+// CHECK-PARSER-NEXT:          this.a = a;
+// CHECK-PARSER-NEXT:          this.b = b;
 // CHECK-PARSER-NEXT:      }
 // CHECK-PARSER:         }
-// CHECK-PARSER:         var foo = Call: [Variable: [Foo](Number: [1], Number: [2], Number: [3], Number: [4], )];
+// CHECK-PARSER:         var foo = Foo(1, 2, 3, 4);
+
+// CHECK-SEMANTIC:       Error: No matching function overload found for call
+// CHECK-SEMANTIC:       class Foo {
+// CHECK-SEMANTIC:         var b: Number;
+// CHECK-SEMANTIC-NEXT:    var a: Number;
+// CHECK-SEMANTIC-NEXT:    fun init(a: Number, b: Number)
+// CHECK-SEMANTIC-NEXT:    {
+// CHECK-SEMANTIC-NEXT:      this.a = a;
+// CHECK-SEMANTIC-NEXT:      this.b = b;
+// CHECK-SEMANTIC-NEXT:    }
+// CHECK-SEMANTIC:       }
+// CHECK-SEMANTIC:       var foo = Foo(1, 2, 3, 4);
 
 class Foo {
   var a;
   var b;
-  Foo(a, b) {
+  init(a: Number, b: Number) {
     this.a = a;
     this.b = b;
   }

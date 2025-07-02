@@ -1,20 +1,37 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:          class Foo {
-// CHECK-PARSER-NEXT:       function init(Variable: [arg], )
-// CHECK-PARSER-NEXT:       BlockStmt: {
-// CHECK-PARSER-NEXT:         Call: [Variable: [print](Binary: [Binary: [String: ["Foo.init("] + Variable: [arg]] + String: [")"]], )];
-// CHECK-PARSER-NEXT:         Assign: [Access: [ this.field ] = String: ["init"]];
+// CHECK-PARSER-NEXT:       var field;
+// CHECK-PARSER-NEXT:       fun init(arg: String)
+// CHECK-PARSER-NEXT:       {
+// CHECK-PARSER-NEXT:         print("Foo.init(" + arg + ")");
+// CHECK-PARSER-NEXT:         this.field = "init";
 // CHECK-PARSER-NEXT:       }
-// CHECK-PARSER:          function init()
-// CHECK-PARSER-NEXT:     BlockStmt: {
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["not initializer"], )];
 // CHECK-PARSER-NEXT:     }
-// CHECK-PARSER:         Call: [Variable: [init]()];
+// CHECK-PARSER:          fun init()
+// CHECK-PARSER-NEXT:     {
+// CHECK-PARSER-NEXT:       print("not initializer");
+// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER:         init();
+
+// CHECK-SEMANTIC:        class Foo {
+// CHECK-SEMANTIC-NEXT:     var field: String;
+// CHECK-SEMANTIC-NEXT:        fun init(arg: String)
+// CHECK-SEMANTIC-NEXT:        {
+// CHECK-SEMANTIC-NEXT:          print("Foo.init(" + arg + ")");
+// CHECK-SEMANTIC-NEXT:          this.field = "init";
+// CHECK-SEMANTIC-NEXT:        }
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC:           fun init()
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:        print("not initializer");
+// CHECK-SEMANTIC-NEXT:      }
+// CHECK-SEMANTIC:           init();
 
 class Foo {
   var field;
-  Foo(arg) {
+  init(arg: String) {
     print ("Foo.init(" + arg + ")");
     this.field = "init";
   }
