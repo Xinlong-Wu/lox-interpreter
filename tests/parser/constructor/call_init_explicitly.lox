@@ -1,21 +1,39 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
-// CHECK-PARSER:           class Foo {
-// CHECK-PARSER-NEXT:        function init(Variable: [arg], )
-// CHECK-PARSER-NEXT:        BlockStmt: {
-// CHECK-PARSER-NEXT:           Call: [Variable: [print](Binary: [Binary: [String: ["Foo.init("] + Variable: [arg]] + String: [")"]], )];
-// CHECK-PARSER-NEXT:           Assign: [Access: [ this.field ] = String: ["init"]];
+// CHECK-PARSER-LABEL:    class Foo {
+// CHECK-PARSER-NEXT:        var field;
+// CHECK-PARSER-NEXT:        fun init(arg: String)
+// CHECK-PARSER-NEXT:        {
+// CHECK-PARSER-NEXT:           print("Foo.init(" + arg + ")");
+// CHECK-PARSER-NEXT:           this.field = "init";
 // CHECK-PARSER-NEXT:         }
+// CHECK-PARSER-NEXT:      }
+// CHECK-PARSER:           var foo = Foo("one");
+// CHECK-PARSER-NEXT:      foo.field = "field";
+// CHECK-PARSER-NEXT:      var foo2 = foo.init("two");
+// CHECK-PARSER-NEXT:      print(foo2);
+// CHECK-PARSER-NEXT:      print(foo.field);
 
-// CHECK-PARSER:           var foo = Call: [Variable: [Foo](String: ["one"], )];
-// CHECK-PARSER-NEXT:      Assign: [Access: [ Variable: [foo].field ] = String: ["field"]];
-// CHECK-PARSER-NEXT:      var foo2 = Call: [Access: [ Variable: [foo].init ](String: ["two"], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Variable: [foo2], )];
-// CHECK-PARSER-NEXT:      Call: [Variable: [print](Access: [ Variable: [foo].field ], )];
+// CHECK-SEMANTIC:         class Foo {
+// CHECK-SEMANTIC-NEXT:      var field: String;
+// CHECK-SEMANTIC-NEXT:      fun init(arg: String)
+// CHECK-SEMANTIC-NEXT:      {
+// CHECK-SEMANTIC-NEXT:         print("Foo.init(" + arg + ")");
+// CHECK-SEMANTIC-NEXT:         this.field = "init";
+// CHECK-SEMANTIC-NEXT:       }
+// CHECK-SEMANTIC-NEXT:    }
+// CHECK-SEMANTIC:         var foo: Instance of Foo = Foo("one");
+// CHECK-SEMANTIC-NEXT:    foo.field = "field";
+// CHECK-SEMANTIC-NEXT:    var foo2: Instance of Foo = foo.init("two");
+// CHECK-SEMANTIC-NEXT:    print(foo2);
+// CHECK-SEMANTIC-NEXT:    print(foo.field);
+
 
 class Foo {
   var field;
-  Foo(arg) {
+  init(arg: String) {
+    // print(field);
     print ("Foo.init(" + arg + ")");
     this.field = "init";
   }
@@ -24,7 +42,7 @@ class Foo {
 var foo = Foo("one"); // expect: Foo.init(one)
 foo.field = "field";
 
-var foo2 = foo.Foo("two"); // expect: Foo.init(two)
+var foo2 = foo.init("two"); // expect: Foo.init(two)
 print (foo2); // expect: Foo instance
 
 // Make sure init() doesn't create a fresh instance.

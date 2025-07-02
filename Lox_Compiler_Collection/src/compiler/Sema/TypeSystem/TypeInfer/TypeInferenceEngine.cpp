@@ -746,7 +746,8 @@ bool lox::TypeInferenceEngine::assinable(Type *left, Type *right) {
   const Type *from = applySubstitution(left);
   const Type *to = applySubstitution(right);
 
-  if (to == typeContext->getStringType() && isa<ClassType>(from)) {
+  if (to == typeContext->getStringType() &&
+      (isa<ClassType>(from) || isa<InstenceType>(from))) {
     return true; // Any type can be assigned to any type
   }
 

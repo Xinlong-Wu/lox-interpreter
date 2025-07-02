@@ -22,7 +22,7 @@ int64_t calculateMatchScore(const vector<Type *> &params,
       score += 10; // Exact match
     } else if (args[i]->isCompatibleWith(params[i])) {
       score += 5; // Compatible types
-    } else if (isa<ClassType>(args[i]) &&
+    } else if ((isa<ClassType>(args[i]) || isa<InstenceType>(args[i])) &&
                params[i] == typeContext->getStringType()) {
       score += 3; // Class type can be treated as string
     } else {
