@@ -96,7 +96,8 @@ std::unique_ptr<ClassDeclStmt> Parser::parseClassDecl() {
       // }
     }
   }
-  std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods;
+  std::unordered_multimap<std::string, std::unique_ptr<FunctionDeclStmt>>
+      methods;
   std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
   this->parse(lox::TokenType::TOKEN_LEFT_BRACE);
   while (!this->parseOptional(lox::TokenType::TOKEN_RIGHT_BRACE) &&

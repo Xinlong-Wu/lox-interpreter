@@ -345,14 +345,15 @@ private:
   std::string className;
   std::optional<std::string> superclassName;
   std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields;
-  std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> methods;
+  std::unordered_multimap<std::string, std::unique_ptr<FunctionDeclStmt>>
+      methods;
   std::unique_ptr<ClassType> classType = nullptr;
 
 public:
   ClassDeclStmt(
       std::string name, std::optional<std::string> superclassName,
       std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
-      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>>
+      std::unordered_multimap<std::string, std::unique_ptr<FunctionDeclStmt>>
           methods,
       Location loc)
       : StmtCRTP<ClassDeclStmt>(loc), className(name),
@@ -361,7 +362,7 @@ public:
   ClassDeclStmt(
       std::string name,
       std::unordered_map<std::string, std::unique_ptr<VarDeclStmt>> fields,
-      std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>>
+      std::unordered_multimap<std::string, std::unique_ptr<FunctionDeclStmt>>
           methods,
       Location loc)
       : ClassDeclStmt(std::move(name), std::nullopt, std::move(fields),
@@ -375,8 +376,8 @@ public:
   getFields() {
     return fields;
   }
-  const std::unordered_map<std::string, std::unique_ptr<FunctionDeclStmt>> &
-  getMethods() {
+  const std::unordered_multimap<std::string, std::unique_ptr<FunctionDeclStmt>>
+      &getMethods() {
     return methods;
   }
 

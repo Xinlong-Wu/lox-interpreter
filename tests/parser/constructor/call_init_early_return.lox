@@ -2,9 +2,11 @@
 // RUN: not %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER:           class Foo {
-// CHECK-PARSER-NEXT:           fun toString()
+// CHECK-PARSER-NEXT:           fun init(s: Number)
 // CHECK-PARSER-NEXT:           {
-// CHECK-PARSER-NEXT:              return "Foo instance";
+// CHECK-PARSER-NEXT:              print("init with number");
+// CHECK-PARSER-NEXT:              return s;
+// CHECK-PARSER-NEXT:              print("nope with number");
 // CHECK-PARSER-NEXT:           }
 // CHECK-PARSER-NEXT:           fun init()
 // CHECK-PARSER-NEXT:           {
@@ -14,13 +16,15 @@
 // CHECK-PARSER-NEXT:           }
 // CHECK-PARSER-NEXT:       }
 // CHECK-PARSER-NEXT:       var foo = Foo();
-// CHECK-PARSER-NEXT:       print(foo.init().toString());
+// CHECK-PARSER-NEXT:       print(foo.init());
 
 // CHECK-SEMANTIC:           Error: Cannot return a value from a constructor
 // CHECK-SEMANTIC-NEXT:      class Foo {
-// CHECK-SEMANTIC-NEXT:           fun toString()
+// CHECK-SEMANTIC-NEXT:           fun init(s: Number)
 // CHECK-SEMANTIC-NEXT:           {
-// CHECK-SEMANTIC-NEXT:              return "Foo instance";
+// CHECK-SEMANTIC-NEXT:              print("init with number");
+// CHECK-SEMANTIC-NEXT:              return s;
+// CHECK-SEMANTIC-NEXT:              print("nope with number");
 // CHECK-SEMANTIC-NEXT:           }
 // CHECK-SEMANTIC-NEXT:           fun init()
 // CHECK-SEMANTIC-NEXT:           {
@@ -30,7 +34,7 @@
 // CHECK-SEMANTIC-NEXT:           }
 // CHECK-SEMANTIC-NEXT:       }
 // CHECK-SEMANTIC-NEXT:       var foo: Instance of Foo = Foo();
-// CHECK-SEMANTIC-NEXT:       print(foo.init().toString());
+// CHECK-SEMANTIC-NEXT:       print(foo.init());
 
 
 class Foo {
@@ -40,11 +44,13 @@ class Foo {
     print ("nope");
   }
 
-  fun toString() {
-    return "Foo instance";
+  init (s: Number) {
+    print ("init with number");
+    return s;
+    print ("nope with number");
   }
 }
 
 var foo = Foo(); // expect: init
-print (foo.init().toString()); // expect: init
+print (foo.init()); // expect: init
 // expect: Foo instance
