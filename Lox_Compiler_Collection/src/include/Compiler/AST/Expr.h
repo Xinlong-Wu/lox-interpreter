@@ -281,12 +281,53 @@ public:
   ExprBase *getRight() const { return right.get(); }
 
   void printImpl(std::ostream &os) const {
+    BinaryExpr *leftBinary = dynamic_cast<BinaryExpr *>(left.get());
+    BinaryExpr *rightBinary = dynamic_cast<BinaryExpr *>(right.get());
+
+    if (leftBinary && leftBinary->getPrecedence() < getPrecedence()) {
+      os << "(";
+    }
     left->print(os);
+    if (leftBinary && leftBinary->getPrecedence() < getPrecedence()) {
+      os << ")";
+    }
+
     os << " " << toString(op) << " ";
+
+    if (rightBinary && rightBinary->getPrecedence() <= getPrecedence()) {
+      os << "(";
+    }
     right->print(os);
+    if (rightBinary && rightBinary->getPrecedence() <= getPrecedence()) {
+      os << ")";
+    }
   }
 
   Op getOp() const { return op; }
+
+  constexpr int getPrecedence() const {
+    switch (op) {
+    case Op::Or:
+      return 1;
+    case Op::And:
+      return 2;
+    case Op::Equal:
+    case Op::NotEqual:
+      return 3;
+    case Op::GreaterThan:
+    case Op::GreaterThanOrEqual:
+      return 4;
+    case Op::Add:
+    case Op::Sub:
+      return 5;
+    case Op::Mul:
+    case Op::Div:
+    case Op::Mod:
+      return 6;
+    default:
+      return 0; // Unknown precedence
+    }
+  }
 
   bool operator==(const Op &op) const { return this->op == op; }
 
