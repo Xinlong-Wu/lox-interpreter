@@ -73,7 +73,8 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
   }
 
   string className = classDecl->getName();
-  ClassType *classType = typeContext->make<ClassType>(className, superClass);
+  ClassType *classType =
+      typeContext->make<ClassType>(className, superClass, typeContext);
 
   if (symbolTable.lookupTypeLocal(className) ||
       symbolTable.lookupLocalSymbol(className)) {
@@ -100,8 +101,8 @@ void lox::TypeInferenceEngine::collectClassDeclarations(
 
   if (!constructorSymbol) {
     // If the class does not have a constructor, create a default constructor
-    unique_ptr<Signature> signature =
-        make_unique<Signature>(vector<Type *>(), classType->getInstanceType());
+    unique_ptr<Signature> signature = make_unique<Signature>(
+        vector<Type *>(), classType->getInstanceType(), typeContext);
     FunctionType *funcType = typeContext->make<FunctionType>(
         classType->getConstructorName(), std::move(signature));
 
@@ -128,7 +129,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
       }
       paramType = type;
     } else {
-      paramType = TypeVariable::create();
+      paramType = TypeVariable::create(typeContext);
     }
     param->setType(paramType);
     paramTypes.push_back(paramType);
@@ -136,7 +137,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   }
 
   // collect the function's return type
-  Type *returnType = TypeVariable::create();
+  Type *returnType = TypeVariable::create(typeContext);
   // check function is a constructor
   ClassScope *clasScope = dyn_cast<ClassScope>(symbolTable.currentScope());
   bool isConstructor = false;
@@ -150,7 +151,7 @@ void lox::TypeInferenceEngine::collectFunctionDeclarations(
   }
 
   unique_ptr<Signature> signature =
-      make_unique<Signature>(std::move(paramTypes), returnType);
+      make_unique<Signature>(std::move(paramTypes), returnType, typeContext);
   Signature *signaturePtr = signature.get();
   funcDecl->setSignature(signaturePtr);
 
@@ -278,7 +279,7 @@ void lox::TypeInferenceEngine::inferVarDeclStmt(VarDeclStmt *varDecl) {
       varType = declaredType;
     } else {
       // if no initializer and no type declared, we use a type variable
-      varType = TypeVariable::create();
+      varType = TypeVariable::create(typeContext);
     }
   }
 

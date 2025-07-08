@@ -62,12 +62,14 @@ lox::FunctionType::resolveOverload(const std::vector<Type *> &argTypes,
   return bestMatches;
 }
 
-lox::ClassType::ClassType(const std::string &name, ClassType *superclass)
-    : TypeBase(name), superclass(superclass) {
+lox::ClassType::ClassType(const std::string &name, ClassType *superClass,
+                          TypeContext *typeContext)
+    : TypeBase(name, typeContext), superclass(superClass) {
   instanceType = std::unique_ptr<InstenceType>(new InstenceType(this));
 }
 
-lox::ClassType::ClassType(const std::string &name) : TypeBase(name) {
+lox::ClassType::ClassType(const std::string &name, TypeContext *typeContext)
+    : TypeBase(name, typeContext), superclass(nullptr) {
   instanceType = std::unique_ptr<InstenceType>(new InstenceType(this));
 }
 

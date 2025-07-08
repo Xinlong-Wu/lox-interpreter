@@ -20,11 +20,11 @@
 
 // Bound methods have identity equality.
 class Foo {
-  fun method(a) {
+  fun method(a: Number) {
     print ("method");
     print (a);
   }
-  fun other(a) {
+  fun other(a: Number) {
     print ("other");
     print (a);
   }

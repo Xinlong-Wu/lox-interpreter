@@ -15,7 +15,8 @@ static void declareBuiltInTypes(lox::GlobalScope *globalScope,
 
 static void registPrintFunction(lox::GlobalScope *globalScope,
                                 lox::TypeContext *typeContext) {
-  lox::FunctionType *printFunc = typeContext->make<lox::FunctionType>("print");
+  lox::FunctionType *printFunc =
+      typeContext->make<lox::FunctionType>("print", typeContext);
   globalScope->declare(std::make_unique<lox::Symbol>("print", printFunc));
 
   // print ( String ) -> Nil

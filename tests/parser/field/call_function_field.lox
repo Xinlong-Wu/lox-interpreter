@@ -1,26 +1,42 @@
 // RUN: %parser %s | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:    class Foo {
-// CHECK-PARSER-NEXT:     }
-// CHECK-PARSER:          function bar(Variable: [a], Variable: [b], )
-// CHECK-PARSER-NEXT:     BlockStmt: {
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["bar"], )];
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [a], )];
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [b], )];
-// CHECK-PARSER-NEXT:     }
-// CHECK-PARSER:         var foo = Call: [Variable: [Foo]()];
-// CHECK-PARSER-NEXT:    Assign: [Access: [ Variable: [foo].bar ] = Variable: [bar]];
-// CHECK-PARSER-NEXT:    Call: [Access: [ Variable: [foo].bar ](Number: [1], Number: [2], )];
+// CHECK-PARSER-NEXT:           var b: Number;
+// CHECK-PARSER-NEXT:           var a: Number;
+// CHECK-PARSER-NEXT:           fun bar(a: Number, b: Number)
+// CHECK-PARSER-NEXT:           {
+// CHECK-PARSER-NEXT:              print("bar");
+// CHECK-PARSER-NEXT:              print(a);
+// CHECK-PARSER-NEXT:              print(b);
+// CHECK-PARSER-NEXT:           }
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       var foo = Foo();
+// CHECK-PARSER-NEXT:       foo.bar(1, 2);
 
-class Foo {}
+// CHECK-SEMANTIC-LABEL:    class Foo {
+// CHECK-SEMANTIC-NEXT:           var b: Number;
+// CHECK-SEMANTIC-NEXT:           var a: Number;
+// CHECK-SEMANTIC-NEXT:           fun bar(a: Number, b: Number)
+// CHECK-SEMANTIC-NEXT:           {
+// CHECK-SEMANTIC-NEXT:              print("bar");
+// CHECK-SEMANTIC-NEXT:              print(a);
+// CHECK-SEMANTIC-NEXT:              print(b);
+// CHECK-SEMANTIC-NEXT:           }
+// CHECK-SEMANTIC-NEXT:       }
+// CHECK-SEMANTIC-NEXT:       var foo: Instance of Foo = Foo();
+// CHECK-SEMANTIC-NEXT:       foo.bar(1, 2);
 
-fun bar(a, b) {
-  print ("bar");
-  print (a);
-  print (b);
+class Foo {
+  var a: Number;
+  var b: Number;
+  fun bar(a: Number, b: Number) {
+    print ("bar");
+    print (a);
+    print (b);
+  }
 }
 
 var foo = Foo();
-foo.bar = bar;
 
 foo.bar(1, 2);

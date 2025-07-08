@@ -21,12 +21,12 @@ public:
   TypeContext() {
     // 初始化基本类型
     std::unique_ptr<PrimitiveType> number =
-        std::unique_ptr<PrimitiveType>(new PrimitiveType("Number"));
+        std::unique_ptr<PrimitiveType>(new PrimitiveType("Number", this));
     std::unique_ptr<PrimitiveType> string =
-        std::unique_ptr<PrimitiveType>(new PrimitiveType("String"));
+        std::unique_ptr<PrimitiveType>(new PrimitiveType("String", this));
     std::unique_ptr<PrimitiveType> boolean =
-        std::unique_ptr<PrimitiveType>(new PrimitiveType("Bool"));
-    std::unique_ptr<NilType> nil = std::unique_ptr<NilType>(new NilType());
+        std::unique_ptr<PrimitiveType>(new PrimitiveType("Bool", this));
+    std::unique_ptr<NilType> nil = std::unique_ptr<NilType>(new NilType(this));
     numberType = number.get();
     stringType = string.get();
     boolType = boolean.get();

@@ -17,11 +17,16 @@ class Type {
 protected:
   std::string name;
 
-  Type(const std::string &name) : name(name) {}
+  const TypeContext *typeContext = nullptr;
+
+  Type(const std::string &name, const TypeContext *typeContext)
+      : name(name), typeContext(typeContext) {}
 
 public:
   virtual ~Type() = default;
   std::string getName() const { return name; }
+
+  const TypeContext *getTypeContext() const { return typeContext; }
 
   virtual bool isCompatibleWith(const Type *other) const {
     return this == other;
@@ -47,7 +52,8 @@ public:
 
 template <typename Derived> class TypeBase : public Type {
 protected:
-  TypeBase(const std::string &name) : Type(name){};
+  TypeBase(const std::string &name, const TypeContext *typeContext)
+      : Type(name, typeContext) {}
   TypeBase &operator=(const TypeBase &) = delete;
 
   TypeBase(TypeBase &&) = default;
@@ -71,17 +77,19 @@ class TypeVariable : public TypeBase<TypeVariable> {
 protected:
   static std::vector<std::unique_ptr<TypeVariable>> instances;
 
-  TypeVariable(const std::string &name) : TypeBase(name) {}
+  TypeVariable(const std::string &name, TypeContext *typeContext)
+      : TypeBase(name, typeContext) {}
 
 public:
   ~TypeVariable() override = default;
 
-  static TypeVariable *create(std::string name = "") {
+  static TypeVariable *create(TypeContext *typeContext, std::string name = "") {
     if (name.empty()) {
       name = "T" + std::to_string(instances.size());
     }
 
-    auto newVar = std::unique_ptr<TypeVariable>(new TypeVariable(name));
+    auto newVar =
+        std::unique_ptr<TypeVariable>(new TypeVariable(name, typeContext));
     TypeVariable *ptr = newVar.get();
     instances.push_back(std::move(newVar));
     return ptr;
@@ -95,11 +103,12 @@ public:
   void printImpl(std::ostream &os) const override { os << name; }
 
   friend class TypeContext;
-};
+}; // namespace lox
 
 class PrimitiveType : public TypeBase<PrimitiveType> {
 protected:
-  PrimitiveType(std::string name) : TypeBase(std::move(name)) {}
+  PrimitiveType(std::string name, TypeContext *typeContext)
+      : TypeBase(name, typeContext) {}
 
 public:
   ~PrimitiveType() override = default;
@@ -113,7 +122,7 @@ private:
   // Singleton instance for NilType
   // static std::unique_ptr<NilType> instance;
 protected:
-  NilType() : TypeBase("nil") {}
+  NilType(TypeContext *typeContext) : TypeBase("nil", typeContext) {}
 
 public:
   ~NilType() override = default;
@@ -131,8 +140,9 @@ private:
   std::unique_ptr<InstenceType> instanceType = nullptr;
 
 protected:
-  ClassType(const std::string &name, ClassType *superClass);
-  ClassType(const std::string &name);
+  ClassType(const std::string &name, ClassType *superClass,
+            TypeContext *typeContext);
+  ClassType(const std::string &name, TypeContext *typeContext);
 
 public:
   ~ClassType() override = default;
@@ -188,7 +198,9 @@ private:
 
 protected:
   InstenceType(ClassType *classType)
-      : TypeBase("Instance of " + classType->getName()), classType(classType) {}
+      : TypeBase("Instance of " + classType->getName(),
+                 classType->getTypeContext()),
+        classType(classType) {}
 
 public:
   ~InstenceType() override = default;
@@ -211,12 +223,13 @@ protected:
   FunctionType *functionType = nullptr;
 
 public:
-  Signature(std::vector<Type *> parameters, Type *returnType = nullptr)
-      : TypeBase("Signature"), parameters(std::move(parameters)),
+  Signature(std::vector<Type *> parameters, Type *returnType,
+            const TypeContext *typeContext)
+      : TypeBase("Signature", typeContext), parameters(std::move(parameters)),
         returnType(returnType) {}
 
   Signature(const Signature &other)
-      : TypeBase("Signature"), parameters(other.parameters),
+      : TypeBase("Signature", other.typeContext), parameters(other.parameters),
         returnType(other.returnType) {}
 
   Type *getParameterType(size_t index) const {
@@ -286,10 +299,12 @@ protected:
   std::vector<std::unique_ptr<Signature>> overloads;
   bool _isConstructor = false;
 
-  FunctionType(std::string name) : TypeBase(name) {}
+  FunctionType(std::string name, TypeContext *typeContext)
+      : TypeBase(name, typeContext) {}
   FunctionType(std::string name, std::unique_ptr<Signature> signature,
                bool _isConstructor = false)
-      : TypeBase(name), _isConstructor(_isConstructor) {
+      : TypeBase(name, signature->getTypeContext()),
+        _isConstructor(_isConstructor) {
     addOverload(std::move(signature));
   }
 
@@ -301,7 +316,26 @@ public:
                   const TypeContext *typeContext) const;
 
   bool isCompatibleWith(const Type *other) const override {
-    assert(false && "Unimplemented FunctionType isCompatibleWith");
+    // if two types are Compatible, they must be one of the following:
+    // 1. the same type
+    // 2. all signatures of the function type are compatible with the other
+    if (this == other) {
+      return true;
+    }
+    if (auto otherFuncType = dyn_cast<const FunctionType>(other)) {
+      // Check if any of the overloads are compatible with the other function
+      // type
+      for (const auto &overload : overloads) {
+        std::vector<const Signature *> bestMatches =
+            otherFuncType->resolveOverload(overload->parameters, typeContext);
+        if (bestMatches.size() == 1) {
+          continue;
+        }
+        return false;
+      }
+      return true;
+    }
+    // If the other type is not a function type, they are not compatible
     return false;
   }
 
@@ -328,8 +362,8 @@ public:
   }
 
   void addOverload(std::vector<Type *> parameters, Type *returnType = nullptr) {
-    auto signature =
-        std::make_unique<Signature>(std::move(parameters), returnType);
+    auto signature = std::make_unique<Signature>(std::move(parameters),
+                                                 returnType, typeContext);
     addOverload(std::move(signature));
   }
 
