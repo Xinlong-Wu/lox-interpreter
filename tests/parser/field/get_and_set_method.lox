@@ -1,22 +1,41 @@
 // RUN: %parser %s 2>&1 | FileCheck %s --check-prefix=CHECK-PARSER
+// RUN: %parser --semantic-analyzer %s 2>&1 | FileCheck %s --check-prefix=CHECK-SEMANTIC
 
 // CHECK-PARSER-LABEL:   class Foo {
-// CHECK-PARSER-NEXT:     function other(Variable: [a], )
-// CHECK-PARSER-NEXT:     BlockStmt: {
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["other"], )];
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [a], )];
-// CHECK-PARSER-NEXT:     }
-// CHECK-PARSER:          function method(Variable: [a], )
-// CHECK-PARSER-NEXT:     BlockStmt: {
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](String: ["method"], )];
-// CHECK-PARSER-NEXT:       Call: [Variable: [print](Variable: [a], )];
-// CHECK-PARSER-NEXT:     }
+// CHECK-PARSER-NEXT:       fun other(a: Number)
+// CHECK-PARSER-NEXT:       {
+// CHECK-PARSER-NEXT:           print("other");
+// CHECK-PARSER-NEXT:           print(a);
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:       fun method(a: Number)
+// CHECK-PARSER-NEXT:       {
+// CHECK-PARSER-NEXT:           print("method");
+// CHECK-PARSER-NEXT:           print(a);
+// CHECK-PARSER-NEXT:       }
+// CHECK-PARSER-NEXT:   }
+// CHECK-PARSER-NEXT:   var foo = Foo();
+// CHECK-PARSER-NEXT:   var method = foo.method;
+// CHECK-PARSER-NEXT:   foo.method = foo.other;
+// CHECK-PARSER-NEXT:   foo.method(1);
+// CHECK-PARSER-NEXT:   method(2);
 
-// CHECK-PARSER:         var foo = Call: [Variable: [Foo]()];
-// CHECK-PARSER-NEXT:    var method = Access: [ Variable: [foo].method ];
-// CHECK-PARSER-NEXT:    Assign: [Access: [ Variable: [foo].method ] = Access: [ Variable: [foo].other ]];
-// CHECK-PARSER-NEXT:    Call: [Access: [ Variable: [foo].method ](Number: [1], )];
-// CHECK-PARSER-NEXT:    Call: [Variable: [method](Number: [2], )];
+// CHECK-SEMANTIC-LABEL:   class Foo {
+// CHECK-SEMANTIC-NEXT:       fun other(a: Number)
+// CHECK-SEMANTIC-NEXT:       {
+// CHECK-SEMANTIC-NEXT:           print("other");
+// CHECK-SEMANTIC-NEXT:           print(a);
+// CHECK-SEMANTIC-NEXT:       }
+// CHECK-SEMANTIC-NEXT:       fun method(a: Number)
+// CHECK-SEMANTIC-NEXT:       {
+// CHECK-SEMANTIC-NEXT:           print("method");
+// CHECK-SEMANTIC-NEXT:           print(a);
+// CHECK-SEMANTIC-NEXT:       }
+// CHECK-SEMANTIC-NEXT:   }
+// CHECK-SEMANTIC-NEXT:   var foo: Instance of Foo = Foo();
+// CHECK-SEMANTIC-NEXT:   var method: Function method with 1 overloads = foo.method;
+// CHECK-SEMANTIC-NEXT:   foo.method = foo.other;
+// CHECK-SEMANTIC-NEXT:   foo.method(1);
+// CHECK-SEMANTIC-NEXT:   method(2);
 
 // Bound methods have identity equality.
 class Foo {
